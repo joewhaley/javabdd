@@ -9,7 +9,7 @@
 #   JDK_ROOT     -- location where you installed JDK
 #
 
-BUDDY_SRC = buddy22/src
+BUDDY_SRC = buddy/src
 CUDD_SRC = cudd-2.4.0
 CAL_SRC = cal-2.1
 
