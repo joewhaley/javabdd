@@ -1,5 +1,7 @@
 package org.sf.javabdd;
 
+import java.io.PrintStream;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -668,9 +670,55 @@ public abstract class BDD {
      * 
      * <p>Compare to bdd_printdot.</p>
      */
-    public abstract void printDot();
+    public void printDot() {
+        PrintStream out = System.out;
+        out.println("digraph G {");
+        out.println("0 [shape=box, label=\"0\", style=filled, shape=box, height=0.3, width=0.3];");
+        out.println("1 [shape=box, label=\"1\", style=filled, shape=box, height=0.3, width=0.3];");
 
-    
+        boolean[] visited = new boolean[nodeCount()+2];
+        visited[0] = true; visited[1] = true;
+        HashMap map = new HashMap();
+        map.put(getFactory().zero(), new Integer(0));
+        map.put(getFactory().one(), new Integer(1));
+        int val = printdot_rec(out, 1, visited, map);
+        
+        out.println("}");
+    }
+
+    int printdot_rec(PrintStream out, int current, boolean[] visited, HashMap map) {
+        Integer ri = ((Integer) map.get(this));
+        if (ri == null) {
+            map.put(this, ri = new Integer(++current));
+        }
+        int r = ri.intValue();
+        if (visited[r])
+            return current;
+        visited[r] = true;
+       
+        // TODO: support labelling of vars.
+        out.println(r+" [label=\""+this.var()+"\"];");
+
+        BDD l = this.low(), h = this.high();
+        Integer li = ((Integer) map.get(l));
+        if (li == null) {
+            map.put(l, li = new Integer(++current));
+        }
+        int low = li.intValue();
+        Integer hi = ((Integer) map.get(h));
+        if (hi == null) {
+            map.put(h, hi = new Integer(++current));
+        }
+        int high = hi.intValue();
+
+        out.println(r+" -> "+low+" [style=dotted];");
+        out.println(r+" -> "+high+" [style=filled];");
+
+        current = l.printdot_rec(out, current, visited, map);
+        current = h.printdot_rec(out, current, visited, map);
+        return current;
+    }
+
     /**
      * <p>Counts the number of distinct nodes used for this BDD.</p>
      * 
