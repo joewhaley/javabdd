@@ -42,9 +42,9 @@ public abstract class BDDFactory {
 
     /** Initializes a BDD factory of the given type with the given initial
      * node table size and operation cache size.  The type is a string that
-     * can be "buddy", "cudd", "java", "test", or a name of a class that
-     * has an init() method that returns a BDDFactory.  If it fails, it
-     * falls back to the "java" factory.
+     * can be "buddy", "cudd", "cal", "j", "java", "jdd", "test", "typed", or
+     * a name of a class that has an init() method that returns a BDDFactory.
+     * If it fails, it falls back to the "j" factory.
      * 
      * @param bddpackage BDD package string identifier
      * @param nodenum initial node table size
@@ -59,6 +59,8 @@ public abstract class BDDFactory {
                 return CUDDFactory.init(nodenum, cachesize);
             if (bddpackage.equals("cal"))
                 return CALFactory.init(nodenum, cachesize);
+            if (bddpackage.equals("j"))
+                return JFactory.init(nodenum, cachesize);
             if (bddpackage.equals("java"))
                 return JavaFactory.init(nodenum, cachesize);
             if (bddpackage.equals("jdd"))
@@ -80,7 +82,7 @@ public abstract class BDDFactory {
         catch (IllegalAccessException _) {}
         catch (InvocationTargetException _) {}
         // falling back to default java implementation.
-        return JavaFactory.init(nodenum, cachesize);
+        return JFactory.init(nodenum, cachesize);
     }
 
     /**
