@@ -20,11 +20,15 @@ public class RubiksCube {
 
     static BDDFactory bdd;
     static int n = 3; // 3x3 cube
-    static int k = 5; // number of moves
+    static int k = 6; // number of moves
 
     public static void main(String[] args) {
         bdd = BDDFactory.init(1000000, 100000);
         bdd.setMaxIncrease(250000);
+        
+        if (args.length > 0) {
+            k = Integer.parseInt(args[0]);
+        }
         
         // 6n^2 domains, one for each square.
         int[] sizes = new int[n * n * 6];
@@ -133,7 +137,7 @@ public class RubiksCube {
         BDD cube = buildInitial();
         BDD allConfigs = cube.id();
         addAll(k, perms, allConfigs, cube);
-        System.out.println("Number of distinct configs after "+k+" moves: "+allConfigs.satCount());
+        System.out.println("Number of distinct configurations after "+k+" moves: "+allConfigs.satCount());
     }
 
     static void addAll(int depth, List perms, BDD allConfigs, BDD c) {
