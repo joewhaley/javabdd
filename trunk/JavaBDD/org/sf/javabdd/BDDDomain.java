@@ -323,7 +323,7 @@ public abstract class BDDDomain {
      * @see #ithVar(long)
      */
     public long [] getVarIndices(BDD bdd, int max) {
-	BDD myvarset = set();	// can't use var here, must respect subclass a factory may provide
+        BDD myvarset = set(); // can't use var here, must respect subclass a factory may provide
         int n = (int)bdd.satCount(myvarset);
         if (max != -1 && n > max)
             n = max;
@@ -333,7 +333,7 @@ public abstract class BDDDomain {
             BDD bi = (BDD) it.next();
             res[i] = bi.scanVar(this);
         }
-	myvarset.free();
+        myvarset.free();
         return res;
     }
 }
