@@ -18,11 +18,11 @@
             href="apidocs/index.html" />
     </menu>
     <menu name="Downloads">
-      <item name="JavaBDD v0.6 for Windows"
+      <item name="JavaBDD for Windows"
             href="http://dl.sourceforge.net/javabdd/javabdd_0.6.zip"/>
-      <item name="JavaBDD v0.6 for Linux"
+      <item name="JavaBDD for Linux"
             href="http://dl.sourceforge.net/javabdd/javabdd_0.6.tar.gz"/>
-      <item name="JavaBDD v0.6 Source code"
+      <item name="JavaBDD Source code"
             href="http://dl.sourceforge.net/javabdd/javabdd_src_0.6.tar.gz"/>
     </menu>
   </body>
