@@ -3043,6 +3043,7 @@ public class JFactory extends BDDFactory {
         BddCache_reset(appexcache);
         BddCache_reset(replacecache);
         BddCache_reset(misccache);
+        BddCache_reset(countcache);
     }
 
     void bdd_operator_varresize() {
@@ -3053,6 +3054,8 @@ public class JFactory extends BDDFactory {
 
         //memset(quantvarset, 0, sizeof(int)*bddvarnum);
         quantvarsetID = 0;
+        
+        BddCache_reset(countcache);
     }
 
     void bdd_operator_noderesize() {
@@ -3065,6 +3068,7 @@ public class JFactory extends BDDFactory {
             BddCache_resize(appexcache, newcachesize);
             BddCache_resize(replacecache, newcachesize);
             BddCache_resize(misccache, newcachesize);
+            BddCache_resize(countcache, newcachesize);
         }
     }
 
