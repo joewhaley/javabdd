@@ -883,6 +883,7 @@ public class JFactory extends BDDFactory {
         firstReorder = 1;
         CHECKa(r, bddfalse);
 
+        if (applycache == null) applycache = BddCacheI_init(cachesize);
         again : for (;;) {
             try {
                 INITREF();
@@ -945,6 +946,9 @@ public class JFactory extends BDDFactory {
         CHECKa(g, bddfalse);
         CHECKa(h, bddfalse);
 
+        if (applycache == null) applycache = BddCacheI_init(cachesize);
+        if (itecache == null) itecache = BddCacheI_init(cachesize);
+        
         again : for (;;) {
             try {
                 INITREF();
@@ -1053,6 +1057,8 @@ public class JFactory extends BDDFactory {
 
         CHECKa(r, bddfalse);
 
+        if (replacecache == null) replacecache = BddCacheI_init(cachesize);
+        
         again : for (;;) {
             try {
                 INITREF();
@@ -1154,6 +1160,8 @@ public class JFactory extends BDDFactory {
             return bddfalse;
         }
 
+        if (applycache == null) applycache = BddCacheI_init(cachesize);
+        
         again : for (;;) {
             try {
                 INITREF();
@@ -1429,6 +1437,10 @@ public class JFactory extends BDDFactory {
         if (var < 2) /* Empty set */
             return bdd_apply(l, r, opr);
 
+        if (applycache == null) applycache = BddCacheI_init(cachesize);
+        if (appexcache == null) appexcache = BddCacheI_init(cachesize);
+        if (quantcache == null) quantcache = BddCacheI_init(cachesize);
+        
         again : for (;;) {
             if (varset2vartable(var) < 0)
                 return bddfalse;
@@ -1650,6 +1662,8 @@ public class JFactory extends BDDFactory {
         CHECKa(f, bddfalse);
         CHECKa(c, bddfalse);
 
+        if (misccache == null) misccache = BddCacheI_init(cachesize);
+        
         again : for (;;) {
             try {
                 INITREF();
@@ -1745,6 +1759,9 @@ public class JFactory extends BDDFactory {
             return bddfalse;
         }
 
+        if (applycache == null) applycache = BddCacheI_init(cachesize);
+        if (itecache == null) itecache = BddCacheI_init(cachesize);
+        
         again : for (;;) {
             try {
                 INITREF();
@@ -1821,6 +1838,10 @@ public class JFactory extends BDDFactory {
 
         CHECKa(f, bddfalse);
 
+        if (applycache == null) applycache = BddCacheI_init(cachesize);
+        if (itecache == null) itecache = BddCacheI_init(cachesize);
+        if (replacecache == null) replacecache = BddCacheI_init(cachesize);
+        
         again : for (;;) {
             try {
                 INITREF();
@@ -1886,6 +1907,9 @@ public class JFactory extends BDDFactory {
         if (var < 2) /* Empty set */
             return r;
 
+        if (applycache == null) applycache = BddCacheI_init(cachesize);
+        if (quantcache == null) quantcache = BddCacheI_init(cachesize);
+        
         again : for (;;) {
             if (varset2vartable(var) < 0)
                 return bddfalse;
@@ -1925,6 +1949,9 @@ public class JFactory extends BDDFactory {
         if (var < 2) /* Empty set */
             return r;
 
+        if (applycache == null) applycache = BddCacheI_init(cachesize);
+        if (quantcache == null) quantcache = BddCacheI_init(cachesize);
+        
         again : for (;;) {
             if (varset2vartable(var) < 0)
                 return bddfalse;
@@ -1963,6 +1990,9 @@ public class JFactory extends BDDFactory {
         if (var < 2) /* Empty set */
             return r;
 
+        if (applycache == null) applycache = BddCacheI_init(cachesize);
+        if (quantcache == null) quantcache = BddCacheI_init(cachesize);
+        
         again : for (;;) {
             if (varset2vartable(var) < 0)
                 return bddfalse;
@@ -2001,6 +2031,8 @@ public class JFactory extends BDDFactory {
         if (var < 2) /* Empty set */
             return r;
 
+        if (misccache == null) misccache = BddCacheI_init(cachesize);
+        
         again : for (;;) {
             if (varset2svartable(var) < 0)
                 return bddfalse;
@@ -2071,6 +2103,8 @@ public class JFactory extends BDDFactory {
         CHECKa(f, bddfalse);
         CHECKa(d, bddfalse);
 
+        if (applycache == null) applycache = BddCacheI_init(cachesize);
+        
         again : for (;;) {
             try {
                 INITREF();
@@ -2236,6 +2270,10 @@ public class JFactory extends BDDFactory {
         if (var < 2) /* Empty set */
             return bdd_apply(l, r, opr);
 
+        if (applycache == null) applycache = BddCacheI_init(cachesize);
+        if (appexcache == null) appexcache = BddCacheI_init(cachesize);
+        if (quantcache == null) quantcache = BddCacheI_init(cachesize);
+        
         again : for (;;) {
             if (varset2vartable(var) < 0)
                 return bddfalse;
@@ -2282,6 +2320,10 @@ public class JFactory extends BDDFactory {
         if (var < 2) /* Empty set */
             return bdd_apply(l, r, opr);
 
+        if (applycache == null) applycache = BddCacheI_init(cachesize);
+        if (appexcache == null) appexcache = BddCacheI_init(cachesize);
+        if (quantcache == null) quantcache = BddCacheI_init(cachesize);
+        
         again : for (;;) {
             if (varset2vartable(var) < 0)
                 return bddfalse;
@@ -2568,6 +2610,8 @@ public class JFactory extends BDDFactory {
 
         miscid = CACHEID_PATHCOU;
 
+        if (countcache == null) countcache = BddCacheD_init(cachesize);
+        
         return bdd_pathcount_rec(r);
     }
 
@@ -2652,6 +2696,8 @@ public class JFactory extends BDDFactory {
 
         CHECK(r);
 
+        if (countcache == null) countcache = BddCacheD_init(cachesize);
+        
         miscid = CACHEID_SATCOU;
         size = Math.pow(2.0, (double) LEVEL(r));
 
@@ -3157,13 +3203,15 @@ public class JFactory extends BDDFactory {
     byte[] allsatProfile; /* Variable profile for bdd_allsat() */
 
     void bdd_operator_init(int cachesize) {
-        applycache = BddCacheI_init(cachesize);
-        itecache = BddCacheI_init(cachesize);
-        quantcache = BddCacheI_init(cachesize);
-        appexcache = BddCacheI_init(cachesize);
-        replacecache = BddCacheI_init(cachesize);
-        misccache = BddCacheI_init(cachesize);
-        countcache = BddCacheD_init(cachesize);
+        if (false) {
+            applycache = BddCacheI_init(cachesize);
+            itecache = BddCacheI_init(cachesize);
+            quantcache = BddCacheI_init(cachesize);
+            appexcache = BddCacheI_init(cachesize);
+            replacecache = BddCacheI_init(cachesize);
+            misccache = BddCacheI_init(cachesize);
+            countcache = BddCacheD_init(cachesize);
+        }
 
         quantvarsetID = 0;
         quantvarset = null;
@@ -3273,12 +3321,15 @@ public class JFactory extends BDDFactory {
     }
 
     void BddCache_done(BddCache cache) {
+        if (cache == null) return;
+        
         free(cache.table);
         cache.table = null;
         cache.tablesize = 0;
     }
 
     int BddCache_resize(BddCache cache, int newsize) {
+        if (cache == null) return 0;
         int n;
 
         free(cache.table);
@@ -3314,6 +3365,7 @@ public class JFactory extends BDDFactory {
     }
 
     void BddCache_reset(BddCache cache) {
+        if (cache == null) return;
         int n;
         for (n = 0; n < cache.tablesize; n++)
             cache.table[n].a = -1;
