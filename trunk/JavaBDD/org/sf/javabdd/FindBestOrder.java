@@ -38,12 +38,14 @@ public class FindBestOrder {
     int maxIncrease;
 
     public FindBestOrder(BDD b1, BDD b2, BDD dom, BDDFactory.BDDOp op,
+                         int nodeTableSize,
                          int cacheSize, int maxIncrease, long bestTime, long delayTime)
         throws IOException {
         this.op = op;
         this.bestCalcTime = bestTime;
         this.bestTotalTime = Long.MAX_VALUE;
-        this.nodeTableSize = b1.getFactory().getAllocNum();
+        //this.nodeTableSize = b1.getFactory().getAllocNum();
+        this.nodeTableSize = nodeTableSize;
         this.cacheSize = cacheSize;
         this.maxIncrease = maxIncrease;
         this.DELAY_TIME = delayTime;
