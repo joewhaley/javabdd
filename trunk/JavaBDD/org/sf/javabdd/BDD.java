@@ -857,8 +857,8 @@ public abstract class BDD {
                 throw new BDDException(); 
             int level = factory.var2Level(var);
             int i = Arrays.binarySearch(levels, level);
-            if (i == -1)
-                throw new BDDException(); 
+            if (i < 0)
+                throw new BDDException("var "+var+" not in iteration set"); 
             return nodes[i] == null;
         }
         
@@ -875,7 +875,7 @@ public abstract class BDD {
                 throw new BDDException(); 
             int level = factory.var2Level(var);
             int i = Arrays.binarySearch(levels, level);
-            if (i == -1)
+            if (i < 0)
                 throw new BDDException(); 
             if (nodes[i] != null)
                 throw new BDDException();
