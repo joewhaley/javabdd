@@ -119,7 +119,7 @@ public class TypedBDDFactory extends BDDFactory {
     }
     
     /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#setMinFreeNodes(int)
+     * @see net.sf.javabdd.BDDFactory#setMinFreeNodes(double)
      */
     public double setMinFreeNodes(double x) {
         return factory.setMinFreeNodes(x);
