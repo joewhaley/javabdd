@@ -153,15 +153,12 @@ public class MicroFactory extends BDDFactory {
 
     private final void DECREF(int node) {
         int a = bddnodes[node*__node_size + offset__lref] & REF_LMASK;
-        if (a == 0 || a == REF_LMASK) {
-            if (REF_HMASK == 0) return;
-            int b = bddnodes[node*__node_size + offset__href] & REF_HMASK;
-            if (a == 0) {
-                if (b == 0) return;
-                bddnodes[node*__node_size + offset__href] -= REF_HINC;
-            } else if (b == REF_HMASK) return;
+        if (a != REF_LMASK ||
+            (REF_HMASK != 0 &&
+                (bddnodes[node*__node_size + offset__href] & REF_HMASK) != REF_HMASK)) {
+            if (REF_HMASK != 0 && a == 0) bddnodes[node*__node_size + offset__href] -= REF_HINC;
+            bddnodes[node*__node_size + offset__lref] -= REF_LINC;
         }
-        bddnodes[node*__node_size + offset__lref] -= REF_LINC;
     }
 
     private final int GETREF(int node) {
@@ -3289,13 +3286,18 @@ public class MicroFactory extends BDDFactory {
         hash2 = NODEHASH(level, low, high);
         res = HASH(hash2);
 
-        while (res != 0) {
-            if (LEVEL(res) == level && LOW(res) == low && HIGH(res) == high) {
-                if (CACHESTATS > 0) cachestats.uniqueHit++;
-                return res;
-            }
-            res = NEXT(res);
-            if (CACHESTATS > 0) cachestats.uniqueChain++;
+        if (res != 0) {
+            int m1 = (level << LEV_LPOS) | low;
+            int m2 = ((level << (LEV_HPOS-LEV_LBITS)) & LEV_HMASK) | high;
+            do {
+                if (bddnodes[res*__node_size + offset__low] == m1 &&
+                    bddnodes[res*__node_size + offset__high] == m2) {
+                    if (CACHESTATS > 0) cachestats.uniqueHit++;
+                    return res;
+                }
+                res = NEXT(res);
+                if (CACHESTATS > 0) cachestats.uniqueChain++;
+            } while (res != 0);
         }
 
         /* No existing node => build one */
