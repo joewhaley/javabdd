@@ -9,31 +9,46 @@
 
 BUDDY_SRC = buddy22/src
 
-
 ifeq (${OS},Windows_NT)
   JDK_ROOT = c:/j2sdk1.4.2
   CC = gcc
   CFLAGS = -Wall -O3 -mno-cygwin
+  OBJECT_OUTPUT_OPTION = -o$(space)
   LINK = dllwrap
   LINKFLAGS = -s -mno-cygwin -mwindows --target=i386-mingw32 \
-              --add-stdcall-alias --driver-name $(CC)
+              --add-stdcall-alias --driver-name gcc
+  DLL_OUTPUT_OPTION = -o$(space)
   INCLUDES = -I. -I$(JDK_ROOT)/include -I$(BUDDY_SRC) \
              -I$(JDK_ROOT)/include/win32
   DLL_NAME = buddy.dll
+  ifeq (${CC},icl)    # Intel Windows compiler
+    CFLAGS = -O3
+    OBJECT_OUTPUT_OPTION = -Fo
+    LINK = icl
+    LINKFLAGS = -MLd -LDd -Zi /link /libpath:$(JDK_ROOT)/lib user32.lib gdi32.lib
+    DLL_OUTPUT_OPTION = -Fe
+  endif
+  ifeq (${CC},cl)     # Microsoft Visual C++ compiler
+    CFLAGS = -O2
+    OBJECT_OUTPUT_OPTION = -Fo
+    LINK = cl
+    LINKFLAGS = -MLd -LDd -Zi /link /libpath:$(JDK_ROOT)/lib user32.lib gdi32.lib
+    DLL_OUTPUT_OPTION = -Fe
+  endif
 else
   JDK_ROOT = /usr/java/j2sdk1.4.2
   CFLAGS = -D_REENTRANT -D_GNU_SOURCE -O3
+  OBJECT_OUTPUT_OPTION = -o$(space)
   LINK = $(CC)
   LINKFLAGS = -shared
+  DLL_OUTPUT_OPTION = -o$(space)
   INCLUDES = -I. -I$(JDK_ROOT)/include -I$(BUDDY_SRC) \
              -I$(JDK_ROOT)/include/linux
   DLL_NAME = libbuddy.so
-  ifeq (${CC},icc)
+  ifeq (${CC},icc)    # Intel Linux compiler
     LINKFLAGS = -shared -static-libcxa
   endif
 endif
-
-# The recommended c compiler flags
 
 # The java tools:
 JAVAC = $(JDK_ROOT)/bin/javac
@@ -71,13 +86,13 @@ DLL_OBJS  = $(DLL_SRCS:.c=.o)
 all: $(DLL_NAME)
 
 $(DLL_NAME): $(DLL_OBJS)
-	$(LINK) $(LINKFLAGS) -o $@ $?
+	$(LINK) $(DLL_OUTPUT_OPTION)$@ $? $(LINKFLAGS)
 
 buddy_jni.o: buddy_jni.c $(JNI_INCLUDE)
-	$(CC) $(CFLAGS) $(INCLUDES) -c -o $@ $<
+	$(CC) $(CFLAGS) $(INCLUDES) -c $(OBJECT_OUTPUT_OPTION)$@ $<
 
 .c.o:
-	$(CC) $(CFLAGS) $(INCLUDES) -c -o $@ $<
+	$(CC) $(CFLAGS) $(INCLUDES) -c $(OBJECT_OUTPUT_OPTION)$@ $<
 
 $(JNI_INCLUDE): $(JNI_CLASSFILE)
 	$(JAVAH) -jni -o $(JNI_INCLUDE) $(JNI_CLASSNAMES)
@@ -104,3 +119,6 @@ test:	$(DLL_NAME) $(EXAMPLE_CLASSFILES)
 clean:
 	$(RM) -f $(JAVA_CLASSFILES) $(JNI_INCLUDE) $(DLL_OBJS) $(DLL_NAME) $(EXAMPLE_CLASSFILES) $(JAR_NAME)
 	$(RM) -rf javadoc
+
+empty := 
+space := $(empty) $(empty)
