@@ -90,6 +90,7 @@ int          bdderrorcond;          /* Some error condition */
 int          bddnodesize;           /* Number of allocated nodes */
 int          bddmaxnodesize;        /* Maximum allowed number of nodes */
 int          bddmaxnodeincrease;    /* Max. # of nodes used to inc. table */
+double       bddincreasefactor;     /* Increase factor when growing table. */
 BddNode*     bddnodes;          /* All of the bdd nodes */
 int          bddfreepos;        /* First free node */
 int          bddfreenum;        /* Number of free nodes */
@@ -235,6 +236,7 @@ int bdd_init(int initnodesize, int cs)
      cachesize = cs;
      usednodes_nextreorder = bddnodesize;
      bddmaxnodeincrease = DEFAULTMAXNODEINC;
+     bddincreasefactor = 2;
      
      bdderrorcond = 0;
      
@@ -572,7 +574,7 @@ SHORT   {* set max. number of nodes used to increase node table *}
 PROTO   {* int bdd_setmaxincrease(int size) *}
 DESCR   {* The node table is expanded by doubling the size of the table
            when no more free nodes can be found, but a maximum for the
-	   number of new nodes added can be set with {\tt bdd\_maxincrease}
+	   number of new nodes added can be set with {\tt bdd\_setmaxincrease}
 	   to {\tt size} nodes. The default is 50000 nodes (1 Mb). *}
 RETURN  {* The old threshold on succes, otherwise a negative error code. *}
 ALSO    {* bdd\_setmaxnodenum, bdd\_setminfreenodes *}
@@ -588,6 +590,32 @@ int bdd_setmaxincrease(int size)
       RETURN(bdd_error(BDD_SIZE));
 
    bddmaxnodeincrease = size;
+   RETURN(old);
+}
+
+/*
+NAME    {* bdd\_increasefactor *}
+SECTION {* kernel *}
+SHORT   {* set factor used to increase node table *}
+PROTO   {* double bdd_setincreasefactor(double size) *}
+DESCR   {* The node table is expanded by multiplying the size by this factor
+           when no more free nodes can be found, but a maximum for the
+	   number of new nodes added can be set with {\tt bdd\_setmaxincrease}
+	   to {\tt size} nodes. The default is 2. *}
+RETURN  {* The old threshold on success, otherwise a negative error code. *}
+ALSO    {* bdd\_setmaxnodenum, bdd\_setminfreenodes, bdd\_setmaxincrease *}
+*/
+double bdd_setincreasefactor(double size)
+{
+   double old = bddincreasefactor;
+
+   BUDDY_PROLOGUE;
+   ADD_ARG1(T_DOUBLE,size);
+   
+   if (size <= 1)
+      RETURN(bdd_error(BDD_SIZE));
+
+   bddincreasefactor = size;
    RETURN(old);
 }
 
@@ -1504,7 +1532,7 @@ int bdd_noderesize(int doRehash)
    if (bddnodesize >= bddmaxnodesize  &&  bddmaxnodesize > 0)
       return -1;
    
-   newsize = bddnodesize << 1;
+   newsize = (int) bddnodesize * bddincreasefactor;
 
    if (newsize > oldsize + bddmaxnodeincrease)
       newsize = oldsize + bddmaxnodeincrease;
