@@ -1,5 +1,6 @@
 package org.sf.javabdd;
 
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Collection;
@@ -325,7 +326,7 @@ public abstract class BDDFactory {
      * 
      * Compare to bdd_load.
      */
-    public abstract BDD load(String filename);
+    public abstract BDD load(String filename) throws IOException;
     // TODO: error code from bdd_load (?)
     
     /**
@@ -333,7 +334,7 @@ public abstract class BDDFactory {
      * 
      * Compare to bdd_save.
      */
-    public abstract void save(String filename, BDD var);
+    public abstract void save(String filename, BDD var) throws IOException;
     // TODO: error code from bdd_save (?)
     
     // TODO: bdd_strm_hook, bdd_file_hook, bdd_blockfile_hook

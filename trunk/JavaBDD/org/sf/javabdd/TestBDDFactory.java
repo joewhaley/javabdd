@@ -3,6 +3,7 @@
 // Licensed under the terms of the GNU LGPL; see COPYING for details.
 package org.sf.javabdd;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -613,14 +614,14 @@ public class TestBDDFactory extends BDDFactory {
     /* (non-Javadoc)
      * @see org.sf.javabdd.BDDFactory#load(java.lang.String)
      */
-    public BDD load(String filename) {
+    public BDD load(String filename) throws IOException {
         return new TestBDD(f1.load(filename), f2.load(filename));
     }
 
     /* (non-Javadoc)
      * @see org.sf.javabdd.BDDFactory#save(java.lang.String, org.sf.javabdd.BDD)
      */
-    public void save(String filename, BDD var) {
+    public void save(String filename, BDD var) throws IOException {
         // TODO Compare!
         BDD b1 = ((TestBDD)var).b1;
         f1.save(filename, b1);
