@@ -2,6 +2,7 @@
 <project xmlns:j="jelly:core">
 
   <preGoal name="native:compile">
+    <echo message="*** copying BuDDy includes ***"/> 
     <copy todir="target/native/jni">
       <fileset dir="buddy/src/" includes="*.h"/>
     </copy>
@@ -11,6 +12,7 @@
   </preGoal>
 
   <postGoal name="native:compile">
+    <echo message="*** renaming BuDDy library ***"/> 
     <move file="target/native/libjavabdd-0.6.so"
           tofile="target/native/libbuddy.so"
           overwrite="true"/>
