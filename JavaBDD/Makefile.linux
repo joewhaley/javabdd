@@ -30,6 +30,7 @@ JAVA_SOURCES = org/sf/javabdd/BDD.java \
 	org/sf/javabdd/BDDPairing.java \
 	org/sf/javabdd/BuDDyFactory.java
 JAVA_CLASSFILES = org/sf/javabdd/*.class
+JAVA_PACKAGES = org.sf.javabdd
 JNI_CLASSFILE = org/sf/javabdd/BuDDyFactory.class
 JNI_CLASSNAMES = org.sf.javabdd.BuDDyFactory \
 	org.sf.javabdd.BuDDyFactory\$$BuDDyBDD \
