@@ -52,6 +52,8 @@ public abstract class BDDFactory {
                 return JavaFactory.init(nodenum, cachesize);
             if (bddpackage.equals("test"))
                 return TestBDDFactory.init(nodenum, cachesize);
+            if (bddpackage.equals("typed"))
+                return TypedBDDFactory.init(nodenum, cachesize);
         } catch (LinkageError _) {
             System.out.println("Could not load BDD package "+bddpackage);
         }
