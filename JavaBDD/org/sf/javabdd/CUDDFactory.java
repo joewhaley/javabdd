@@ -356,7 +356,7 @@ public class CUDDFactory extends BDDFactory {
      * @author SUIF User
      * @version $Id$
      */
-    public static class CUDDBDD extends BDD {
+    static class CUDDBDD extends BDD {
 
         private long _ddnode_ptr;
         
@@ -614,7 +614,7 @@ public class CUDDFactory extends BDDFactory {
      * @author SUIF User
      * @version $Id$
      */
-    public static class CUDDBDDDomain extends BDDDomain {
+    static class CUDDBDDDomain extends BDDDomain {
 
         private CUDDBDDDomain(int index, long range) {
             super(index, range);
@@ -635,7 +635,7 @@ public class CUDDFactory extends BDDFactory {
      * @author SUIF User
      * @version $Id$
      */
-    public static class CUDDBDDPairing extends BDDPairing {
+    static class CUDDBDDPairing extends BDDPairing {
 
         long _ptr;
 
@@ -706,7 +706,7 @@ public class CUDDFactory extends BDDFactory {
     /**
      * An implementation of a BDDDomain, used by the BuDDy interface.
      */
-    public static class CUDDBDDBitVector extends BDDBitVector {
+    static class CUDDBDDBitVector extends BDDBitVector {
 
         private CUDDBDDBitVector(int a) {
             super(a);
