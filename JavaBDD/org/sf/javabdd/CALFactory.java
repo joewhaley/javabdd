@@ -676,6 +676,7 @@ public class CALFactory extends BDDFactory {
         public double satCount() {
             return satCount0(_ddnode_ptr);
         }
+        // TODO: debug CAL satCount.
         private static native double satCount0(long b);
         
         /* (non-Javadoc)
