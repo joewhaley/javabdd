@@ -54,7 +54,7 @@ public abstract class BDD {
      * Compare to bdd_and.
      */
     public BDD and(BDD that) {
-        return this.apply(that, BuDDyFactory.and);
+        return this.apply(that, BDDFactory.and);
     }
 
     /**
@@ -64,7 +64,7 @@ public abstract class BDD {
      * Compare to bdd_and.
      */
     public void andWith(BDD that) {
-        this.applyWith(that, BuDDyFactory.and);
+        this.applyWith(that, BDDFactory.and);
     }
 
     /**
@@ -73,7 +73,7 @@ public abstract class BDD {
      * Compare to bdd_or.
      */
     public BDD or(BDD that) {
-        return this.apply(that, BuDDyFactory.or);
+        return this.apply(that, BDDFactory.or);
     }
 
     /**
@@ -83,7 +83,7 @@ public abstract class BDD {
      * Compare to bdd_or.
      */
     public void orWith(BDD that) {
-        this.applyWith(that, BuDDyFactory.or);
+        this.applyWith(that, BDDFactory.or);
     }
 
     /**
@@ -92,7 +92,7 @@ public abstract class BDD {
      * Compare to bdd_xor.
      */
     public BDD xor(BDD that) {
-        return this.apply(that, BuDDyFactory.xor);
+        return this.apply(that, BDDFactory.xor);
     }
     
     /**
@@ -102,7 +102,7 @@ public abstract class BDD {
      * Compare to bdd_or.
      */
     public void xorWith(BDD that) {
-        this.applyWith(that, BuDDyFactory.xor);
+        this.applyWith(that, BDDFactory.xor);
     }
 
     /**
@@ -111,7 +111,7 @@ public abstract class BDD {
      * Compare to bdd_imp.
      */
     public BDD imp(BDD that) {
-        return this.apply(that, BuDDyFactory.imp);
+        return this.apply(that, BDDFactory.imp);
     }
     
     /**
@@ -121,7 +121,7 @@ public abstract class BDD {
      * Compare to bdd_or.
      */
     public void impWith(BDD that) {
-        this.applyWith(that, BuDDyFactory.imp);
+        this.applyWith(that, BDDFactory.imp);
     }
 
     /**
@@ -130,7 +130,7 @@ public abstract class BDD {
      * Compare to bdd_biimp.
      */
     public BDD biimp(BDD that) {
-        return this.apply(that, BuDDyFactory.biimp);
+        return this.apply(that, BDDFactory.biimp);
     }
     
     /**
@@ -140,7 +140,7 @@ public abstract class BDD {
      * Compare to bdd_or.
      */
     public void biimpWith(BDD that) {
-        this.applyWith(that, BuDDyFactory.biimp);
+        this.applyWith(that, BDDFactory.biimp);
     }
 
     /**
