@@ -16,11 +16,30 @@ import java.util.Iterator;
  */
 public abstract class BDDFactory {
 
+    /** Initializes a BDD factory with the given initial node table size
+     * and operation cache size.  Tries to use the "buddy" native library;
+     * if it fails, it falls back to the "java" library.
+     * 
+     * @param nodenum initial node table size
+     * @param cachesize operation cache size
+     * @return BDD factory object
+     */
     public static BDDFactory init(int nodenum, int cachesize) {
         String bddpackage = System.getProperty("bdd", "buddy");
         return init(bddpackage, nodenum, cachesize);
     }
 
+    /** Initializes a BDD factory of the given type with the given initial
+     * node table size and operation cache size.  The type is a string that
+     * can be "buddy", "cudd", "java", "test", or a name of a class that
+     * has an init() method that returns a BDDFactory.  If it fails, it
+     * falls back to the "java" factory.
+     * 
+     * @param bddpackage BDD package string identifier
+     * @param nodenum initial node table size
+     * @param cachesize operation cache size
+     * @return BDD factory object
+     */
     public static BDDFactory init(String bddpackage, int nodenum, int cachesize) {
         try {
             if (bddpackage.equals("buddy"))
