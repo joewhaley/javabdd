@@ -432,11 +432,51 @@ public class TypedBDDFactory extends BDDFactory {
         }
         
         /**
-         * Changes this BDD domains to be the given set.
+         * Changes this BDD's domains to be the given set.
          */
-        public void setDomainSet(Set d) {
+        public void setDomains(Set d) {
             dom.clear();
             dom.addAll(d);
+        }
+        
+        /**
+         * Changes this BDD's domain to be the given domain.
+         */
+        public void setDomains(BDDDomain d) {
+            dom.clear();
+            dom.add(d);
+        }
+        
+        /**
+         * Changes this BDD's domains to be the given domains.
+         */
+        public void setDomains(BDDDomain d1, BDDDomain d2) {
+            dom.clear();
+            dom.add(d1); dom.add(d2);
+        }
+        
+        /**
+         * Changes this BDD's domains to be the given domains.
+         */
+        public void setDomains(BDDDomain d1, BDDDomain d2, BDDDomain d3) {
+            dom.clear();
+            dom.add(d1); dom.add(d2); dom.add(d3);
+        }
+        
+        /**
+         * Changes this BDD's domains to be the given domains.
+         */
+        public void setDomains(BDDDomain d1, BDDDomain d2, BDDDomain d3, BDDDomain d4) {
+            dom.clear();
+            dom.add(d1); dom.add(d2); dom.add(d3); dom.add(d4);
+        }
+        
+        /**
+         * Changes this BDD's domains to be the given domains.
+         */
+        public void setDomains(BDDDomain d1, BDDDomain d2, BDDDomain d3, BDDDomain d4, BDDDomain d5) {
+            dom.clear();
+            dom.add(d1); dom.add(d2); dom.add(d3); dom.add(d4); dom.add(d5);
         }
         
         /**
@@ -920,7 +960,7 @@ public class TypedBDDFactory extends BDDFactory {
         public Iterator iterator() {
             final BDD b = bdd.id();
             final BDD domains = getDomains();
-            final BDD zero = TypedBDDFactory.this.zero();
+            final BDD zero = bdd.getFactory().zero();
             return new Iterator() {
 
                 BDD last;
