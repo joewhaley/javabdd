@@ -29,7 +29,16 @@ public class CUDDFactory extends BDDFactory {
     private static CUDDFactory INSTANCE;
     
     static {
-        System.loadLibrary("cudd");
+        String libname = "cudd";
+        try {
+            System.loadLibrary(libname);
+        } catch (java.lang.UnsatisfiedLinkError x) {
+            // Cannot find library, try loading it from the current directory...
+            libname = System.mapLibraryName(libname);
+            String currentdir = System.getProperty("user.dir");
+            String sep = System.getProperty("file.separator");
+            System.load(currentdir+sep+libname);
+        }
         registerNatives();
     }
     
