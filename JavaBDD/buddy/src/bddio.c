@@ -130,7 +130,7 @@ void bdd_fprintall(FILE *ofile)
    
    for (n=0 ; n<bddnodesize ; n++)
    {
-      if (LOW(n) != -1)
+      if (LOW(n) != INVALID_BDD)
       {
 	 fprintf(ofile, "[%5d - %2d] ", n, REF(n));
 	 if (filehandler)

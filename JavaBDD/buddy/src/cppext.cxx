@@ -334,7 +334,7 @@ ostream &operator<<(ostream &o, const bdd_ioformat &f)
       {
 	 const BddNode *node = &bddnodes[n];
 	 
-	 if (LOWp(node) != -1)
+	 if (LOWp(node) != INVALID_BDD)
 	 {
 	    o << "[" << setw(5) << n << "] ";
 	    if (strmhandler_bdd)

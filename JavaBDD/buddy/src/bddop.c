@@ -2909,7 +2909,7 @@ static void support_rec(int r, int* support)
       return;
 
    node = &bddnodes[r];
-   if (MARKEDp(node)  ||  LOWp(node) == -1)
+   if (MARKEDp(node)  ||  LOWp(node) == INVALID_BDD)
       return;
 
    support[LEVELp(node)] = supportID;

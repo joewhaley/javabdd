@@ -212,17 +212,14 @@ int bdd_init(int initnodesize, int cs)
      bddresized = 0;
      
      for (n=0 ; n<bddnodesize ; n++) {
-       CLRLEVELREF(n);
-       LOW(n) = -1;
-       bddnodes[n].hash = 0;
-       bddnodes[n].next = n+1;
+       INIT_NODE(n);
      }
-     bddnodes[bddnodesize-1].next = 0;
+     SETNEXT(bddnodesize-1, 0);
      
-     SETREF(0, MAXREF);
-     SETREF(1, MAXREF);
-     LOW(0) = HIGH(0) = 0;
-     LOW(1) = HIGH(1) = 1;
+     SETMAXREF(0);
+     SETMAXREF(1);
+     SETLOW(0,0); SETHIGH(0,0);
+     SETLOW(1,1); SETHIGH(1,1);
      
      if ((err=bdd_operator_init(cs)) < 0) {
        bdd_done();
@@ -393,8 +390,8 @@ int bdd_setvarnum(int num)
 	 RETURN(-bdderrorcond);
       }
       
-      SETREF(bddvarset[bddvarnum*2], MAXREF);
-      SETREF(bddvarset[bddvarnum*2+1], MAXREF);
+      SETMAXREF(bddvarset[bddvarnum*2]);
+      SETMAXREF(bddvarset[bddvarnum*2+1]);
       bddlevel2var[bddvarnum] = bddvarnum;
       bddvar2level[bddvarnum] = bddvarnum;
    }
@@ -730,7 +727,7 @@ ALSO    {* bdd\_versionnum *}
 */
 char *bdd_versionstr(void)
 {
-   static char str[] = "BuDDy -  release " PACKAGE_VERSION;
+   static char str[] = "BuDDy - release " PACKAGE_VERSION;
    BUDDY_PROLOGUE;
    RETURN(str);
 }
@@ -943,6 +940,7 @@ RETURN  {* The I'th variable on succes, otherwise the constant false bdd *}
 ALSO {* bdd\_setvarnum, bdd\_nithvar, bddtrue, bddfalse *} */
 BDD bdd_ithvar(int var)
 {
+   int res;
    BUDDY_PROLOGUE;
    ADD_ARG1(T_INT,var);
    if (var < 0  ||  var >= bddvarnum)
@@ -951,7 +949,8 @@ BDD bdd_ithvar(int var)
       RETURN_BDD(bddfalse);
    }
 
-   RETURN_BDD(bddvarset[var*2]);
+   res = bddvarset[var*2];
+   RETURN_BDD(res);
 }
 
 
@@ -971,6 +970,7 @@ ALSO    {* bdd\_setvarnum, bdd\_ithvar, bddtrue, bddfalse *}
 */
 BDD bdd_nithvar(int var)
 {
+   int res;
    BUDDY_PROLOGUE;
    ADD_ARG1(T_INT,var);
    if (var < 0  ||  var >= bddvarnum)
@@ -979,7 +979,8 @@ BDD bdd_nithvar(int var)
       RETURN_BDD(bddfalse);
    }
    
-   RETURN_BDD(bddvarset[var*2+1]);
+   res = bddvarset[var*2+1];
+   RETURN_BDD(res);
 }
 
 
@@ -1094,17 +1095,17 @@ static void bdd_gbc_rehash(void)
    {
       register BddNode *node = &bddnodes[n];
 
-      if (LOWp(node) != -1)
+      if (LOWp(node) != INVALID_BDD)
       {
 	 register unsigned int hash;
 
 	 hash = NODEHASH(LEVELp(node), LOWp(node), HIGHp(node));
-	 node->next = bddnodes[hash].hash;
-	 bddnodes[hash].hash = n;
+	 SETNEXTp(node, HASH(hash));
+	 SETHASH(hash, n);
       }
       else
       {
-	 node->next = bddfreepos;
+	 SETNEXTpz(node, bddfreepos);
 	 bddfreepos = n;
 	 bddfreenum++;
       }
@@ -1134,9 +1135,8 @@ void bdd_gbc(void)
 
    for (n=0 ; n<bddnodesize ; n++)
    {
-      if (REF(n) > 0)
-	 bdd_mark(n);
-      bddnodes[n].hash = 0;
+      if (HASREF(n)) bdd_mark(n);
+      SETHASH(n, 0);
    }
    
    bddfreepos = 0;
@@ -1146,19 +1146,19 @@ void bdd_gbc(void)
    {
       register BddNode *node = &bddnodes[n];
 
-      if (MARKEDp(node)  &&  LOWp(node) != -1)
+      if (MARKEDp(node)  &&  LOWp(node) != INVALID_BDD)
       {
 	 register unsigned int hash;
 
          UNMARKp(node);
 	 hash = NODEHASH(LEVELp(node), LOWp(node), HIGHp(node));
-	 node->next = bddnodes[hash].hash;
-	 bddnodes[hash].hash = n;
+	 SETNEXTp(node, HASH(hash));
+	 SETHASH(hash, n);
       }
       else
       {
-	 LOWp(node) = -1;
-	 node->next = bddfreepos;
+	 SETLOWpz(node, INVALID_BDD); // obliterates refcount
+	 SETNEXTpz(node, bddfreepos); // obliterates lev, mark
 	 bddfreepos = n;
 	 bddfreenum++;
       }
@@ -1204,7 +1204,7 @@ BDD bdd_addref(BDD root)
       RETURN_BDD(root);
    if (root >= bddnodesize)
       RETURN_BDD(bdd_error(BDD_ILLBDD));
-   if (LOW(root) == -1)
+   if (LOW(root) == INVALID_BDD)
       RETURN_BDD(bdd_error(BDD_ILLBDD));
 
    INCREF(root);
@@ -1232,7 +1232,7 @@ BDD bdd_delref(BDD root)
       RETURN_BDD(root);
    if (root >= bddnodesize)
       RETURN_BDD(bdd_error(BDD_ILLBDD));
-   if (LOW(root) == -1)
+   if (LOW(root) == INVALID_BDD)
       RETURN_BDD(bdd_error(BDD_ILLBDD));
 
    /* if the following line is present, fails there much earlier */ 
@@ -1256,7 +1256,7 @@ void bdd_mark(int i)
       return;
 
    node = &bddnodes[i];
-   if (MARKEDp(node)  ||  LOWp(node) == -1)
+   if (MARKEDp(node)  ||  LOWp(node) == INVALID_BDD)
       return;
    
    SETMARKp(node);
@@ -1273,7 +1273,7 @@ void bdd_mark_upto(int i, int level)
    if (i < 2)
       return;
    
-   if (MARKEDp(node)  ||  LOWp(node) == -1)
+   if (MARKEDp(node)  ||  LOWp(node) == INVALID_BDD)
       return;
    
    if (LEVELp(node) > level)
@@ -1294,7 +1294,7 @@ void bdd_markcount(int i, int *cou)
       return;
 
    node = &bddnodes[i];
-   if (MARKEDp(node)  ||  LOWp(node) == -1)
+   if (MARKEDp(node)  ||  LOWp(node) == INVALID_BDD)
       return;
    
    SETMARKp(node);
@@ -1314,7 +1314,7 @@ void bdd_unmark(int i)
 
    node = &bddnodes[i];
 
-   if (!MARKEDp(node)  ||  LOWp(node) == -1)
+   if (!MARKEDp(node)  ||  LOWp(node) == INVALID_BDD)
       return;
    UNMARKp(node);
    
@@ -1363,7 +1363,7 @@ int bdd_makenode(unsigned int level, int low, int high)
 
       /* Try to find an existing node of this kind */
    hash = NODEHASH(level, low, high);
-   res = bddnodes[hash].hash;
+   res = HASH(hash);
 
    while(res != 0)
    {
@@ -1375,7 +1375,7 @@ int bdd_makenode(unsigned int level, int low, int high)
 	 return res;
       }
 
-      res = bddnodes[res].next;
+      res = NEXT(res);
 #ifdef CACHESTATS
       bddcachestats.uniqueChain++;
 #endif
@@ -1418,18 +1418,16 @@ int bdd_makenode(unsigned int level, int low, int high)
 
       /* Build new node */
    res = bddfreepos;
-   bddfreepos = bddnodes[bddfreepos].next;
+   bddfreepos = NEXT(bddfreepos);
    bddfreenum--;
    bddproduced++;
    
-   node = &bddnodes[res];
-   SETLEVELp(node, level);
-   LOWp(node) = low;
-   HIGHp(node) = high;
-   
-      /* Insert node */
-   node->next = bddnodes[hash].hash;
-   bddnodes[hash].hash = res;
+   {
+       int next = HASH(hash);
+       CREATE_NODE(res, level, low, high, next);
+       /* Insert node */
+       SETHASH(hash, res);
+   }
 
    return res;
 }
@@ -1460,16 +1458,13 @@ static int bdd_noderesize2(int doRehash, int oldsize, int newsize)
 
    if (doRehash)
       for (n=0 ; n<oldsize ; n++)
-	 bddnodes[n].hash = 0;
+	 SETHASH(n, 0);
    
    for (n=oldsize ; n<bddnodesize ; n++)
    {
-      CLRLEVELREF(n);
-      bddnodes[n].hash = 0;
-      LOW(n) = -1;
-      bddnodes[n].next = n+1;
+      INIT_NODE(n);
    }
-   bddnodes[bddnodesize-1].next = bddfreepos;
+   SETNEXT(bddnodesize-1, bddfreepos);
    bddfreepos = oldsize;
    bddfreenum += bddnodesize - oldsize;
 
