@@ -991,7 +991,7 @@ public abstract class BDD {
         return sb.toString();
     }
     
-    static class OutputBuffer {
+    private static class OutputBuffer {
         BDDToString ts;
         StringBuffer sb;
         int domain;

@@ -455,7 +455,7 @@ public abstract class BDDFactory {
         return tokenizer.nextToken();
     }
     
-    static class LoadHash {
+    private static class LoadHash {
         int key;
         BDD data;
         int first;
