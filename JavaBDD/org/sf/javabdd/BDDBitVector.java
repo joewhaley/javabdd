@@ -4,7 +4,7 @@
 package org.sf.javabdd;
 
 /**
- * BDDBitVector
+ * <p>Bit vector implementation for BDDs.</p>
  * 
  * @author John Whaley
  * @version $Id$

@@ -10,7 +10,11 @@ import java.util.LinkedList;
 import java.util.List;
 
 /**
- * TestBDDFactory
+ * <p>This BDD factory is used to test other BDD factories.  It is a wrapper around
+ * two BDD factories, and all operations are performed on both factories.  It
+ * throws an exception if the results from the two implementations do not match.</p>
+ * 
+ * @see org.sf.javabdd.BDDFactory
  * 
  * @author John Whaley
  * @version $Id$
@@ -243,12 +247,13 @@ public class TestBDDFactory extends BDDFactory {
         /* (non-Javadoc)
          * @see org.sf.javabdd.BDD#restrictWith(org.sf.javabdd.BDD)
          */
-        public void restrictWith(BDD var) {
+        public BDD restrictWith(BDD var) {
             BDD c1 = ((TestBDD)var).b1;
             BDD c2 = ((TestBDD)var).b2;
             b1.restrictWith(c1);
             b2.restrictWith(c2);
             assertSame(b1, b2, "restrict");
+            return this;
         }
         
         /* (non-Javadoc)
@@ -285,12 +290,13 @@ public class TestBDDFactory extends BDDFactory {
         /* (non-Javadoc)
          * @see org.sf.javabdd.BDD#applyWith(org.sf.javabdd.BDD, org.sf.javabdd.BDDFactory.BDDOp)
          */
-        public void applyWith(BDD that, BDDOp opr) {
+        public BDD applyWith(BDD that, BDDOp opr) {
             BDD c1 = ((TestBDD)that).b1;
             BDD c2 = ((TestBDD)that).b2;
             b1.applyWith(c1, opr);
             b2.applyWith(c2, opr);
             assertSame(b1, b2, "applyWith "+opr);
+            return this;
         }
 
         /* (non-Javadoc)
@@ -351,15 +357,15 @@ public class TestBDDFactory extends BDDFactory {
         }
 
         /* (non-Javadoc)
-         * @see org.sf.javabdd.BDD#satOneSet(org.sf.javabdd.BDD, org.sf.javabdd.BDD)
+         * @see org.sf.javabdd.BDD#satOne(org.sf.javabdd.BDD, org.sf.javabdd.BDD)
          */
-        public BDD satOneSet(BDD var, BDD pol) {
+        public BDD satOne(BDD var, BDD pol) {
             BDD c1 = ((TestBDD)var).b1;
             BDD c2 = ((TestBDD)var).b2;
             BDD d1 = ((TestBDD)pol).b1;
             BDD d2 = ((TestBDD)pol).b2;
-            BDD r1 = b1.satOneSet(c1, d1);
-            BDD r2 = b2.satOneSet(c2, d2);
+            BDD r1 = b1.satOne(c1, d1);
+            BDD r2 = b2.satOne(c2, d2);
             return new TestBDD(r1, r2);
         }
 
@@ -395,12 +401,13 @@ public class TestBDDFactory extends BDDFactory {
         /* (non-Javadoc)
          * @see org.sf.javabdd.BDD#replaceWith(org.sf.javabdd.BDDPairing)
          */
-        public void replaceWith(BDDPairing pair) {
+        public BDD replaceWith(BDDPairing pair) {
             BDDPairing c1 = ((TestBDDPairing)pair).b1;
             BDDPairing c2 = ((TestBDDPairing)pair).b2;
             b1.replaceWith(c1);
             b2.replaceWith(c2);
             assertSame(b1, b2, "replaceWith");
+            return this;
         }
 
         /* (non-Javadoc)
@@ -475,22 +482,6 @@ public class TestBDDFactory extends BDDFactory {
             return b2.hashCode();
         }
 
-        /* (non-Javadoc)
-         * @see org.sf.javabdd.BDD#addRef()
-         */
-        protected void addRef() {
-            b1.addRef();
-            b2.addRef();
-        }
-
-        /* (non-Javadoc)
-         * @see org.sf.javabdd.BDD#delRef()
-         */
-        protected void delRef() {
-            b1.delRef();
-            b2.delRef();
-        }
-        
         /* (non-Javadoc)
          * @see org.sf.javabdd.BDD#free()
          */

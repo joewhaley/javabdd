@@ -118,15 +118,15 @@ $(JAR_NAME): $(JNI_CLASSFILE) $(EXAMPLE_CLASSFILES)
 
 pdo:
 	icl -Qprof_gen $(INCLUDES) $(CFLAGS) $(DLL_OUTPUT_OPTION)buddy.dll $(DLL_SRCS) -LD /link /libpath:$(JDK_ROOT)/lib 
-	$(JAVA) -Djava.library.path=. NQueens 12
+	$(JAVA) NQueens 12
 	icl -Qprof_use $(INCLUDES) $(CFLAGS) $(DLL_OUTPUT_OPTION)buddy.dll $(DLL_SRCS) -LD /link /libpath:$(JDK_ROOT)/lib 
-	$(JAVA) -Djava.library.path=. NQueens 12
+	$(JAVA) NQueens 12
 
 opt_report:
 	icl -Qopt_report -Qopt_report_phase all $(INCLUDES) $(CFLAGS) $(DLL_OUTPUT_OPTION)buddy.dll $(DLL_SRCS) -LD /link /libpath:$(JDK_ROOT)/lib 
 
 test:	$(DLL_NAME) $(EXAMPLE_CLASSFILES)
-	$(JAVA) -Djava.library.path=. NQueens 8
+	$(JAVA) NQueens 8
 
 clean:
 	$(RM) -f $(JAVA_CLASSFILES) $(JNI_INCLUDE) $(DLL_OBJS) $(DLL_NAME) $(EXAMPLE_CLASSFILES) $(JAR_NAME)

@@ -15,7 +15,13 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 
 /**
- * @author jwhaley
+ * <p>This BDD factory keeps track of what domains each BDD uses, and complains
+ * if you try to do an operation where the domains do not match.</p>
+ * 
+ * @see org.sf.javabdd.BDDFactory
+ * 
+ * @author John Whaley
+ * @version $Id$
  */
 public class TypedBDDFactory extends BDDFactory {
 
@@ -46,7 +52,7 @@ public class TypedBDDFactory extends BDDFactory {
     public BDD one() {
         Set s = makeSet();
         //Set s = allDomains();
-        return new TypedBDD(factory.zero(), s);
+        return new TypedBDD(factory.one(), s);
     }
 
     /* (non-Javadoc)
@@ -137,10 +143,10 @@ public class TypedBDDFactory extends BDDFactory {
      * @see org.sf.javabdd.BDDFactory#nithVar(int)
      */
     public BDD nithVar(int var) {
-        BDDDomain d = whichDomain(var);
         Set s = makeSet();
-        if (d != null) s.add(d);
-        return new TypedBDD(factory.nithVar(var), makeSet());
+        //BDDDomain d = whichDomain(var);
+        //if (d != null) s.add(d);
+        return new TypedBDD(factory.nithVar(var), s);
     }
 
     /* (non-Javadoc)
@@ -605,7 +611,7 @@ public class TypedBDDFactory extends BDDFactory {
         /* (non-Javadoc)
          * @see org.sf.javabdd.BDD#restrictWith(org.sf.javabdd.BDD)
          */
-        public void restrictWith(BDD var) {
+        public BDD restrictWith(BDD var) {
             TypedBDD bdd1 = (TypedBDD) var;
             if (!dom.containsAll(bdd1.dom)) {
                 out.println("Warning! Restricting domain that doesn't exist: "+domainNames(bdd1.dom));
@@ -619,6 +625,7 @@ public class TypedBDDFactory extends BDDFactory {
             }
             dom.removeAll(bdd1.dom);
             bdd.restrictWith(bdd1.bdd);
+            return this;
         }
 
         /* (non-Javadoc)
@@ -676,10 +683,11 @@ public class TypedBDDFactory extends BDDFactory {
         /* (non-Javadoc)
          * @see org.sf.javabdd.BDD#applyWith(org.sf.javabdd.BDD, org.sf.javabdd.BDDFactory.BDDOp)
          */
-        public void applyWith(BDD that, BDDOp opr) {
+        public BDD applyWith(BDD that, BDDOp opr) {
             TypedBDD bdd1 = (TypedBDD) that;
             applyHelper(dom, this, bdd1, opr);
             bdd.applyWith(bdd1.bdd, opr);
+            return this;
         }
 
         /* (non-Javadoc)
@@ -754,9 +762,9 @@ public class TypedBDDFactory extends BDDFactory {
         }
 
         /* (non-Javadoc)
-         * @see org.sf.javabdd.BDD#satOneSet(org.sf.javabdd.BDD, org.sf.javabdd.BDD)
+         * @see org.sf.javabdd.BDD#satOne(org.sf.javabdd.BDD, org.sf.javabdd.BDD)
          */
-        public BDD satOneSet(BDD var, BDD pol) {
+        public BDD satOne(BDD var, BDD pol) {
             TypedBDD bdd1 = (TypedBDD) var;
             TypedBDD bdd2 = (TypedBDD) pol;
             Set newDom = makeSet();
@@ -767,7 +775,7 @@ public class TypedBDDFactory extends BDDFactory {
                     new Exception().printStackTrace(out);
             }
             newDom.addAll(bdd1.dom);
-            return new TypedBDD(bdd.satOneSet(bdd1.bdd, bdd2.bdd), newDom);
+            return new TypedBDD(bdd.satOne(bdd1.bdd, bdd2.bdd), newDom);
         }
 
         /* (non-Javadoc)
@@ -808,7 +816,7 @@ public class TypedBDDFactory extends BDDFactory {
         /* (non-Javadoc)
          * @see org.sf.javabdd.BDD#replaceWith(org.sf.javabdd.BDDPairing)
          */
-        public void replaceWith(BDDPairing pair) {
+        public BDD replaceWith(BDDPairing pair) {
             TypedBDDPairing tpair = (TypedBDDPairing) pair;
             for (Iterator i = tpair.domMap.entrySet().iterator(); i.hasNext(); ) {
                 Map.Entry e = (Map.Entry) i.next();
@@ -824,6 +832,7 @@ public class TypedBDDFactory extends BDDFactory {
             dom.removeAll(tpair.domMap.keySet());
             dom.addAll(tpair.domMap.values());
             bdd.replaceWith(tpair.pairing);
+            return this;
         }
 
         /* (non-Javadoc)
@@ -894,7 +903,7 @@ public class TypedBDDFactory extends BDDFactory {
                 }
 
                 public Object next() {
-                    BDD c = b.satOneSet(domains, zero);
+                    BDD c = b.satOne(domains, zero);
                     b.applyWith(c.id(), diff);
                     last = c;
                     Set newDom = makeSet();
@@ -905,20 +914,6 @@ public class TypedBDDFactory extends BDDFactory {
             };
         }
         
-        /* (non-Javadoc)
-         * @see org.sf.javabdd.BDD#addRef()
-         */
-        protected void addRef() {
-            bdd.addRef();
-        }
-
-        /* (non-Javadoc)
-         * @see org.sf.javabdd.BDD#delRef()
-         */
-        protected void delRef() {
-            bdd.delRef();
-        }
-
         /* (non-Javadoc)
          * @see org.sf.javabdd.BDD#free()
          */

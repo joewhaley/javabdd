@@ -6,7 +6,7 @@ import java.util.List;
 
 /**
  * <p>Binary Decision Diagrams (BDDs) are used for efficient computation of many
- * common problems. This is done by giving a compact representation and a set
+ * common problems. This is done by giving a compact representation and a set of
  * efficient operations on boolean functions f: {0,1}^n --> {0,1}.</p>
  * 
  * <p>Use an implementation of BDDFactory to create BDD objects.</p>
@@ -120,8 +120,8 @@ public abstract class BDD {
      * 
      * @param that the BDD to 'and' with
      */
-    public void andWith(BDD that) {
-        this.applyWith(that, BDDFactory.and);
+    public BDD andWith(BDD that) {
+        return this.applyWith(that, BDDFactory.and);
     }
 
     /**
@@ -146,8 +146,8 @@ public abstract class BDD {
      * 
      * @param that the BDD to 'or' with
      */
-    public void orWith(BDD that) {
-        this.applyWith(that, BDDFactory.or);
+    public BDD orWith(BDD that) {
+        return this.applyWith(that, BDDFactory.or);
     }
 
     /**
@@ -172,8 +172,8 @@ public abstract class BDD {
      * 
      * @param that the BDD to 'xor' with
      */
-    public void xorWith(BDD that) {
-        this.applyWith(that, BDDFactory.xor);
+    public BDD xorWith(BDD that) {
+        return this.applyWith(that, BDDFactory.xor);
     }
 
     /**
@@ -198,8 +198,8 @@ public abstract class BDD {
      * 
      * @param that the BDD to 'implication' with
      */
-    public void impWith(BDD that) {
-        this.applyWith(that, BDDFactory.imp);
+    public BDD impWith(BDD that) {
+        return this.applyWith(that, BDDFactory.imp);
     }
 
     /**
@@ -224,8 +224,8 @@ public abstract class BDD {
      * 
      * @param that the BDD to 'bi-implication' with
      */
-    public void biimpWith(BDD that) {
-        this.applyWith(that, BDDFactory.biimp);
+    public BDD biimpWith(BDD that) {
+        return this.applyWith(that, BDDFactory.biimp);
     }
 
     /**
@@ -348,7 +348,7 @@ public abstract class BDD {
      * 
      * @param var BDD containing the variables to be restricted
      */
-    public abstract void restrictWith(BDD var);
+    public abstract BDD restrictWith(BDD var);
 
     /**
      * <p>Coudert and Madre's restrict function.  Tries to simplify the BDD f by
@@ -394,7 +394,7 @@ public abstract class BDD {
      * @param that the BDD to apply the operator on
      * @param opr the operator to apply
      */
-    public abstract void applyWith(BDD that, BDDFactory.BDDOp opr);
+    public abstract BDD applyWith(BDD that, BDDFactory.BDDOp opr);
     
     /**
      * <p>Applies the binary operator opr to two BDDs and then performs a universal
@@ -471,7 +471,7 @@ public abstract class BDD {
      * @param pol the polarity of the result
      * @return one satisfying variable assignment
      */
-    public abstract BDD satOneSet(BDD var, BDD pol);
+    public abstract BDD satOne(BDD var, BDD pol);
 
     /**
      * <p>Finds all satisfying variable assignments.</p>
@@ -656,7 +656,7 @@ public abstract class BDD {
      * 
      * @param pair pairing of variables to the BDDs that replace those variables
      */
-    public abstract void replaceWith(BDDPairing pair);
+    public abstract BDD replaceWith(BDDPairing pair);
 
     /**
      * <p>Prints the set of truth assignments specified by this BDD.</p>
@@ -1110,7 +1110,7 @@ public abstract class BDD {
      * 
      * <p>Compare to bdd_addref.</p>
      */
-    protected abstract void addRef();
+    //protected abstract void addRef();
     
     /**
      * <p>Decreases the reference count on a node.  Reference counting is done on
@@ -1118,7 +1118,7 @@ public abstract class BDD {
      * 
      * <p>Compare to bdd_delref.</p>
      */
-    protected abstract void delRef();
+    //protected abstract void delRef();
     
     /**
      * <p>Frees this BDD.  Further use of this BDD will result in an exception being thrown.</p>
