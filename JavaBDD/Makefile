@@ -74,7 +74,7 @@ JNI_CLASSNAMES = org.sf.javabdd.BuDDyFactory \
 JNI_INCLUDE = buddy_jni.h
 EXAMPLE_SOURCES = NQueens.java
 EXAMPLE_CLASSFILES = $(EXAMPLE_SOURCES:%.java=%.class)
-JAR_NAME = javabdd_0.5.jar
+JAR_NAME = javabdd_0.6.jar
 
 DLL_SRCS  = buddy_jni.c \
 	$(BUDDY_SRC)/bddio.c $(BUDDY_SRC)/bddop.c $(BUDDY_SRC)/bvec.c \
