@@ -6,9 +6,11 @@ import org.sf.javabdd.*;
 public class NQueens {
     public static BDDFactory B;
 
+    public static boolean TRACE;
     public static int N; /* Size of the chess board */
     public static BDD[][] X; /* BDD variable array */
     public static BDD queen; /* N-queen problem expressed as a BDD */
+    public static BDD solution; /* One solution */
 
     public static void main(String[] args) {
         if (args.length != 1) {
@@ -20,25 +22,37 @@ public class NQueens {
             System.err.println("USAGE:  java NQueens N");
             return;
         }
-
+        
+        TRACE = true;
         long time = System.currentTimeMillis();
+        runTest();
+        freeAll();
+        time = System.currentTimeMillis() - time;
+        System.out.println("Time: "+time/1000.+" seconds");
+        B.done();
+        B = null;
+    }
 
-        /* Initialize with reasonable nodes and cache size and NxN variables */
-        String numOfNodes = System.getProperty("bddnodes");
-        int numberOfNodes;
-        if (numOfNodes == null)
-            numberOfNodes = (int) (Math.pow(4.42, N-6))*1000;
-        else
-            numberOfNodes = Integer.parseInt(numOfNodes);
-        String cache = System.getProperty("bddcache");
-        int cacheSize;
-        if (cache == null)
-            cacheSize = 1000;
-        else
-            cacheSize = Integer.parseInt(cache);
-        numberOfNodes = Math.max(1000, numberOfNodes);
-        B = BDDFactory.init(numberOfNodes, cacheSize);
-        B.setVarNum(N * N);
+    public static double runTest() {
+
+        if (B == null) {
+            /* Initialize with reasonable nodes and cache size and NxN variables */
+            String numOfNodes = System.getProperty("bddnodes");
+            int numberOfNodes;
+            if (numOfNodes == null)
+                numberOfNodes = (int) (Math.pow(4.42, N-6))*1000;
+            else
+                numberOfNodes = Integer.parseInt(numOfNodes);
+            String cache = System.getProperty("bddcache");
+            int cacheSize;
+            if (cache == null)
+                cacheSize = 1000;
+            else
+                cacheSize = Integer.parseInt(cache);
+            numberOfNodes = Math.max(1000, numberOfNodes);
+            B = BDDFactory.init(numberOfNodes, cacheSize);
+        }
+        if (B.varNum() < N * N) B.setVarNum(N * N);
 
         queen = B.one();
 
@@ -62,32 +76,33 @@ public class NQueens {
         /* Build requirements for each variable(field) */
         for (i = 0; i < N; i++)
             for (j = 0; j < N; j++) {
-                System.out.print("Adding position " + i + "," + j+"   \r");
+                if (TRACE) System.out.print("Adding position " + i + "," + j+"   \r");
                 build(i, j);
             }
 
+        solution = queen.satOne();
+        
+        double result = queen.satCount();
         /* Print the results */
-        System.out.println("There are " + (long) queen.satCount() + " solutions.");
-        BDD solution = queen.satOne();
-        System.out.println("Here is "+(long) solution.satCount() + " solution:");
-        solution.printSet();
-        System.out.println();
+        if (TRACE) {
+            System.out.println("There are " + (long) result + " solutions.");
+            double result2 = solution.satCount();
+            System.out.println("Here is "+(long) result2 + " solution:");
+            solution.printSet();
+            System.out.println();
+        }
 
-        solution.free();
-        freeAll();
-        B.done();
-
-        time = System.currentTimeMillis() - time;
-        System.out.println("Time: "+time/1000.+" seconds");
+        return result;
     }
 
-    static void freeAll() {
-        queen.free();
+    public static void freeAll() {
         for (int i = 0; i < N; i++)
             for (int j = 0; j < N; j++)
                 X[i][j].free();
+        queen.free();
+        solution.free();
     }
-
+    
     static void build(int i, int j) {
         BDD a = B.one(), b = B.one(), c = B.one(), d = B.one();
         int k, l;
