@@ -84,7 +84,8 @@ static int check_error(JNIEnv *env)
   case BDD_ILLBDD:  /* Illegal bdd argument */
   case BDD_SIZE:    /* Illegal size argument */
   case BVEC_SHIFT:   /* Illegal shift-left/right parameter */
-    clsname = "java/lang/IllegalArgumentException";
+    //clsname = "java/lang/IllegalArgumentException";
+    clsname = "net/sf/javabdd/BDDException";
     break;
   default:
     clsname = "java/lang/InternalError";
@@ -323,6 +324,28 @@ JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_setMaxNodeNum0
   printf("bdd_setmaxnodenum(%d)\n", size);
 #endif
   result = bdd_setmaxnodenum(size);
+  check_error(env);
+  return result;
+}
+
+/*
+ * Class:     net_sf_javabdd_BuDDyFactory
+ * Method:    setNodeTableSize0
+ * Signature: (I)I
+ */
+JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_setNodeTableSize0
+  (JNIEnv *env, jclass cl, jint size)
+{
+  int result;
+  jnienv = env;
+#if defined(TRACE_BUDDYLIB)
+  printf("bdd_getallocnum()\n");
+#endif
+  result = bdd_getallocnum();
+#if defined(TRACE_BUDDYLIB)
+  printf("bdd_noderesize2(%d, %d, %d)\n", 1, result, size);
+#endif
+  bdd_noderesize2(1, result, size);
   check_error(env);
   return result;
 }
@@ -906,6 +929,24 @@ JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_getAllocNum0
 #endif
   result = bdd_getallocnum();
   check_error(env);
+  return result;
+}
+
+/*
+ * Class:     net_sf_javabdd_BuDDyFactory
+ * Method:    getCacheSize0
+ * Signature: ()I
+ */
+JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_getCacheSize0
+  (JNIEnv *env, jclass c)
+{
+  int result;
+  bddStat stats;
+#if defined(TRACE_BUDDYLIB)
+  printf("bdd_stats(%p)\n", &stats);
+#endif
+  bdd_stats(&stats);
+  result = stats.cachesize;
   return result;
 }
 

@@ -4,13 +4,13 @@ import net.sf.javabdd.*;
  * @author John Whaley
  */
 public class NQueens {
-    public static BDDFactory B;
+    static BDDFactory B;
 
-    public static boolean TRACE;
-    public static int N; /* Size of the chess board */
-    public static BDD[][] X; /* BDD variable array */
-    public static BDD queen; /* N-queen problem expressed as a BDD */
-    public static BDD solution; /* One solution */
+    static boolean TRACE;
+    static int N; /* Size of the chess board */
+    static BDD[][] X; /* BDD variable array */
+    static BDD queen; /* N-queen problem expressed as a BDD */
+    static BDD solution; /* One solution */
 
     public static void main(String[] args) {
         if (args.length != 1) {

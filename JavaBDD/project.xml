@@ -3,7 +3,7 @@
   <pomVersion>3</pomVersion>
   <name>JavaBDD</name>
   <id>javabdd</id>
-  <currentVersion>0.6</currentVersion>
+  <currentVersion>1.0b1</currentVersion>
   <logo>/images/logo2_mid.jpg</logo> 
   <organization>
     <name>John Whaley</name>
@@ -83,9 +83,9 @@
       <tag>v0_6</tag>
     </version>
     <version>
-      <id>1.0beta</id>
-      <name>1.0beta</name>
-      <tag>HEAD</tag>
+      <id>1.0b1</id>
+      <name>1.0b1</name>
+      <tag>v1_0b1</tag>
     </version>
   </versions>
 
@@ -185,8 +185,7 @@
     <unitTest>
       <includes>
         <include>**/*Test.java</include>
-      </includes>
-      <includes>
+        <include>**/*Tests.java</include>
         <include>regression/*.java</include>
       </includes>
 <!-- Not currently used.
@@ -244,10 +243,19 @@
       maven-jxr-plugin
     </report>
     <report>
+      maven-junit-report-plugin
+    </report>
+    <report>
       maven-findbugs-plugin
     </report>
     <report>
       maven-linkcheck-plugin
+    </report>
+    <report>
+      maven-statcvs-plugin
+    </report>
+    <report>
+      maven-changes-plugin
     </report>
 <!-- TOO EXPENSIVE
     <report>
