@@ -32,7 +32,7 @@ ifeq (${OS},Windows_NT)
   CUDD_DLL_NAME = cudd.dll
   CAL_DLL_NAME = cal.dll
   ifeq (${CC},icl)    # Intel Windows compiler
-    CFLAGS = -O3 -Ob2 -QaxW
+    CFLAGS = -O2
     OBJECT_OUTPUT_OPTION = -Fo
     LINK = xilink
     LINKFLAGS = /dll /libpath:$(JDK_ROOT)/lib user32.lib gdi32.lib
