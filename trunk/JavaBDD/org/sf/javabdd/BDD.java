@@ -2,6 +2,7 @@ package org.sf.javabdd;
 
 import java.io.PrintStream;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -633,6 +634,42 @@ public abstract class BDD {
         return res;
     }
 
+    /**
+     * <p>Returns an iteration of the satisfying assignments of this BDD.  Returns
+     * an iteration of minterms.  The var argument is a set of variables that
+     * must be mentioned in the result.</p>
+     * 
+     * @return an iteration of minterms
+     */
+    public Iterator iterator(final BDD var) {
+        final BDD b = id();
+        final BDD zero = getFactory().zero();
+        return new Iterator() {
+
+            BDD last;
+                
+            public void remove() {
+                if (last != null) {
+                    applyWith(last.id(), BDDFactory.diff);
+                    last = null;
+                } else {
+                    throw new IllegalStateException();
+                }
+            }
+
+            public boolean hasNext() {
+                return !b.isZero();
+            }
+
+            public Object next() {
+                BDD c = b.satOne(var, zero);
+                b.applyWith(c.id(), BDDFactory.diff);
+                return last = c;
+            }
+                
+        };
+    }
+    
     /**
      * <p>Returns a BDD where all variables are replaced with the variables
      * defined by pair.  Each entry in pair consists of a old and a new variable.
