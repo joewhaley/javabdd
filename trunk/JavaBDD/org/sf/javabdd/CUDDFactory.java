@@ -657,9 +657,9 @@ public class CUDDFactory extends BDDFactory {
         }
 
         /* (non-Javadoc)
-         * @see org.sf.javabdd.BDD#satOne(org.sf.javabdd.BDD, org.sf.javabdd.BDD)
+         * @see org.sf.javabdd.BDD#satOne(org.sf.javabdd.BDD, boolean)
          */
-        public BDD satOne(BDD var, BDD pol) {
+        public BDD satOne(BDD var, boolean pol) {
             // TODO Implement this.
             throw new UnsupportedOperationException();
         }

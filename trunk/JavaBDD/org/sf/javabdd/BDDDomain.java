@@ -1,6 +1,7 @@
 package org.sf.javabdd;
 
 import java.util.Iterator;
+import java.math.BigInteger;
 
 /**
  * Represents a domain of BDD variables.  This is useful for finite state
@@ -25,23 +26,31 @@ public abstract class BDDDomain {
     protected int index;
 
     /* The specified domain (0...N-1) */
-    protected long realsize;
+    protected BigInteger realsize;
     /* Variable indices for the variable set */
     protected int[] ivar;
     /* The BDD variable set.  Actually constructed in extDomain(), etc. */
     protected BDD var;
 
+    /**
+     * Default constructor.
+     * 
+     * @param index  index of this domain
+     * @param range  size of this domain
+     */
     protected BDDDomain(int index, long range) {
-        long calcsize = 2L;
-        if (range <= 0L  || range > Long.MAX_VALUE/2)
+    }
+    protected BDDDomain(int index, BigInteger range) {
+        BigInteger calcsize = BigInteger.valueOf(2L);
+        if (range.signum() <= 0)
             throw new BDDException();
         this.name = Integer.toString(index);
         this.index = index;
         this.realsize = range;
         int binsize = 1;
-        while (calcsize < range) {
+        while (calcsize.compareTo(range) < 0) {
            binsize++;
-           calcsize <<= 1;
+           calcsize = calcsize.shiftLeft(1);
         }
         this.ivar = new int[binsize];
     }
@@ -73,25 +82,25 @@ public abstract class BDDDomain {
     }
 
     /**
-     * Returns what corresponds to a disjunction of all possible values of this
+     * <p>Returns what corresponds to a disjunction of all possible values of this
      * domain. This is more efficient than doing ithVar(0) OR ithVar(1) ...
-     * explicitly for all values in the domain.
+     * explicitly for all values in the domain.</p>
      * 
-     * Compare to fdd_domain.
+     * <p>Compare to fdd_domain.</p>
      */ 
     public BDD domain() {
         BDDFactory factory = getFactory();
         
         /* Encode V<=X-1. V is the variables in 'var' and X is the domain size */
-        long val = size() - 1L;
+        BigInteger val = size().subtract(BigInteger.ONE);
         BDD d = factory.one();
         int[] ivar = vars();
         for (int n = 0; n < this.varNum(); n++) {
-            if ((val & 0x1L) != 0L)
+            if (val.testBit(0))
                 d.orWith(factory.nithVar(ivar[n]));
             else
                 d.andWith(factory.nithVar(ivar[n]));
-            val >>= 1;
+            val = val.shiftRight(1);
         }
         return d;
     }
@@ -101,7 +110,7 @@ public abstract class BDDDomain {
      * 
      * Compare to fdd_domainsize.
      */
-    public long size() {
+    public BigInteger size() {
         return this.realsize;
     }
     
@@ -208,10 +217,13 @@ public abstract class BDDDomain {
      * @return BDD
      */
     public BDD ithVar(int val) {
-        return ithVar((long) val);
+        return ithVar(BigInteger.valueOf(val));
     }
     public BDD ithVar(long val) {
-        if (val < 0L || val >= this.size()) {
+        return ithVar(BigInteger.valueOf(val));
+    }
+    public BDD ithVar(BigInteger val) {
+        if (val.signum() < 0 || val.compareTo(size()) >= 0) {
             throw new BDDException(val+" is out of range");
         }
 
@@ -219,11 +231,11 @@ public abstract class BDDDomain {
         BDD v = factory.one();
         int[] ivar = this.vars();
         for (int n = 0; n < ivar.length; n++) {
-            if ((val & 0x1L) != 0L)
+            if (val.testBit(0))
                 v.andWith(factory.ithVar(ivar[n]));
             else
                 v.andWith(factory.nithVar(ivar[n]));
-            val >>= 1;
+            val = val.shiftRight(1);
         }
 
         return v;
@@ -235,30 +247,27 @@ public abstract class BDDDomain {
      * 
      * @return BDD
      */
-    public BDD varRange(long lo, long hi) {
-        if (lo < 0L || hi >= this.size() || lo > hi) {
+    public BDD varRange(BigInteger lo, BigInteger hi) {
+        if (lo.signum() < 0 || hi.compareTo(size()) >= 0 || lo.compareTo(hi) > 0) {
             throw new BDDException("range <"+lo+", "+hi+"> is invalid");
         }
 
         BDDFactory factory = getFactory();
         BDD result = factory.zero();
         int[] ivar = this.vars();
-        while (lo <= hi) {
-            long bitmask = 1L << (ivar.length - 1);
+        while (lo.compareTo(hi) <= 0) {
             BDD v = factory.one();
             for (int n = ivar.length - 1; ; n--) {
-                long bit = lo & bitmask;
-                if (bit != 0L) {
+                if (lo.testBit(n)) {
                     v.andWith(factory.ithVar(ivar[n]));
                 } else {
                     v.andWith(factory.nithVar(ivar[n]));
                 }
-                long mask = bitmask - 1L;
-                if ((lo & mask) == 0L && (lo | mask) <= hi) {
-                    lo = (lo | mask) + 1L;
+                BigInteger mask = BigInteger.ONE.shiftLeft(n).subtract(BigInteger.ONE);
+                if (!lo.testBit(n) && lo.or(mask).compareTo(hi) <= 0) {
+                    lo = lo.or(mask).add(BigInteger.ONE);
                     break;
                 }
-                bitmask >>= 1;
             }
             result.orWith(v);
         }

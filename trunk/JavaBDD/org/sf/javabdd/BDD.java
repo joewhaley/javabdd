@@ -1,3 +1,6 @@
+// BDD.java, created Jan 29, 2003 9:50:57 PM by jwhaley
+// Copyright (C) 2003 John Whaley
+// Licensed under the terms of the GNU LGPL; see COPYING for details.
 package org.sf.javabdd;
 
 import java.util.Arrays;
@@ -351,11 +354,14 @@ public abstract class BDD {
      * in this BDD to constant true if they are included in their positive form
      * in var, and constant false if they are included in their negative form.</p>
      * 
+     * <p><i>Note that this is quite different than Coudert and Madre's restrict
+     * function.</i></p>
+     * 
      * <p>Compare to bdd_restrict.</p>
      * 
      * @param var BDD containing the variables to be restricted
      * @return the result of the restrict operation
-     * @see org.sf.javabdd.BDDDomain#set()
+     * @see org.sf.javabdd.BDD#simplify(BDD)
      */
     public abstract BDD restrict(BDD var);
 
@@ -364,6 +370,9 @@ public abstract class BDD {
      * Restricts the variables in this BDD to constant true if they are included
      * in their positive form in var, and constant false if they are included in
      * their negative form.  The "that" BDD is consumed, and can no longer be used.</p>
+     * 
+     * <p><i>Note that this is quite different than Coudert and Madre's restrict
+     * function.</i></p>
      * 
      * <p>Compare to bdd_restrict and bdd_delref.</p>
      * 
@@ -396,7 +405,8 @@ public abstract class BDD {
     public abstract BDD support();
 
     /**
-     * <p>Returns the result of applying the binary operator opr to the two BDDs.</p>
+     * <p>Returns the result of applying the binary operator <tt>opr</tt> to the
+     * two BDDs.</p>
      * 
      * <p>Compare to bdd_apply.</p>
      * 
@@ -407,9 +417,9 @@ public abstract class BDD {
     public abstract BDD apply(BDD that, BDDFactory.BDDOp opr);
 
     /**
-     * <p>Makes this BDD be the result of the binary operator opr of two BDDs.  The
-     * "that" BDD is consumed, and can no longer be used.  Attempting to use the
-     * passed in BDD again will result in an exception being thrown.</p>
+     * <p>Makes this BDD be the result of the binary operator <tt>opr</tt> of two
+     * BDDs.  The "that" BDD is consumed, and can no longer be used.  Attempting
+     * to use the passed in BDD again will result in an exception being thrown.</p>
      * 
      * <p>Compare to bdd_apply and bdd_delref.</p>
      * 
@@ -419,8 +429,9 @@ public abstract class BDD {
     public abstract BDD applyWith(BDD that, BDDFactory.BDDOp opr);
     
     /**
-     * <p>Applies the binary operator opr to two BDDs and then performs a universal
-     * quantification of the variables from the variable set var.</p>
+     * <p>Applies the binary operator <tt>opr</tt> to two BDDs and then performs a
+     * universal quantification of the variables from the variable set
+     * <tt>var</tt>.</p>
      * 
      * <p>Compare to bdd_appall.</p>
      * 
@@ -433,8 +444,9 @@ public abstract class BDD {
     public abstract BDD applyAll(BDD that, BDDFactory.BDDOp opr, BDD var);
 
     /**
-     * <p>Applies the binary operator opr to two BDDs and then performs an
-     * existential quantification of the variables from the variable set var.</p>
+     * <p>Applies the binary operator <tt>opr</tt> to two BDDs and then performs
+     * an existential quantification of the variables from the variable set
+     * <tt>var</tt>.</p>
      * 
      * <p>Compare to bdd_appex.</p>
      * 
@@ -447,8 +459,9 @@ public abstract class BDD {
     public abstract BDD applyEx(BDD that, BDDFactory.BDDOp opr, BDD var);
 
     /**
-     * <p>Applies the binary operator opr to two BDDs and then performs a unique
-     * quantification of the variables from the variable set var.</p>
+     * <p>Applies the binary operator <tt>opr</tt> to two BDDs and then performs
+     * a unique quantification of the variables from the variable set
+     * <tt>var</tt>.</p>
      * 
      * <p>Compare to bdd_appuni.</p>
      * 
@@ -462,7 +475,7 @@ public abstract class BDD {
 
     /**
      * <p>Finds one satisfying variable assignment.  Finds a BDD with at most one
-     * variable at each levels.  The new BDD implies this BDD and is not false
+     * variable at each level.  The new BDD implies this BDD and is not false
      * unless this BDD is false.</p>
      * 
      * <p>Compare to bdd_satone.</p>
@@ -484,19 +497,20 @@ public abstract class BDD {
 
     /**
      * <p>Finds one satisfying variable assignment.  Finds a minterm in this BDD.
-     * The var argument is a set of variables that must be mentioned in the
-     * result.  The polarity of these variables in the result -- in case they
-     * are undefined in this BDD, are defined by the pol parameter.  If pol is
-     * the false BDD then all variables will be in negative form, and otherwise
-     * they will be in positive form.</p>
+     * The <tt>var</tt> argument is a set of variables that must be mentioned in
+     * the result.  The polarity of these variables in the result - in case they
+     * are undefined in this BDD - are defined by the <tt>pol</tt> parameter.
+     * If <tt>pol</tt> is false, then all variables will be in negative form.
+     * Otherwise they will be in positive form.</p>
      * 
      * <p>Compare to bdd_satoneset.</p>
      * 
      * @param var BDD containing the set of variables that must be mentioned in the result
      * @param pol the polarity of the result
      * @return one satisfying variable assignment
+     * @see org.sf.javabdd.BDDDomain#set()
      */
-    public abstract BDD satOne(BDD var, BDD pol);
+    public abstract BDD satOne(BDD var, boolean pol);
 
     /**
      * <p>Finds all satisfying variable assignments.</p>
@@ -543,7 +557,7 @@ public abstract class BDD {
 
     /**
      * <p>Scans this BDD and copies the stored variables into a integer array of
-     * variable numbers.  The numbers returned are guaranteed to be in
+     * BDDDomain variable numbers.  The numbers returned are guaranteed to be in
      * ascending order.</p>
      * 
      * <p>Compare to fdd_scanset.</p>
@@ -597,8 +611,8 @@ public abstract class BDD {
     }
     
     /**
-     * <p>Finds one satisfying assignment of the domain d in this BDD and returns
-     * that value.</p>
+     * <p>Finds one satisfying assignment of the domain <tt>d</tt> in this BDD
+     * and returns that value.</p>
      * 
      * <p>Compare to fdd_scanvar.</p>
      * 
@@ -614,9 +628,9 @@ public abstract class BDD {
     }
     
     /**
-     * <p>Finds one satisfying assignment in this BDD of all the defined FDD
-     * variables.  Each value is stored in an array which is returned.  The size
-     * of this array is exactly the number of FDD variables defined.</p>
+     * <p>Finds one satisfying assignment in this BDD of all the defined
+     * BDDDomain's.  Each value is stored in an array which is returned.  The size
+     * of this array is exactly the number of BDDDomain's defined.</p>
      * 
      * <p>Compare to fdd_scanallvar.</p>
      * 
@@ -670,6 +684,12 @@ public abstract class BDD {
         return res;
     }
 
+    /**
+     * Utility function to convert from a BDD varset to an array of levels.
+     * 
+     * @param r  BDD varset
+     * @return  array of levels
+     */
     static int[] varset2levels(BDD r) {
         int size = 0;
         BDD p = r.id();
@@ -695,22 +715,38 @@ public abstract class BDD {
     
     /**
      * <p>Returns an iteration of the satisfying assignments of this BDD.  Returns
-     * an iteration of minterms.  The var argument is the set of variables that
-     * will be mentioned in the result.</p>
+     * an iteration of minterms.  The <tt>var</tt> argument is the set of variables
+     * that will be mentioned in the result.</p>
      * 
+     * @param var  set of variables to mention in result
      * @return an iteration of minterms
+     * @see org.sf.javabdd.BDDDomain#set()
      */
     public BDDIterator iterator(final BDD var) {
         return new BDDIterator(this, var);
     }
     
+    /**
+     * <p>BDDIterator is used to iterate through the satisfying assignments of a BDD.
+     * It includes the ability to check if bits are dont-cares and skip them.</p>
+     * 
+     * @author jwhaley
+     * @version $Id$
+     */
     public static class BDDIterator implements Iterator {
-        BDDFactory factory;
-        int[] levels;
-        boolean[] values;
-        BDD[] nodes = null;
-        boolean more = false;
+        protected BDDFactory factory;
+        protected int[] levels;
+        protected boolean[] values;
+        protected BDD[] nodes = null;
+        protected boolean more = false;
         
+        /**
+         * <p>Construct a new BDDIterator on the given BDD.  The <tt>var</tt>
+         * argument is the set of variables that will be mentioned in the result.</p>
+         * 
+         * @param dis  BDD to iterate over
+         * @param var  variable set to mention in result
+         */
         public BDDIterator(BDD dis, BDD var){
             factory = dis.getFactory();
             if (!dis.isZero()) {
@@ -722,7 +758,7 @@ public abstract class BDD {
             }
         }
         
-        void fillInSatisfyingAssignment(BDD node, int i) {
+        protected void fillInSatisfyingAssignment(BDD node, int i) {
             while (!node.isOne() && !node.isZero()) {
                 int v = node.level();
                 
@@ -753,7 +789,7 @@ public abstract class BDD {
             }
         }
         
-        boolean findNextSatisfyingAssignment() {
+        protected boolean findNextSatisfyingAssignment() {
             int i = nodes.length - 1;
             for (;;) {
                 if (i < 0) return false;
@@ -782,7 +818,7 @@ public abstract class BDD {
             }
         }
         
-        void increment() {
+        protected void increment() {
             more = false;
             boolean carry = true;
             for (int i = levels.length - 1; i >= 0; --i) {
@@ -797,7 +833,7 @@ public abstract class BDD {
             }
         }
         
-        BDD buildAndIncrement() {
+        protected BDD buildAndIncrement() {
             more = false;
             BDD b = factory.one();
             boolean carry = true;
@@ -818,7 +854,7 @@ public abstract class BDD {
             return b;
         }
         
-        void free() {
+        protected void free() {
             for (int i = levels.length - 1; i >= 0; --i) {
                 if (nodes[i] != null) {
                     nodes[i].free();
@@ -828,6 +864,9 @@ public abstract class BDD {
             nodes = null;
         }
         
+        /* (non-Javadoc)
+         * @see java.util.Iterator#next()
+         */
         public Object next() {
             BDD b;
             if (more) {
@@ -844,14 +883,28 @@ public abstract class BDD {
             return b;
         }
         
+        /* (non-Javadoc)
+         * @see java.util.Iterator#hasNext()
+         */
         public boolean hasNext() {
             return nodes != null;
         }
         
+        /* (non-Javadoc)
+         * @see java.util.Iterator#remove()
+         */
         public void remove() {
             throw new UnsupportedOperationException();
         }
         
+        /**
+         * <p>Returns true if the given BDD variable number is a dont-care.
+         * <tt>var</tt> must be a variable in the iteration set.</p>
+         * 
+         * @param var  variable number to check
+         * @return  if the given variable is a dont-care
+         * @throws BDDException if var is not in the iteration set
+         */
         public boolean isDontCare(int var) {
             if (nodes == null) return false;
             if (levels == null)
@@ -863,6 +916,14 @@ public abstract class BDD {
             return nodes[i] == null;
         }
         
+        /**
+         * <p>Returns true if the BDD variables in the given BDD domain are
+         * all dont-care's.<p>
+         * 
+         * @param d  domain to check
+         * @return  if the variables are all dont-cares
+         * @throws BDDException if d is not in the iteration set
+         */
         public boolean isDontCare(BDDDomain d) {
             if (nodes == null) return false;
             int[] vars = d.vars();
@@ -872,7 +933,7 @@ public abstract class BDD {
             return true;
         }
         
-        void fastForward0(int var) {
+        protected void fastForward0(int var) {
             if (levels == null)
                 throw new BDDException(); 
             int level = factory.var2Level(var);
@@ -884,11 +945,22 @@ public abstract class BDD {
             values[i] = true;
         }
         
+        /**
+         * Fast-forward the iteration such that the given variable number is true.
+         * 
+         * @param var  number of variable
+         */
         public void fastForward(int var) {
             fastForward0(var);
             //increment();
         }
         
+        /**
+         * Assuming <tt>d</tt> is a dont-care, skip to the end of the iteration for
+         * <tt>d</tt>
+         * 
+         * @param d  BDD domain to fast-forward past
+         */
         public void skipDontCare(BDDDomain d) {
             int[] vars = d.vars();
             for (int i = 0; i < vars.length; ++i) {
@@ -900,9 +972,8 @@ public abstract class BDD {
     }
     
     /**
-     * <p>Returns an iteration of the satisfying assignments of this BDD.  Returns
-     * an iteration of minterms.  The var argument is a set of variables that
-     * must be mentioned in the result.</p>
+     * <p>This is another version of iterator() that supports the remove() operation.
+     * It is much slower than the other one.</p>
      * 
      * @return an iteration of minterms
      */
@@ -910,17 +981,18 @@ public abstract class BDD {
         return new Iterator() {
 
             BDD b = null;
-            BDD zero;
             BDD myVar;
             BDD last = null;
             {
                 if (!isZero()) {
                     b = id();
-                    zero = getFactory().zero();
                     myVar = var.id();
                 }
             }
             
+            /* (non-Javadoc)
+             * @see java.util.Iterator#remove()
+             */
             public void remove() {
                 if (last != null) {
                     applyWith(last.id(), BDDFactory.diff);
@@ -930,19 +1002,24 @@ public abstract class BDD {
                 }
             }
 
+            /* (non-Javadoc)
+             * @see java.util.Iterator#hasNext()
+             */
             public boolean hasNext() {
                 return b != null;
             }
 
+            /* (non-Javadoc)
+             * @see java.util.Iterator#next()
+             */
             public Object next() {
                 if (b == null)
                     throw new NoSuchElementException();
-                BDD c = b.satOne(myVar, zero);
+                BDD c = b.satOne(myVar, false);
                 b.applyWith(c.id(), BDDFactory.diff);
                 if (b.isZero()) {
                     myVar.free(); myVar = null;
                     b.free(); b = null;
-                    zero.free(); zero = null;
                 }
                 return last = c;
             }
@@ -1019,7 +1096,7 @@ public abstract class BDD {
         out.println("}");
     }
 
-    int printdot_rec(PrintStream out, int current, boolean[] visited, HashMap map) {
+    protected int printdot_rec(PrintStream out, int current, boolean[] visited, HashMap map) {
         Integer ri = ((Integer) map.get(this));
         if (ri == null) {
             map.put(this.id(), ri = new Integer(++current));
@@ -1350,14 +1427,8 @@ public abstract class BDD {
                         int val = set[var[i]];
                         if (val == 2) {
                             pos |= 1L;
-                            //System.out.print('1');
-                        } else if (val == 1) {
-                            //System.out.print('0');
-                        } else {
-                            //System.out.print('x');
                         }
                     }
-                    //System.out.println();
                     if (!hasDontCare) {
                         sb.append(ts.elementName(n, pos));
                     } else {
@@ -1383,22 +1454,6 @@ public abstract class BDD {
             
             set[r.var()] = 0;
         }
-    }
-    
-    static boolean[] fdddec2bin(BDDFactory bdd, int var, long val) {
-        boolean[] res;
-        int n = 0;
-        
-        res = new boolean[bdd.getDomain(var).varNum()];
-        
-        while (val > 0) {
-            if ((val & 0x1) != 0)
-                res[n] = true;
-            val >>= 1;
-            n++;
-        }
-        
-        return res;
     }
     
     /**

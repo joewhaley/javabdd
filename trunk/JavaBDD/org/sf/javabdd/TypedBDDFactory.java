@@ -3,8 +3,6 @@
  */
 package org.sf.javabdd;
 
-import java.io.IOException;
-import java.io.PrintStream;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -14,6 +12,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.math.BigInteger;
 
 /**
  * <p>This BDD factory keeps track of what domains each BDD uses, and complains
@@ -864,11 +865,10 @@ public class TypedBDDFactory extends BDDFactory {
         }
 
         /* (non-Javadoc)
-         * @see org.sf.javabdd.BDD#satOne(org.sf.javabdd.BDD, org.sf.javabdd.BDD)
+         * @see org.sf.javabdd.BDD#satOne(org.sf.javabdd.BDD, boolean)
          */
-        public BDD satOne(BDD var, BDD pol) {
+        public BDD satOne(BDD var, boolean pol) {
             TypedBDD bdd1 = (TypedBDD) var;
-            TypedBDD bdd2 = (TypedBDD) pol;
             Set newDom = makeSet();
             newDom.addAll(dom);
             if (!newDom.containsAll(bdd1.dom)) {
@@ -877,7 +877,7 @@ public class TypedBDDFactory extends BDDFactory {
                     new Exception().printStackTrace(out);
             }
             newDom.addAll(bdd1.dom);
-            return new TypedBDD(bdd.satOne(bdd1.bdd, bdd2.bdd), newDom);
+            return new TypedBDD(bdd.satOne(bdd1.bdd, pol), newDom);
         }
 
         /* (non-Javadoc)
@@ -1091,7 +1091,7 @@ public class TypedBDDFactory extends BDDFactory {
         /* (non-Javadoc)
          * @see org.sf.javabdd.BDDDomain#varRange(long, long)
          */
-        public BDD varRange(long lo, long hi) {
+        public BDD varRange(BigInteger lo, BigInteger hi) {
             BDD v = domain.varRange(lo, hi);
             Set s = makeSet();
             s.add(this);
