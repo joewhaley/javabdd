@@ -1,5 +1,6 @@
 buddy_jni.h
 cudd_jni.h
+cal_jni.h
 *.jar
 *.dll
 *.ext
