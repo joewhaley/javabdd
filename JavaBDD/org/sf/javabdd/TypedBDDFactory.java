@@ -419,7 +419,7 @@ public class TypedBDDFactory extends BDDFactory {
         
     };
     
-    public class TypedBDD extends BDD {
+    class TypedBDD extends BDD {
         
         final BDD bdd;
         final Set dom;
@@ -1080,7 +1080,7 @@ public class TypedBDDFactory extends BDDFactory {
 
     }
     
-    class TypedBDDPairing extends BDDPairing {
+    static class TypedBDDPairing extends BDDPairing {
 
         final Map domMap;
         final BDDPairing pairing;
