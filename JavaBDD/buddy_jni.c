@@ -2,6 +2,7 @@
 #include <bdd.h>
 #include <fdd.h>
 #include <stdlib.h>
+#include <time.h>
 #include "buddy_jni.h"
 
 /*
@@ -148,11 +149,11 @@ static void bdd_gbchandler(int code, bddGbcStat *s)
   }
   fid = (*jnienv)->GetFieldID(jnienv, gc_cls, "time", "J");
   if (fid) {
-    (*jnienv)->SetLongField(jnienv, gc_obj, fid, s->time);
+    (*jnienv)->SetLongField(jnienv, gc_obj, fid, s->time / (CLOCKS_PER_SEC/1000));
   }
   fid = (*jnienv)->GetFieldID(jnienv, gc_cls, "sumtime", "J");
   if (fid) {
-    (*jnienv)->SetLongField(jnienv, gc_obj, fid, s->sumtime);
+    (*jnienv)->SetLongField(jnienv, gc_obj, fid, s->sumtime / (CLOCKS_PER_SEC/1000));
   }
   fid = (*jnienv)->GetFieldID(jnienv, gc_cls, "num", "I");
   if (fid) {
