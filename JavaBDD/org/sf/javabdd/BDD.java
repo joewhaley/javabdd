@@ -693,7 +693,7 @@ public abstract class BDD {
         HashMap map = new HashMap();
         map.put(getFactory().zero(), new Integer(0));
         map.put(getFactory().one(), new Integer(1));
-        int val = printdot_rec(out, 1, visited, map);
+        printdot_rec(out, 1, visited, map);
         
         out.println("}");
     }
@@ -952,7 +952,6 @@ public abstract class BDD {
                                     long value, int i,
                                     int[] set, int[] var,
                                     int maxSkip) {
-        int x;
         if (i == maxSkip) {
             //_assert(set[var[i]] == 0);
             long maxValue = value | ((1L << (i+1)) - 1L);
@@ -973,8 +972,7 @@ public abstract class BDD {
         int n, m, i;
         boolean used = false;
         int[] var;
-        boolean[] binval;
-        boolean ok, first;
+        boolean first;
         
         if (r.isZero())
             return;
@@ -983,7 +981,6 @@ public abstract class BDD {
             first = true;
             
             for (n=0 ; n<fdvarnum ; n++) {
-                boolean firstval = true;
                 used = false;
                 
                 BDDDomain domain_n = bdd.getDomain(n);
@@ -998,7 +995,7 @@ public abstract class BDD {
                     if (!first)
                         sb.append(", ");
                     first = false;
-                    sb.append(ts.domainName(n));
+                    sb.append(domain_n.getName());
                     sb.append(':');
                     
                     var = domain_n_ivar;
@@ -1083,15 +1080,6 @@ public abstract class BDD {
          * <p>Protected constructor.</p>
          */
         protected BDDToString() { }
-        
-        /**
-         * <p>Given a domain index, return its name.
-         * Called by the toStringWithDomains() function.</p>
-         * 
-         * @param i the domain number
-         * @return the string representation of that domain
-         */
-        public String domainName(int i) { return Integer.toString(i); }
         
         /**
          * <p>Given a domain index and an element index, return the element's name.
