@@ -2135,9 +2135,10 @@ public class MicroFactory extends BDDFactory {
             return BDDZERO;
         }
 
-        if (ISCONST(l) && ISCONST(r))
+        if (ISCONST(l) && ISCONST(r)) {
             res = oprres[appexop][(l << 1) | r];
-        else if (ISCONST(var)) {
+            return res;
+        } else if (ISCONST(var)) {
             int oldop = applyop;
             applyop = appexop;
             switch (applyop) {
