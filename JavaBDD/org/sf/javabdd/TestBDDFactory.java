@@ -491,6 +491,13 @@ public class TestBDDFactory extends BDDFactory {
             b2.delRef();
         }
         
+        /* (non-Javadoc)
+         * @see org.sf.javabdd.BDD#free()
+         */
+        public void free() {
+            b1.free();
+            b2.free();
+        }
     }
 
     /* (non-Javadoc)
