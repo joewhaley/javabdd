@@ -2,6 +2,7 @@
 // Copyright (C) 2004 John Whaley <jwhaley@alum.mit.edu>
 // Licensed under the terms of the GNU LGPL; see COPYING for details.
 package bdd;
+
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -49,7 +50,7 @@ public abstract class BDDTestCase extends TestCase implements Iterator {
     
     public BDDTestCase(int nodenum, int cachesize) {
         initFactories(nodenum, cachesize);
-        i = factories.iterator();
+        reset();
     }
     public BDDTestCase() {
         this(1000, 1000);
@@ -71,4 +72,7 @@ public abstract class BDDTestCase extends TestCase implements Iterator {
         i.remove();
     }
     
+    public void reset() {
+        i = factories.iterator();
+    }
 }
