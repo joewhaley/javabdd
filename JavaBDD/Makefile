@@ -81,37 +81,37 @@ JAVADOC = $(JDK_ROOT)/bin/javadoc
 JAR = $(JDK_ROOT)/bin/jar
 
 # The java source code
-JAVA_SOURCES = org/sf/javabdd/BDD.java \
-	org/sf/javabdd/BDDBitVector.java \
-	org/sf/javabdd/BDDDomain.java \
-	org/sf/javabdd/BDDException.java \
-	org/sf/javabdd/BDDFactory.java \
-	org/sf/javabdd/BDDPairing.java \
-	org/sf/javabdd/BuDDyFactory.java \
-	org/sf/javabdd/CALFactory.java \
-	org/sf/javabdd/CUDDFactory.java \
-	org/sf/javabdd/FindBestOrder.java \
-	org/sf/javabdd/JFactory.java \
-	org/sf/javabdd/JDDFactory.java \
-	org/sf/javabdd/TestBDDFactory.java \
-	org/sf/javabdd/TypedBDDFactory.java
-JAVA_CLASSFILES = org/sf/javabdd/*.class
-JAVA_PACKAGES = org.sf.javabdd
-BUDDY_CLASSFILE = org/sf/javabdd/BuDDyFactory.class
-CUDD_CLASSFILE = org/sf/javabdd/CUDDFactory.class
-CAL_CLASSFILE = org/sf/javabdd/CALFactory.class
-BUDDY_CLASSNAMES = org.sf.javabdd.BuDDyFactory \
-	org.sf.javabdd.BuDDyFactory\$$BuDDyBDD \
-	org.sf.javabdd.BuDDyFactory\$$BuDDyBDDDomain \
-	org.sf.javabdd.BuDDyFactory\$$BuDDyBDDPairing
-CUDD_CLASSNAMES = org.sf.javabdd.CUDDFactory \
-	org.sf.javabdd.CUDDFactory\$$CUDDBDD \
-	org.sf.javabdd.CUDDFactory\$$CUDDBDDDomain \
-	org.sf.javabdd.CUDDFactory\$$CUDDBDDPairing
-CAL_CLASSNAMES = org.sf.javabdd.CALFactory \
-	org.sf.javabdd.CALFactory\$$CALBDD \
-	org.sf.javabdd.CALFactory\$$CALBDDDomain \
-	org.sf.javabdd.CALFactory\$$CALBDDPairing
+JAVA_SOURCES = net/sf/javabdd/BDD.java \
+	net/sf/javabdd/BDDBitVector.java \
+	net/sf/javabdd/BDDDomain.java \
+	net/sf/javabdd/BDDException.java \
+	net/sf/javabdd/BDDFactory.java \
+	net/sf/javabdd/BDDPairing.java \
+	net/sf/javabdd/BuDDyFactory.java \
+	net/sf/javabdd/CALFactory.java \
+	net/sf/javabdd/CUDDFactory.java \
+	net/sf/javabdd/FindBestOrder.java \
+	net/sf/javabdd/JFactory.java \
+	net/sf/javabdd/JDDFactory.java \
+	net/sf/javabdd/TestBDDFactory.java \
+	net/sf/javabdd/TypedBDDFactory.java
+JAVA_CLASSFILES = net/sf/javabdd/*.class
+JAVA_PACKAGES = net.sf.javabdd
+BUDDY_CLASSFILE = net/sf/javabdd/BuDDyFactory.class
+CUDD_CLASSFILE = net/sf/javabdd/CUDDFactory.class
+CAL_CLASSFILE = net/sf/javabdd/CALFactory.class
+BUDDY_CLASSNAMES = net.sf.javabdd.BuDDyFactory \
+	net.sf.javabdd.BuDDyFactory\$$BuDDyBDD \
+	net.sf.javabdd.BuDDyFactory\$$BuDDyBDDDomain \
+	net.sf.javabdd.BuDDyFactory\$$BuDDyBDDPairing
+CUDD_CLASSNAMES = net.sf.javabdd.CUDDFactory \
+	net.sf.javabdd.CUDDFactory\$$CUDDBDD \
+	net.sf.javabdd.CUDDFactory\$$CUDDBDDDomain \
+	net.sf.javabdd.CUDDFactory\$$CUDDBDDPairing
+CAL_CLASSNAMES = net.sf.javabdd.CALFactory \
+	net.sf.javabdd.CALFactory\$$CALBDD \
+	net.sf.javabdd.CALFactory\$$CALBDDDomain \
+	net.sf.javabdd.CALFactory\$$CALBDDPairing
 EXAMPLE_SOURCES = NQueens.java RubiksCube.java
 EXAMPLE_CLASSFILES = $(EXAMPLE_SOURCES:%.java=%.class)
 JAR_NAME = javabdd.jar

@@ -47,21 +47,21 @@ static void die(JNIEnv *env, char* msg)
 /**** START OF NATIVE METHOD IMPLEMENTATIONS ****/
 
 /*
- * Class:     org_sf_javabdd_CALFactory
+ * Class:     net_sf_javabdd_CALFactory
  * Method:    registerNatives
  * Signature: ()V
  */
-JNIEXPORT void JNICALL Java_org_sf_javabdd_CALFactory_registerNatives
+JNIEXPORT void JNICALL Java_net_sf_javabdd_CALFactory_registerNatives
   (JNIEnv *env, jclass cl)
 {
 }
 
 /*
- * Class:     org_sf_javabdd_CALFactory
+ * Class:     net_sf_javabdd_CALFactory
  * Method:    initialize0
  * Signature: (II)V
  */
-JNIEXPORT void JNICALL Java_org_sf_javabdd_CALFactory_initialize0
+JNIEXPORT void JNICALL Java_net_sf_javabdd_CALFactory_initialize0
   (JNIEnv *env, jclass cl, jint numSlots, jint cacheSize)
 {
     jfieldID one_fid;
@@ -96,22 +96,22 @@ JNIEXPORT void JNICALL Java_org_sf_javabdd_CALFactory_initialize0
 }
 
 /*
- * Class:     org_sf_javabdd_CALFactory
+ * Class:     net_sf_javabdd_CALFactory
  * Method:    isInitialized0
  * Signature: ()Z
  */
-JNIEXPORT jboolean JNICALL Java_org_sf_javabdd_CALFactory_isInitialized0
+JNIEXPORT jboolean JNICALL Java_net_sf_javabdd_CALFactory_isInitialized0
   (JNIEnv *env, jclass cl)
 {
     return manager != NULL;
 }
   
 /*
- * Class:     org_sf_javabdd_CALFactory
+ * Class:     net_sf_javabdd_CALFactory
  * Method:    done0
  * Signature: ()V
  */
-JNIEXPORT void JNICALL Java_org_sf_javabdd_CALFactory_done0
+JNIEXPORT void JNICALL Java_net_sf_javabdd_CALFactory_done0
   (JNIEnv *env, jclass cl)
 {
     int bdds;
@@ -131,22 +131,22 @@ JNIEXPORT void JNICALL Java_org_sf_javabdd_CALFactory_done0
 }
 
 /*
- * Class:     org_sf_javabdd_CALFactory
+ * Class:     net_sf_javabdd_CALFactory
  * Method:    varNum0
  * Signature: ()I
  */
-JNIEXPORT jint JNICALL Java_org_sf_javabdd_CALFactory_varNum0
+JNIEXPORT jint JNICALL Java_net_sf_javabdd_CALFactory_varNum0
   (JNIEnv *env, jclass cl)
 {
     return Cal_BddVars(manager);
 }
 
 /*
- * Class:     org_sf_javabdd_CALFactory
+ * Class:     net_sf_javabdd_CALFactory
  * Method:    setVarNum0
  * Signature: (I)I
  */
-JNIEXPORT jint JNICALL Java_org_sf_javabdd_CALFactory_setVarNum0
+JNIEXPORT jint JNICALL Java_net_sf_javabdd_CALFactory_setVarNum0
   (JNIEnv *env, jclass cl, jint x)
 {
     jint old = Cal_BddVars(manager);
@@ -158,11 +158,11 @@ JNIEXPORT jint JNICALL Java_org_sf_javabdd_CALFactory_setVarNum0
 }
 
 /*
- * Class:     org_sf_javabdd_CALFactory
+ * Class:     net_sf_javabdd_CALFactory
  * Method:    ithVar0
  * Signature: (I)J
  */
-JNIEXPORT jlong JNICALL Java_org_sf_javabdd_CALFactory_ithVar0
+JNIEXPORT jlong JNICALL Java_net_sf_javabdd_CALFactory_ithVar0
   (JNIEnv *env, jclass cl, jint i)
 {
     Cal_Bdd d;
@@ -173,11 +173,11 @@ JNIEXPORT jlong JNICALL Java_org_sf_javabdd_CALFactory_ithVar0
 }
 
 /*
- * Class:     org_sf_javabdd_CALFactory
+ * Class:     net_sf_javabdd_CALFactory
  * Method:    level2Var0
  * Signature: (I)I
  */
-JNIEXPORT jint JNICALL Java_org_sf_javabdd_CALFactory_level2Var0
+JNIEXPORT jint JNICALL Java_net_sf_javabdd_CALFactory_level2Var0
   (JNIEnv *env, jclass cl, jint level)
 {
     Cal_Bdd fn;
@@ -191,11 +191,11 @@ JNIEXPORT jint JNICALL Java_org_sf_javabdd_CALFactory_level2Var0
 }
 
 /*
- * Class:     org_sf_javabdd_CALFactory
+ * Class:     net_sf_javabdd_CALFactory
  * Method:    var2Level0
  * Signature: (I)I
  */
-JNIEXPORT jint JNICALL Java_org_sf_javabdd_CALFactory_var2Level0
+JNIEXPORT jint JNICALL Java_net_sf_javabdd_CALFactory_var2Level0
   (JNIEnv *env, jclass cl, jint v)
 {
     Cal_Bdd d = Cal_BddManagerGetVarWithId(manager, v);
@@ -204,11 +204,11 @@ JNIEXPORT jint JNICALL Java_org_sf_javabdd_CALFactory_var2Level0
 }
 
 /*
- * Class:     org_sf_javabdd_CALFactory
+ * Class:     net_sf_javabdd_CALFactory
  * Method:    setVarOrder0
  * Signature: ([I)V
  */
-JNIEXPORT void JNICALL Java_org_sf_javabdd_CALFactory_setVarOrder0
+JNIEXPORT void JNICALL Java_net_sf_javabdd_CALFactory_setVarOrder0
   (JNIEnv *env, jclass cl, jintArray arr)
 {
   int *a;
@@ -226,14 +226,14 @@ JNIEXPORT void JNICALL Java_org_sf_javabdd_CALFactory_setVarOrder0
   (*env)->ReleasePrimitiveArrayCritical(env, arr, a, JNI_ABORT);
 }
 
-/* class org_sf_javabdd_CALFactory_CALBDD */
+/* class net_sf_javabdd_CALFactory_CALBDD */
 
 /*
- * Class:     org_sf_javabdd_CALFactory_CALBDD
+ * Class:     net_sf_javabdd_CALFactory_CALBDD
  * Method:    var0
  * Signature: (J)I
  */
-JNIEXPORT jint JNICALL Java_org_sf_javabdd_CALFactory_00024CALBDD_var0
+JNIEXPORT jint JNICALL Java_net_sf_javabdd_CALFactory_00024CALBDD_var0
   (JNIEnv *env, jclass cl, jlong b)
 {
     Cal_Bdd d;
@@ -242,11 +242,11 @@ JNIEXPORT jint JNICALL Java_org_sf_javabdd_CALFactory_00024CALBDD_var0
 }
 
 /*
- * Class:     org_sf_javabdd_CALFactory_CALBDD
+ * Class:     net_sf_javabdd_CALFactory_CALBDD
  * Method:    high0
  * Signature: (J)J
  */
-JNIEXPORT jlong JNICALL Java_org_sf_javabdd_CALFactory_00024CALBDD_high0
+JNIEXPORT jlong JNICALL Java_net_sf_javabdd_CALFactory_00024CALBDD_high0
   (JNIEnv *env, jclass cl, jlong b)
 {
     Cal_Bdd d;
@@ -262,11 +262,11 @@ JNIEXPORT jlong JNICALL Java_org_sf_javabdd_CALFactory_00024CALBDD_high0
 }
 
 /*
- * Class:     org_sf_javabdd_CALFactory_CALBDD
+ * Class:     net_sf_javabdd_CALFactory_CALBDD
  * Method:    low0
  * Signature: (J)J
  */
-JNIEXPORT jlong JNICALL Java_org_sf_javabdd_CALFactory_00024CALBDD_low0
+JNIEXPORT jlong JNICALL Java_net_sf_javabdd_CALFactory_00024CALBDD_low0
   (JNIEnv *env, jclass cl, jlong b)
 {
     Cal_Bdd d;
@@ -282,11 +282,11 @@ JNIEXPORT jlong JNICALL Java_org_sf_javabdd_CALFactory_00024CALBDD_low0
 }
 
 /*
- * Class:     org_sf_javabdd_CALFactory_CALBDD
+ * Class:     net_sf_javabdd_CALFactory_CALBDD
  * Method:    not0
  * Signature: (J)J
  */
-JNIEXPORT jlong JNICALL Java_org_sf_javabdd_CALFactory_00024CALBDD_not0
+JNIEXPORT jlong JNICALL Java_net_sf_javabdd_CALFactory_00024CALBDD_not0
   (JNIEnv *env, jclass cl, jlong b)
 {
     Cal_Bdd d;
@@ -298,11 +298,11 @@ JNIEXPORT jlong JNICALL Java_org_sf_javabdd_CALFactory_00024CALBDD_not0
 }
 
 /*
- * Class:     org_sf_javabdd_CALFactory_CALBDD
+ * Class:     net_sf_javabdd_CALFactory_CALBDD
  * Method:    ite0
  * Signature: (JJJ)J
  */
-JNIEXPORT jlong JNICALL Java_org_sf_javabdd_CALFactory_00024CALBDD_ite0
+JNIEXPORT jlong JNICALL Java_net_sf_javabdd_CALFactory_00024CALBDD_ite0
   (JNIEnv *env, jclass cl, jlong a, jlong b, jlong c)
 {
     Cal_Bdd d;
@@ -319,11 +319,11 @@ JNIEXPORT jlong JNICALL Java_org_sf_javabdd_CALFactory_00024CALBDD_ite0
 }
 
 /*
- * Class:     org_sf_javabdd_CALFactory_CALBDD
+ * Class:     net_sf_javabdd_CALFactory_CALBDD
  * Method:    relprod0
  * Signature: (JJJ)J
  */
-JNIEXPORT jlong JNICALL Java_org_sf_javabdd_CALFactory_00024CALBDD_relprod0
+JNIEXPORT jlong JNICALL Java_net_sf_javabdd_CALFactory_00024CALBDD_relprod0
   (JNIEnv *env, jclass cl, jlong a, jlong b, jlong c)
 {
     Cal_Bdd d;
@@ -342,11 +342,11 @@ JNIEXPORT jlong JNICALL Java_org_sf_javabdd_CALFactory_00024CALBDD_relprod0
 }
 
 /*
- * Class:     org_sf_javabdd_CALFactory_CALBDD
+ * Class:     net_sf_javabdd_CALFactory_CALBDD
  * Method:    restrict0
  * Signature: (JJ)J
  */
-JNIEXPORT jlong JNICALL Java_org_sf_javabdd_CALFactory_00024CALBDD_restrict0
+JNIEXPORT jlong JNICALL Java_net_sf_javabdd_CALFactory_00024CALBDD_restrict0
   (JNIEnv *env, jclass cl, jlong a, jlong b)
 {
     Cal_Bdd d;
@@ -361,11 +361,11 @@ JNIEXPORT jlong JNICALL Java_org_sf_javabdd_CALFactory_00024CALBDD_restrict0
 }
 
 /*
- * Class:     org_sf_javabdd_CALFactory_CALBDD
+ * Class:     net_sf_javabdd_CALFactory_CALBDD
  * Method:    support0
  * Signature: (J)J
  */
-JNIEXPORT jlong JNICALL Java_org_sf_javabdd_CALFactory_00024CALBDD_support0
+JNIEXPORT jlong JNICALL Java_net_sf_javabdd_CALFactory_00024CALBDD_support0
   (JNIEnv *env, jclass cl, jlong a)
 {
     Cal_Bdd d;
@@ -378,11 +378,11 @@ JNIEXPORT jlong JNICALL Java_org_sf_javabdd_CALFactory_00024CALBDD_support0
 }
 
 /*
- * Class:     org_sf_javabdd_CALFactory_CALBDD
+ * Class:     net_sf_javabdd_CALFactory_CALBDD
  * Method:    apply0
  * Signature: (JJI)J
  */
-JNIEXPORT jlong JNICALL Java_org_sf_javabdd_CALFactory_00024CALBDD_apply0
+JNIEXPORT jlong JNICALL Java_net_sf_javabdd_CALFactory_00024CALBDD_apply0
   (JNIEnv *env, jclass cl, jlong a, jlong b, jint oper)
 {
     Cal_Bdd d;
@@ -443,11 +443,11 @@ JNIEXPORT jlong JNICALL Java_org_sf_javabdd_CALFactory_00024CALBDD_apply0
 }
 
 /*
- * Class:     org_sf_javabdd_CALFactory_CALBDD
+ * Class:     net_sf_javabdd_CALFactory_CALBDD
  * Method:    satOne0
  * Signature: (J)J
  */
-JNIEXPORT jlong JNICALL Java_org_sf_javabdd_CALFactory_00024CALBDD_satOne0
+JNIEXPORT jlong JNICALL Java_net_sf_javabdd_CALFactory_00024CALBDD_satOne0
   (JNIEnv *env, jclass cl, jlong a)
 {
     Cal_Bdd d;
@@ -460,11 +460,11 @@ JNIEXPORT jlong JNICALL Java_org_sf_javabdd_CALFactory_00024CALBDD_satOne0
 }
 
 /*
- * Class:     org_sf_javabdd_CALFactory_CALBDD
+ * Class:     net_sf_javabdd_CALFactory_CALBDD
  * Method:    nodeCount0
  * Signature: (J)I
  */
-JNIEXPORT jint JNICALL Java_org_sf_javabdd_CALFactory_00024CALBDD_nodeCount0
+JNIEXPORT jint JNICALL Java_net_sf_javabdd_CALFactory_00024CALBDD_nodeCount0
   (JNIEnv *env, jclass cl, jlong a)
 {
     Cal_Bdd d;
@@ -473,11 +473,11 @@ JNIEXPORT jint JNICALL Java_org_sf_javabdd_CALFactory_00024CALBDD_nodeCount0
 }
 
 /*
- * Class:     org_sf_javabdd_CALFactory_CALBDD
+ * Class:     net_sf_javabdd_CALFactory_CALBDD
  * Method:    pathCount0
  * Signature: (J)D
  */
-JNIEXPORT jdouble JNICALL Java_org_sf_javabdd_CALFactory_00024CALBDD_pathCount0
+JNIEXPORT jdouble JNICALL Java_net_sf_javabdd_CALFactory_00024CALBDD_pathCount0
   (JNIEnv *env, jclass cl, jlong a)
 {
     Cal_Bdd d;
@@ -488,11 +488,11 @@ JNIEXPORT jdouble JNICALL Java_org_sf_javabdd_CALFactory_00024CALBDD_pathCount0
 }
 
 /*
- * Class:     org_sf_javabdd_CALFactory_CALBDD
+ * Class:     net_sf_javabdd_CALFactory_CALBDD
  * Method:    satCount0
  * Signature: (J)D
  */
-JNIEXPORT jdouble JNICALL Java_org_sf_javabdd_CALFactory_00024CALBDD_satCount0
+JNIEXPORT jdouble JNICALL Java_net_sf_javabdd_CALFactory_00024CALBDD_satCount0
   (JNIEnv *env, jclass cl, jlong a)
 {
     Cal_Bdd d;
@@ -504,11 +504,11 @@ JNIEXPORT jdouble JNICALL Java_org_sf_javabdd_CALFactory_00024CALBDD_satCount0
 }
 
 /*
- * Class:     org_sf_javabdd_CALFactory_CALBDD
+ * Class:     net_sf_javabdd_CALFactory_CALBDD
  * Method:    addRef
  * Signature: (J)V
  */
-JNIEXPORT void JNICALL Java_org_sf_javabdd_CALFactory_00024CALBDD_addRef
+JNIEXPORT void JNICALL Java_net_sf_javabdd_CALFactory_00024CALBDD_addRef
   (JNIEnv *env, jclass cl, jlong a)
 {
     Cal_Bdd d;
@@ -517,11 +517,11 @@ JNIEXPORT void JNICALL Java_org_sf_javabdd_CALFactory_00024CALBDD_addRef
 }
 
 /*
- * Class:     org_sf_javabdd_CALFactory_CALBDD
+ * Class:     net_sf_javabdd_CALFactory_CALBDD
  * Method:    delRef
  * Signature: (J)V
  */
-JNIEXPORT void JNICALL Java_org_sf_javabdd_CALFactory_00024CALBDD_delRef
+JNIEXPORT void JNICALL Java_net_sf_javabdd_CALFactory_00024CALBDD_delRef
   (JNIEnv *env, jclass cl, jlong a)
 {
     Cal_Bdd d;
