@@ -210,16 +210,19 @@ $(JAR_NAME): $(BUDDY_CLASSFILE) $(CUDD_CLASSFILE) $(CAL_CLASSFILE) $(EXAMPLE_CLA
 	$(JAR) cfm $(JAR_NAME) javabddManifest $(JAVA_CLASSFILES) $(EXAMPLE_CLASSFILES)
 
 pdo:
-	icl -Qprof_gen $(INCLUDES) $(CFLAGS) $(DLL_OUTPUT_OPTION)buddy.dll $(DLL_SRCS) -LD /link /libpath:$(JDK_ROOT)/lib 
+	icl -Qprof_gen $(INCLUDES) $(CFLAGS) $(DLL_OUTPUT_OPTION)$(BUDDY_DLL_NAME) $(DLL_SRCS) -LD /link /libpath:$(JDK_ROOT)/lib 
 	$(JAVA) NQueens 12
-	icl -Qprof_use $(INCLUDES) $(CFLAGS) $(DLL_OUTPUT_OPTION)buddy.dll $(DLL_SRCS) -LD /link /libpath:$(JDK_ROOT)/lib 
+	icl -Qprof_use $(INCLUDES) $(CFLAGS) $(DLL_OUTPUT_OPTION)$(BUDDY_DLL_NAME) $(DLL_SRCS) -LD /link /libpath:$(JDK_ROOT)/lib 
 	$(JAVA) NQueens 12
 
 opt_report:
 	icl -Qopt_report -Qopt_report_phase all $(INCLUDES) $(CFLAGS) $(DLL_OUTPUT_OPTION)buddy.dll $(DLL_SRCS) -LD /link /libpath:$(JDK_ROOT)/lib 
 
-test:	$(DLL_NAME) $(EXAMPLE_CLASSFILES)
+test:	$(EXAMPLE_CLASSFILES)
 	$(JAVA) NQueens 8
+	$(JAVA) -Dbdd=cudd NQueens 8
+	$(JAVA) -Dbdd=cal NQueens 8
+	$(JAVA) -Dbdd=jdd NQueens 8
 
 clean:
 	$(RM) -f $(JAVA_CLASSFILES) $(BUDDY_INCLUDE) $(CUDD_INCLUDE) $(CAL_INCLUDE) $(BUDDY_OBJS) $(CAL_OBJS) $(CUDD_OBJS) $(DLL_NAME) $(EXAMPLE_CLASSFILES) $(JAR_NAME)
