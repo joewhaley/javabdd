@@ -775,12 +775,12 @@ public abstract class BDD {
                     sb.append(v);
                     sb.append(") not in iteration set:\n");
                     for (int k = 0; k < levels.length; ++k) {
-                        sb.append(factory.level2Var(k));
+                        sb.append(factory.level2Var(levels[k]));
                         if (k < levels.length-1) sb.append(",");
                     }
                     sb.append("\n(levels: ");
                     for (int k = 0; k < levels.length; ++k) {
-                        sb.append(k);
+                        sb.append(levels[k]);
                         if (k < levels.length-1) sb.append(",");
                     }
                     sb.append(")\n");
