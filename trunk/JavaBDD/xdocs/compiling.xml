@@ -49,7 +49,7 @@
       <p>
       You can also specify different compilers by setting the CC variable.
       In addition to <code>gcc</code>, the Makefile supports the Microsoft
-      compiler (<code>cl</code>) and the Intel compiler (<code>icc on Linux,
+      compiler (<code>cl</code>) and the Intel compiler (<code>icc</code> on Linux,
       <code>icl</code> on Windows).
       </p>
       <p>
