@@ -149,7 +149,7 @@ public class FindBestOrder {
         public void run() {
             long total = System.currentTimeMillis();
             if (bdd == null) {
-                bdd = JavaFactory.init(nodeTableSize, cacheSize);
+                bdd = JFactory.init(nodeTableSize, cacheSize);
                 bdd.setMaxIncrease(maxIncrease);
                 readBDDConfig(bdd);
             }
