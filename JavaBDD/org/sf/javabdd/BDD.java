@@ -14,10 +14,11 @@ import java.util.List;
  *
  * <p>Some methods, namely <tt>exist()</tt>, <tt>forall()</tt>, <tt>unique()</tt>, 
  * <tt>relprod()</tt>, <tt>applyAll()</tt>, <tt>applyEx()</tt>, <tt>applyUni()</tt>, 
- * <tt>restrict()</tt>, <tt>restrictWith()</tt>, and <tt>satCount()</tt> take a 
- * 'set of variables' argument.
- * This set is represented as a BDD that represents the all-true minterm
- * of the variables involved.  For a given BDDDomain, such a BDD can be obtained 
+ * and <tt>satCount()</tt> take a 'set of variables' argument that is also of type BDD.
+ * Those BDDs must be a boolean function that represents the all-true minterm
+ * of the BDD variables of interest.  They only serve to identify the set of
+ * variables of interest, however.  For example, for a given BDDDomain, a BDD var set
+ * representing all BDD variables of that domain can be obtained 
  * by calling <tt>BDDDomain.set()</tt>.</p>
  * 
  * @see org.sf.javabdd.BDDFactory
