@@ -9,7 +9,7 @@
 </sealing>
 </manifest>
 <selectedElements exportClassFiles="true" exportJavaFiles="false" exportOutputFolder="false">
-<javaElement handleIdentifier="=JavaBDD/&lt;net.sf.javabdd"/>
 <javaElement handleIdentifier="=JavaBDD/&lt;"/>
+<javaElement handleIdentifier="=JavaBDD/&lt;net.sf.javabdd"/>
 </selectedElements>
 </jardesc>
