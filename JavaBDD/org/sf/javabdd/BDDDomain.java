@@ -113,7 +113,7 @@ public abstract class BDDDomain {
     public BDD buildAdd(BDDDomain that, int bits, long value) {
         if (bits > this.varNum() ||
             bits > that.varNum())
-            throw new BDDException();
+            throw new BDDException("Number of bits requested ("+bits+") is larger than domain sizes "+this.varNum()+","+that.varNum());
         
         BDDFactory bdd = getFactory();
         
