@@ -359,13 +359,11 @@ public class TestBDDFactory extends BDDFactory {
         /* (non-Javadoc)
          * @see org.sf.javabdd.BDD#satOne(org.sf.javabdd.BDD, org.sf.javabdd.BDD)
          */
-        public BDD satOne(BDD var, BDD pol) {
+        public BDD satOne(BDD var, boolean pol) {
             BDD c1 = ((TestBDD)var).b1;
             BDD c2 = ((TestBDD)var).b2;
-            BDD d1 = ((TestBDD)pol).b1;
-            BDD d2 = ((TestBDD)pol).b2;
-            BDD r1 = b1.satOne(c1, d1);
-            BDD r2 = b2.satOne(c2, d2);
+            BDD r1 = b1.satOne(c1, pol);
+            BDD r2 = b2.satOne(c2, pol);
             return new TestBDD(r1, r2);
         }
 
