@@ -107,12 +107,59 @@ static JNIEnv *jnienv;
 
 static void bdd_gbchandler(int code, bddGbcStat *s)
 {
-  jclass cls = (*jnienv)->FindClass(jnienv, "net/sf/javabdd/BuDDyFactory");
-  jmethodID mid = (*jnienv)->GetStaticMethodID(jnienv, cls, "gc_callback", "(I)V");
-  if (mid == 0) {
+  jclass bdd_cls, buddy_cls, gc_cls;
+  jobject factory_obj, gc_obj;
+  jfieldID fid, fid2;
+  jmethodID mid;
+  
+  bdd_cls = (*jnienv)->FindClass(jnienv, "net/sf/javabdd/BDDFactory");
+  buddy_cls = (*jnienv)->FindClass(jnienv, "net/sf/javabdd/BuDDyFactory");
+  gc_cls = (*jnienv)->FindClass(jnienv, "net/sf/javabdd/BDDFactory$GCStats");
+  if (!bdd_cls || !buddy_cls || !gc_cls) {
     return;
   }
-  (*jnienv)->CallStaticVoidMethod(jnienv, cls, mid, code);
+  
+  mid = (*jnienv)->GetStaticMethodID(jnienv, buddy_cls, "gc_callback", "(I)V");
+  fid2 = (*jnienv)->GetStaticFieldID(jnienv, buddy_cls, "INSTANCE", "Lnet/sf/javabdd/BuDDyFactory;");
+  fid = (*jnienv)->GetFieldID(jnienv, bdd_cls, "gcstats", "Lnet/sf/javabdd/BDDFactory$GCStats;");
+  if (!mid || !fid2 || !fid) {
+    return;
+  }
+  
+  factory_obj = (*jnienv)->GetStaticObjectField(jnienv, buddy_cls, fid2);
+  if (!factory_obj) {
+    printf("Error: BuDDyFactory.INSTANCE is null\n");
+    return;
+  }
+  
+  gc_obj = (*jnienv)->GetObjectField(jnienv, factory_obj, fid);
+  if (!gc_obj) {
+    printf("Error: gcstats is null\n");
+    return;
+  }
+  
+  fid = (*jnienv)->GetFieldID(jnienv, gc_cls, "nodes", "I");
+  if (fid) {
+    (*jnienv)->SetIntField(jnienv, gc_obj, fid, s->nodes);
+  }
+  fid = (*jnienv)->GetFieldID(jnienv, gc_cls, "freenodes", "I");
+  if (fid) {
+    (*jnienv)->SetIntField(jnienv, gc_obj, fid, s->freenodes);
+  }
+  fid = (*jnienv)->GetFieldID(jnienv, gc_cls, "time", "J");
+  if (fid) {
+    (*jnienv)->SetLongField(jnienv, gc_obj, fid, s->time);
+  }
+  fid = (*jnienv)->GetFieldID(jnienv, gc_cls, "sumtime", "J");
+  if (fid) {
+    (*jnienv)->SetLongField(jnienv, gc_obj, fid, s->sumtime);
+  }
+  fid = (*jnienv)->GetFieldID(jnienv, gc_cls, "num", "I");
+  if (fid) {
+    (*jnienv)->SetIntField(jnienv, gc_obj, fid, s->num);
+  }
+  
+  (*jnienv)->CallStaticVoidMethod(jnienv, buddy_cls, mid, code);
 }
 
 static void bdd_resizehandler(int a, int b)

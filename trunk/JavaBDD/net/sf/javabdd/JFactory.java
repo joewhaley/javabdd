@@ -2636,20 +2636,6 @@ public class JFactory extends BDDFactory {
         }
     }
 
-    void gbc_handler(boolean pre, GCStats s) {
-        if (gc_callbacks == null) {
-            bdd_default_gbchandler(pre, s);
-        } else {
-            doCallbacks(gc_callbacks, pre?1:0);
-        }
-    }
-
-    void bdd_default_gbchandler(boolean pre, GCStats s) {
-        if (!pre) {
-            System.err.println(s.toString());
-        }
-    }
-
     void bdd_gbc_rehash() {
         int n;
 
@@ -3130,10 +3116,6 @@ public class JFactory extends BDDFactory {
         SETHASH(hash2, res);
 
         return res;
-    }
-
-    void resize_handler(int oldsize, int newsize) {
-        super.doCallbacks(resize_callbacks, oldsize);
     }
 
     int bdd_noderesize(boolean doRehash) {
@@ -3697,28 +3679,28 @@ public class JFactory extends BDDFactory {
         bddreordermethod = method;
         bddreordertimes = 1;
 
-        if ((top = bddtree_new(-1)) == null)
-            return;
-        if (reorder_init() < 0)
-            return;
-
-        usednum_before = bddnodesize - bddfreenum;
-
-        top.first = 0;
-        top.last = bdd_varnum() - 1;
-        top.fixed = false;
-        top.next = null;
-        top.nextlevel = vartree;
-
-        reorder_block(top, method);
-        vartree = top.nextlevel;
-        free(top);
-
-        usednum_after = bddnodesize - bddfreenum;
-
-        reorder_done();
-        bddreordermethod = savemethod;
-        bddreordertimes = savetimes;
+        if ((top = bddtree_new(-1)) != null) {
+            if (reorder_init() >= 0) {
+                
+                usednum_before = bddnodesize - bddfreenum;
+        
+                top.first = 0;
+                top.last = bdd_varnum() - 1;
+                top.fixed = false;
+                top.next = null;
+                top.nextlevel = vartree;
+        
+                reorder_block(top, method);
+                vartree = top.nextlevel;
+                free(top);
+        
+                usednum_after = bddnodesize - bddfreenum;
+        
+                reorder_done();
+                bddreordermethod = savemethod;
+                bddreordertimes = savetimes;
+            }
+        }
     }
 
     BddTree bddtree_new(int id) {
@@ -4390,22 +4372,8 @@ public class JFactory extends BDDFactory {
         if (!bdd_reorder_ready())
             return;
 
-        //if (reorder_handler != null)
-        reorder_handler(true);
-
         bdd_reorder(bddreordermethod);
         bddreordertimes--;
-
-        //if (reorder_handler != null)
-        reorder_handler(false);
-    }
-
-    void reorder_handler(boolean b) {
-        if (reorder_callbacks == null) {
-            bdd_default_reohandler(b?1:0);
-        } else {
-            doCallbacks(reorder_callbacks, b?1:0);
-        }
     }
 
     int bdd_reorder_gain() {
@@ -4891,26 +4859,6 @@ public class JFactory extends BDDFactory {
 
     static long c1;
 
-    void bdd_default_reohandler(int prestate) {
-
-        if (verbose > 0) {
-            if (prestate != 0) {
-                System.out.println("Start reordering");
-                c1 = clock();
-            } else {
-                long c2 = clock();
-                System.out.println(
-                    "End reordering. Went from "
-                        + usednum_before
-                        + " to "
-                        + usednum_after
-                        + " nodes ("
-                        + (float) (c2 - c1) / (float) 1000
-                        + " sec)");
-            }
-        }
-    }
-
     void bdd_reorder_done() {
         bddtree_del(vartree);
         bdd_operator_reset();
@@ -5378,6 +5326,8 @@ public class JFactory extends BDDFactory {
     int reorder_init() {
         int n;
 
+        reorder_handler(true, reorderstats);
+        
         levels = new levelData[bddvarnum];
 
         for (n = 0; n < bddvarnum; n++) {
@@ -5555,6 +5505,8 @@ public class JFactory extends BDDFactory {
         free(levels);
         imatrixDelete(iactmtx);
         bdd_gbc();
+        
+        reorder_handler(false, reorderstats);
     }
 
     void imatrixDelete(imatrix mtx) {
