@@ -1,14 +1,16 @@
 #include <jni.h>
 #include <bdd.h>
+#include <fdd.h>
 #include <stdlib.h>
-#include "org_sf_javabdd_BuDDyFactory.h"
-#include "org_sf_javabdd_BuDDyFactory_BuDDyBDD.h"
+#include "buddy_jni.h"
 
 static jclass bdd_cls;
 static jfieldID bdd_fid;
 static jmethodID bdd_mid;
 static jfieldID reorder_fid;
 static jfieldID op_fid;
+static jfieldID pair_fid;
+static jfieldID domain_fid;
 
 #define INVALID_BDD -1
 
@@ -70,45 +72,6 @@ static int check_error(JNIEnv *env)
   }
   bdd_error = 0;
   return err;
-}
-
-/*
- * Class:     org_sf_javabdd_BuDDyFactory
- * Method:    registerNatives
- * Signature: ()V
- */
-JNIEXPORT void JNICALL Java_org_sf_javabdd_BuDDyFactory_registerNatives
-  (JNIEnv *env, jclass c)
-{    // TODO: throw exception if any of them are null.
-
-  jclass cls;
-
-  cls = (*env)->FindClass(env, "org/sf/javabdd/BuDDyFactory$BuDDyBDD");
-  if (cls != NULL) {
-    bdd_cls = (*env)->NewWeakGlobalRef(env, cls);
-    bdd_fid = (*env)->GetFieldID(env, cls, "_id", "I");
-    bdd_mid = (*env)->GetMethodID(env, cls, "<init>", "(I)V");
-  }
-
-  cls = (*env)->FindClass(env, "org/sf/javabdd/BDDFactory$ReorderMethod");
-  if (cls != NULL) {
-    reorder_fid = (*env)->GetFieldID(env, cls, "id", "I");
-  }
-  (*env)->DeleteLocalRef(env, cls);
-
-  cls = (*env)->FindClass(env, "org/sf/javabdd/BDDFactory$BDDOp");
-  if (cls != NULL) {
-    op_fid = (*env)->GetFieldID(env, cls, "id", "I");
-  }
-  (*env)->DeleteLocalRef(env, cls);
-
-  if (!bdd_cls || !bdd_fid || !bdd_mid || !reorder_fid || !op_fid) {
-    cls = (*env)->FindClass(env, "java/lang/InternalError");
-    if (cls != NULL) {
-      (*env)->ThrowNew(env, cls, "cannot find members: version mismatch?");
-    }
-    (*env)->DeleteLocalRef(env, cls);
-  }
 }
 
 static BDD BDD_JavaToC(JNIEnv *env, jobject var)
@@ -182,6 +145,75 @@ static int BDDOp_JavaToC(JNIEnv *env, jobject method)
   return m;
 }
 
+static bddPair* Pair_JavaToC(JNIEnv *env, jobject pair)
+{
+  jlong m;
+  bddPair* result;
+  m = (*env)->GetLongField(env, pair, pair_fid);
+  result = (bddPair*) m;
+  return result;
+}
+
+static int Domain_JavaToC(JNIEnv *env, jobject domain)
+{
+  jint m;
+  m = (*env)->GetIntField(env, domain, domain_fid);
+  return m;
+}
+
+/**** START OF NATIVE METHOD IMPLEMENTATIONS ****/
+
+/*
+ * Class:     org_sf_javabdd_BuDDyFactory
+ * Method:    registerNatives
+ * Signature: ()V
+ */
+JNIEXPORT void JNICALL Java_org_sf_javabdd_BuDDyFactory_registerNatives
+  (JNIEnv *env, jclass c)
+{
+
+  jclass cls;
+
+  cls = (*env)->FindClass(env, "org/sf/javabdd/BuDDyFactory$BuDDyBDD");
+  if (cls != NULL) {
+    bdd_cls = (*env)->NewWeakGlobalRef(env, cls);
+    bdd_fid = (*env)->GetFieldID(env, cls, "_id", "I");
+    bdd_mid = (*env)->GetMethodID(env, cls, "<init>", "(I)V");
+  }
+
+  cls = (*env)->FindClass(env, "org/sf/javabdd/BDDFactory$ReorderMethod");
+  if (cls != NULL) {
+    reorder_fid = (*env)->GetFieldID(env, cls, "id", "I");
+  }
+  (*env)->DeleteLocalRef(env, cls);
+
+  cls = (*env)->FindClass(env, "org/sf/javabdd/BDDFactory$BDDOp");
+  if (cls != NULL) {
+    op_fid = (*env)->GetFieldID(env, cls, "id", "I");
+  }
+  (*env)->DeleteLocalRef(env, cls);
+
+  cls = (*env)->FindClass(env, "org/sf/javabdd/BuDDyFactory$BuDDyBDDPairing");
+  if (cls != NULL) {
+    pair_fid = (*env)->GetFieldID(env, cls, "_ptr", "J");
+  }
+  (*env)->DeleteLocalRef(env, cls);
+
+  cls = (*env)->FindClass(env, "org/sf/javabdd/BuDDyFactory$BuDDyBDDDomain");
+  if (cls != NULL) {
+    domain_fid = (*env)->GetFieldID(env, cls, "_id", "I");
+  }
+  (*env)->DeleteLocalRef(env, cls);
+
+  if (!bdd_cls || !bdd_fid || !bdd_mid || !reorder_fid || !op_fid || !pair_fid || !domain_fid) {
+    cls = (*env)->FindClass(env, "java/lang/InternalError");
+    if (cls != NULL) {
+      (*env)->ThrowNew(env, cls, "cannot find members: version mismatch?");
+    }
+    (*env)->DeleteLocalRef(env, cls);
+  }
+}
+
 /*
  * Class:     org_sf_javabdd_BuDDyFactory
  * Method:    _getZero
@@ -213,7 +245,7 @@ JNIEXPORT jobject JNICALL Java_org_sf_javabdd_BuDDyFactory__1getOne
  * Method:    buildCube
  * Signature: (II[Lorg/sf/javabdd/BDD;)Lorg/sf/javabdd/BDD;
  */
-JNIEXPORT jobject JNICALL Java_org_sf_javabdd_BuDDyFactory_buildCube__II_3LUtil_BDD_2
+JNIEXPORT jobject JNICALL Java_org_sf_javabdd_BuDDyFactory_buildCube__II_3Lorg_sf_javabdd_BDD_2
   (JNIEnv *env, jobject o, jint value, jint width, jobjectArray arr)
 {
   int i;
@@ -244,6 +276,7 @@ JNIEXPORT jobject JNICALL Java_org_sf_javabdd_BuDDyFactory_buildCube__II_3I
   BDD b;
 
   arr = (int*) (*env)->GetPrimitiveArrayCritical(env, var, NULL);
+  if (arr == NULL) return NULL;
   b = bdd_ibuildcube(value, width, arr);
   (*env)->ReleasePrimitiveArrayCritical(env, var, arr, 0);
 
@@ -265,6 +298,7 @@ JNIEXPORT jobject JNICALL Java_org_sf_javabdd_BuDDyFactory_makeSet
 
   n = (*env)->GetArrayLength(env, v);
   arr = (int*) (*env)->GetPrimitiveArrayCritical(env, v, NULL);
+  if (arr == NULL) return NULL;
   b = bdd_makeset(arr, n);
   (*env)->ReleasePrimitiveArrayCritical(env, v, arr, 0);
 
@@ -429,13 +463,36 @@ JNIEXPORT jobject JNICALL Java_org_sf_javabdd_BuDDyFactory_nithVar
 /*
  * Class:     org_sf_javabdd_BuDDyFactory
  * Method:    swapVar
- * Signature: (II)I
+ * Signature: (II)V
  */
-JNIEXPORT jint JNICALL Java_org_sf_javabdd_BuDDyFactory_swapVar__II
+JNIEXPORT void JNICALL Java_org_sf_javabdd_BuDDyFactory_swapVar
   (JNIEnv *env, jobject o, jint v1, jint v2)
 {
-  int result = bdd_swapvar(v1, v2);
+  bdd_swapvar(v1, v2);
   check_error(env);
+}
+
+/*
+ * Class:     org_sf_javabdd_BuDDyFactory
+ * Method:    makePair
+ * Signature: ()Lorg/sf/javabdd/BDDPairing;
+ */
+JNIEXPORT jobject JNICALL Java_org_sf_javabdd_BuDDyFactory_makePair
+  (JNIEnv *env, jobject o)
+{
+  jclass cls;
+  jobject result = NULL;
+
+  cls = (*env)->FindClass(env, "org/sf/javabdd/BuDDyFactory$BuDDyBDDPairing");
+  if (cls != NULL) {
+    jmethodID mid = (*env)->GetMethodID(env, cls, "<init>", "(I)V");
+    if (mid != NULL) {
+      bddPair* pair = bdd_newpair();
+      jlong param = (jlong) pair;
+      result = (*env)->NewObject(env, cls, mid, param);
+    }
+  }
+  (*env)->DeleteLocalRef(env, cls);
   return result;
 }
 
@@ -548,7 +605,7 @@ JNIEXPORT void JNICALL Java_org_sf_javabdd_BuDDyFactory_reorder
  * Method:    autoReorder
  * Signature: (Lorg/sf/javabdd/BDDFactory$ReorderMethod;)V
  */
-JNIEXPORT void JNICALL Java_org_sf_javabdd_BuDDyFactory_autoReorder__LUtil_BDDFactory_00024ReorderMethod_2
+JNIEXPORT void JNICALL Java_org_sf_javabdd_BuDDyFactory_autoReorder__Lorg_sf_javabdd_BDDFactory_00024ReorderMethod_2
   (JNIEnv *env, jobject o, jobject method)
 {
   jint m = ReorderMethod_JavaToC(env, method);
@@ -561,7 +618,7 @@ JNIEXPORT void JNICALL Java_org_sf_javabdd_BuDDyFactory_autoReorder__LUtil_BDDFa
  * Method:    autoReorder
  * Signature: (Lorg/sf/javabdd/BDDFactory$ReorderMethod;I)V
  */
-JNIEXPORT void JNICALL Java_org_sf_javabdd_BuDDyFactory_autoReorder__LUtil_BDDFactory_00024ReorderMethod_2I
+JNIEXPORT void JNICALL Java_org_sf_javabdd_BuDDyFactory_autoReorder__Lorg_sf_javabdd_BDDFactory_00024ReorderMethod_2I
   (JNIEnv *env, jobject o, jobject method, jint n)
 {
   jint m = ReorderMethod_JavaToC(env, method);
@@ -638,7 +695,7 @@ JNIEXPORT jint JNICALL Java_org_sf_javabdd_BuDDyFactory_reorderVerbose
  * Method:    addVarBlock
  * Signature: (Lorg/sf/javabdd/BDD;Z)V
  */
-JNIEXPORT void JNICALL Java_org_sf_javabdd_BuDDyFactory_addVarBlock__LUtil_BDD_2Z
+JNIEXPORT void JNICALL Java_org_sf_javabdd_BuDDyFactory_addVarBlock__Lorg_sf_javabdd_BDD_2Z
   (JNIEnv *env, jobject o, jobject var, jboolean fixed)
 {
   BDD b = BDD_JavaToC(env, var);
@@ -759,6 +816,8 @@ JNIEXPORT void JNICALL Java_org_sf_javabdd_BuDDyFactory_printStat
   check_error(env);
 }
 
+/* class org_sf_javabdd_BuDDyFactory_BuDDyBDD */
+
 /*
  * Class:     org_sf_javabdd_BuDDyFactory_BuDDyBDD
  * Method:    var
@@ -800,6 +859,19 @@ JNIEXPORT jobject JNICALL Java_org_sf_javabdd_BuDDyFactory_00024BuDDyBDD_low
   check_error(env);
   return result;}
 
+/*
+ * Class:     org_sf_javabdd_BuDDyFactory_BuDDyBDD
+ * Method:    id
+ * Signature: ()Lorg/sf/javabdd/BDD;
+ */
+JNIEXPORT jobject JNICALL Java_org_sf_javabdd_BuDDyFactory_00024BuDDyBDD_id
+  (JNIEnv *env, jobject o)
+{
+  BDD b = BDD_JavaToC(env, o);
+  jobject result = BDD_CToJava(env, b);
+  check_error(env);
+  return result;
+}
 
 /*
  * Class:     org_sf_javabdd_BuDDyFactory_BuDDyBDD
@@ -811,20 +883,6 @@ JNIEXPORT jobject JNICALL Java_org_sf_javabdd_BuDDyFactory_00024BuDDyBDD_not
 {
   BDD b = BDD_JavaToC(env, o);
   jobject result = BDD_CToJava(env, bdd_not(b));
-  check_error(env);
-  return result;
-}
-
-/*
- * Class:     org_sf_javabdd_BuDDyFactory_BuDDyBDD
- * Method:    id
- * Signature: ()Lorg/sf/javabdd/BDD;
- */
-JNIEXPORT jobject JNICALL Java_org_sf_javabdd_BuDDyFactory_00024BuDDyBDD_id
-  (JNIEnv *env, jobject o)
-{
-  BDD b = BDD_JavaToC(env, o);
-  jobject result = BDD_CToJava(env, b);
   check_error(env);
   return result;
 }
@@ -1187,7 +1245,7 @@ JNIEXPORT jdouble JNICALL Java_org_sf_javabdd_BuDDyFactory_00024BuDDyBDD_satCoun
  * Method:    satCount
  * Signature: (Lorg/sf/javabdd/BDD;)D
  */
-JNIEXPORT jdouble JNICALL Java_org_sf_javabdd_BuDDyFactory_00024BuDDyBDD_satCount__LUtil_BDD_2
+JNIEXPORT jdouble JNICALL Java_org_sf_javabdd_BuDDyFactory_00024BuDDyBDD_satCount__Lorg_sf_javabdd_BDD_2
   (JNIEnv *env, jobject o, jobject that)
 {
   BDD b = BDD_JavaToC(env, o);
@@ -1216,7 +1274,7 @@ JNIEXPORT jdouble JNICALL Java_org_sf_javabdd_BuDDyFactory_00024BuDDyBDD_logSatC
  * Method:    logSatCount
  * Signature: (Lorg/sf/javabdd/BDD;)D
  */
-JNIEXPORT jdouble JNICALL Java_org_sf_javabdd_BuDDyFactory_00024BuDDyBDD_logSatCount__LUtil_BDD_2
+JNIEXPORT jdouble JNICALL Java_org_sf_javabdd_BuDDyFactory_00024BuDDyBDD_logSatCount__Lorg_sf_javabdd_BDD_2
   (JNIEnv *env, jobject o, jobject that)
 {
   BDD b = BDD_JavaToC(env, o);
@@ -1252,5 +1310,377 @@ JNIEXPORT void JNICALL Java_org_sf_javabdd_BuDDyFactory_00024BuDDyBDD_delRef
   (*env)->SetIntField(env, o, bdd_fid, INVALID_BDD);
   if (bdd != INVALID_BDD)
     bdd_delref(bdd);
+  check_error(env);
+}
+
+/*
+ * Class:     org_sf_javabdd_BuDDyFactory_BuDDyBDD
+ * Method:    veccompose
+ * Signature: (Lorg/sf/javabdd/BDDPairing;)Lorg/sf/javabdd/BDD;
+ */
+JNIEXPORT jobject JNICALL Java_org_sf_javabdd_BuDDyFactory_00024BuDDyBDD_veccompose
+  (JNIEnv *env, jobject o, jobject pair)
+{
+  BDD b = BDD_JavaToC(env, o);
+  bddPair* p = Pair_JavaToC(env, pair);
+  BDD c = bdd_veccompose(b, p);
+  jobject result = BDD_CToJava(env, c);
+  check_error(env);
+  return result;
+}
+
+/*
+ * Class:     org_sf_javabdd_BuDDyFactory_BuDDyBDD
+ * Method:    scanSet
+ * Signature: ()[I
+ */
+JNIEXPORT jintArray JNICALL Java_org_sf_javabdd_BuDDyFactory_00024BuDDyBDD_scanSet
+  (JNIEnv *env, jobject o)
+{
+  BDD b = BDD_JavaToC(env, o);
+  int size;
+  int *arr;
+  jintArray result;
+
+  bdd_scanset(b, &arr, &size);
+  if (check_error(env)) return NULL;
+  if (arr == NULL) return NULL;
+  result = (*env)->NewIntArray(env, size);
+  (*env)->SetIntArrayRegion(env, result, 0, size, (jint*) arr);
+  free(arr);
+  return result;
+}
+
+/*
+ * Class:     org_sf_javabdd_BuDDyFactory_BuDDyBDD
+ * Method:    scanVar
+ * Signature: (I)I
+ */
+JNIEXPORT jint JNICALL Java_org_sf_javabdd_BuDDyFactory_00024BuDDyBDD_scanVar
+  (JNIEnv *env, jobject o, jint i)
+{
+  BDD b = BDD_JavaToC(env, o);
+  jint result = fdd_scanvar(b, i);
+  return result;
+}
+
+/*
+ * Class:     org_sf_javabdd_BuDDyFactory_BuDDyBDD
+ * Method:    scanAllVar
+ * Signature: ()[I
+ */
+JNIEXPORT jintArray JNICALL Java_org_sf_javabdd_BuDDyFactory_00024BuDDyBDD_scanAllVar
+  (JNIEnv *env, jobject o)
+{
+  jintArray result;
+  BDD b = BDD_JavaToC(env, o);
+  jint size = fdd_domainnum();
+  int* arr = fdd_scanallvar(b);
+  if (check_error(env)) return NULL;
+  if (arr == NULL) return NULL;
+
+  result = (*env)->NewIntArray(env, size);
+  (*env)->SetIntArrayRegion(env, result, 0, size, (jint*) arr);
+  free(arr);
+  return result;
+}
+
+/*
+ * Class:     org_sf_javabdd_BuDDyFactory_BuDDyBDD
+ * Method:    replace
+ * Signature: (Lorg/sf/javabdd/BDDPairing;)Lorg/sf/javabdd/BDD;
+ */
+JNIEXPORT jobject JNICALL Java_org_sf_javabdd_BuDDyFactory_00024BuDDyBDD_replace
+  (JNIEnv *env, jobject o, jobject pair)
+{
+  BDD b = BDD_JavaToC(env, o);
+  bddPair* p = Pair_JavaToC(env, pair);
+  BDD c = bdd_replace(b, p);
+  jobject result = BDD_CToJava(env, c);
+  check_error(env);
+  return result;
+}
+
+/*
+ * Class:     org_sf_javabdd_BuDDyFactory_BuDDyBDD
+ * Method:    printSetWithDomains
+ * Signature: ()V
+ */
+JNIEXPORT void JNICALL Java_org_sf_javabdd_BuDDyFactory_00024BuDDyBDD_printSetWithDomains
+  (JNIEnv *env, jobject o)
+{
+  BDD b = BDD_JavaToC(env, o);
+  fdd_printset(b);
+  check_error(env);
+}
+
+/* class org_sf_javabdd_BuDDyFactory_BuDDyBDDDomain */
+
+/*
+ * Class:     org_sf_javabdd_BuDDyFactory_BuDDyBDDDomain
+ * Method:    domain
+ * Signature: ()Lorg/sf/javabdd/BDD;
+ */
+JNIEXPORT jobject JNICALL Java_org_sf_javabdd_BuDDyFactory_00024BuDDyBDDDomain_domain
+  (JNIEnv *env, jobject o)
+{
+  int domain = Domain_JavaToC(env, o);
+  BDD b = fdd_domain(domain);
+  jobject result = BDD_CToJava(env, b);
+  check_error(env);
+  return result;
+}
+
+/*
+ * Class:     org_sf_javabdd_BuDDyFactory_BuDDyBDDDomain
+ * Method:    size
+ * Signature: ()I
+ */
+JNIEXPORT jint JNICALL Java_org_sf_javabdd_BuDDyFactory_00024BuDDyBDDDomain_size
+  (JNIEnv *env, jobject o)
+{
+  int domain = Domain_JavaToC(env, o);
+  jint result = fdd_domainsize(domain);
+  check_error(env);
+  return result;
+}
+
+/*
+ * Class:     org_sf_javabdd_BuDDyFactory_BuDDyBDDDomain
+ * Method:    buildEquals
+ * Signature: (Lorg/sf/javabdd/BDDDomain;)Lorg/sf/javabdd/BDD;
+ */
+JNIEXPORT jobject JNICALL Java_org_sf_javabdd_BuDDyFactory_00024BuDDyBDDDomain_buildEquals
+  (JNIEnv *env, jobject o, jobject that)
+{
+  int d1 = Domain_JavaToC(env, o);
+  int d2 = Domain_JavaToC(env, that);
+  BDD b = fdd_equals(d1, d2);
+  jobject result = BDD_CToJava(env, b);
+  check_error(env);
+  return result;
+}
+
+/*
+ * Class:     org_sf_javabdd_BuDDyFactory_BuDDyBDDDomain
+ * Method:    set
+ * Signature: ()Lorg/sf/javabdd/BDD;
+ */
+JNIEXPORT jobject JNICALL Java_org_sf_javabdd_BuDDyFactory_00024BuDDyBDDDomain_set
+  (JNIEnv *env, jobject o)
+{
+  int domain = Domain_JavaToC(env, o);
+  BDD b = fdd_ithset(domain);
+  jobject result = BDD_CToJava(env, b);
+  check_error(env);
+  return result;
+}
+
+/*
+ * Class:     org_sf_javabdd_BuDDyFactory_BuDDyBDDDomain
+ * Method:    ithVar
+ * Signature: (I)Lorg/sf/javabdd/BDD;
+ */
+JNIEXPORT jobject JNICALL Java_org_sf_javabdd_BuDDyFactory_00024BuDDyBDDDomain_ithVar
+  (JNIEnv *env, jobject o, jint i)
+{
+  int domain = Domain_JavaToC(env, o);
+  BDD b = fdd_ithvar(domain, i);
+  jobject result = BDD_CToJava(env, b);
+  check_error(env);
+  return result;
+}
+
+/*
+ * Class:     org_sf_javabdd_BuDDyFactory_BuDDyBDDDomain
+ * Method:    varNum
+ * Signature: ()I
+ */
+JNIEXPORT jint JNICALL Java_org_sf_javabdd_BuDDyFactory_00024BuDDyBDDDomain_varNum
+  (JNIEnv *env, jobject o)
+{
+  int domain = Domain_JavaToC(env, o);
+  jint result = fdd_varnum(domain);
+  check_error(env);
+  return result;
+}
+
+/*
+ * Class:     org_sf_javabdd_BuDDyFactory_BuDDyBDDDomain
+ * Method:    vars
+ * Signature: ()[I
+ */
+JNIEXPORT jintArray JNICALL Java_org_sf_javabdd_BuDDyFactory_00024BuDDyBDDDomain_vars
+  (JNIEnv *env, jobject o)
+{
+  jintArray result;
+  int domain = Domain_JavaToC(env, o);
+  jint size = fdd_domainsize(domain);
+  int* arr = fdd_vars(domain);
+  if (check_error(env)) return NULL;
+  if (arr == NULL) return NULL;
+
+  result = (*env)->NewIntArray(env, size);
+  (*env)->SetIntArrayRegion(env, result, 0, size, (jint*)arr);
+  free(arr);
+  return result;
+}
+
+/* class org_sf_javabdd_BuDDyFactory_BuDDyBDDPairing */
+
+/*
+ * Class:     org_sf_javabdd_BuDDyFactory_BuDDyBDDPairing
+ * Method:    set
+ * Signature: (II)V
+ */
+JNIEXPORT void JNICALL Java_org_sf_javabdd_BuDDyFactory_00024BuDDyBDDPairing_set__II
+  (JNIEnv *env, jobject o, jint i, jint j)
+{
+  bddPair* p = Pair_JavaToC(env, o);
+  bdd_setpair(p, i, j);
+  check_error(env);
+}
+
+/*
+ * Class:     org_sf_javabdd_BuDDyFactory_BuDDyBDDPairing
+ * Method:    set
+ * Signature: ([I[I)V
+ */
+JNIEXPORT void JNICALL Java_org_sf_javabdd_BuDDyFactory_00024BuDDyBDDPairing_set___3I_3I
+  (JNIEnv *env, jobject o, jintArray arr1, jintArray arr2)
+{
+  bddPair* p = Pair_JavaToC(env, o);
+  jint *a1;
+  jint *a2;
+  jint size1 = (*env)->GetArrayLength(env, arr1);
+  jint size2 = (*env)->GetArrayLength(env, arr2);
+  if (size1 != size2) {
+    jclass cls = (*env)->FindClass(env, "java/lang/IllegalArgumentException");
+    (*env)->ThrowNew(env, cls, "array sizes do not match");
+    (*env)->DeleteLocalRef(env, cls);
+    return;
+  }
+  a1 = (*env)->GetPrimitiveArrayCritical(env, arr1, NULL);
+  if (a1 == NULL) return;
+  a2 = (*env)->GetPrimitiveArrayCritical(env, arr2, NULL);
+  if (a2 == NULL) return;
+  bdd_setpairs(p, (int*)a1, (int*)a2, size1);
+  (*env)->ReleasePrimitiveArrayCritical(env, arr1, a1, 0);
+  (*env)->ReleasePrimitiveArrayCritical(env, arr2, a2, 0);
+  check_error(env);
+}
+
+/*
+ * Class:     org_sf_javabdd_BuDDyFactory_BuDDyBDDPairing
+ * Method:    set
+ * Signature: (Lorg/sf/javabdd/BDD;Lorg/sf/javabdd/BDD;)V
+ */
+JNIEXPORT void JNICALL Java_org_sf_javabdd_BuDDyFactory_00024BuDDyBDDPairing_set__Lorg_sf_javabdd_BDD_2Lorg_sf_javabdd_BDD_2
+  (JNIEnv *env, jobject o, jobject that1, jobject that2)
+{
+  bddPair* p = Pair_JavaToC(env, o);
+  BDD b = BDD_JavaToC(env, that1);
+  BDD c = BDD_JavaToC(env, that2);
+  bdd_setbddpair(p, b, c);
+  check_error(env);
+}
+
+/*
+ * Class:     org_sf_javabdd_BuDDyFactory_BuDDyBDDPairing
+ * Method:    set
+ * Signature: ([Lorg/sf/javabdd/BDD;[Lorg/sf/javabdd/BDD;)V
+ */
+JNIEXPORT void JNICALL Java_org_sf_javabdd_BuDDyFactory_00024BuDDyBDDPairing_set___3Lorg_sf_javabdd_BDD_2_3Lorg_sf_javabdd_BDD_2
+  (JNIEnv *env, jobject o, jobjectArray arr1, jobjectArray arr2)
+{
+  bddPair* p = Pair_JavaToC(env, o);
+  bdd *a1;
+  bdd *a2;
+  jint size1 = (*env)->GetArrayLength(env, arr1);
+  jint size2 = (*env)->GetArrayLength(env, arr2);
+  int i;
+  if (size1 != size2) {
+    jclass cls = (*env)->FindClass(env, "java/lang/IllegalArgumentException");
+    (*env)->ThrowNew(env, cls, "array sizes do not match");
+    (*env)->DeleteLocalRef(env, cls);
+    return;
+  }
+  a1 = (bdd*) malloc(size1 * sizeof(bdd*));
+  a2 = (bdd*) malloc(size1 * sizeof(bdd*));
+  for (i=0; i<size1; ++i) {
+    jobject obj1 = (*env)->GetObjectArrayElement(env, arr1, i);
+    jobject obj2 = (*env)->GetObjectArrayElement(env, arr2, i);
+    a1[i] = BDD_JavaToC(env, obj1);
+    a2[i] = BDD_JavaToC(env, obj2);
+    (*env)->DeleteLocalRef(env, obj1);
+    (*env)->DeleteLocalRef(env, obj2);
+  }
+  bdd_setbddpairs(p, a1, a2, size1);
+  free(a1);
+  free(a2);
+  check_error(env);
+}
+
+/*
+ * Class:     org_sf_javabdd_BuDDyFactory_BuDDyBDDPairing
+ * Method:    set
+ * Signature: (Lorg/sf/javabdd/BDDDomain;Lorg/sf/javabdd/BDDDomain;)V
+ */
+JNIEXPORT void JNICALL Java_org_sf_javabdd_BuDDyFactory_00024BuDDyBDDPairing_set__Lorg_sf_javabdd_BDDDomain_2Lorg_sf_javabdd_BDDDomain_2
+  (JNIEnv *env, jobject o, jobject dom1, jobject dom2)
+{
+  bddPair* p = Pair_JavaToC(env, o);
+  int b = Domain_JavaToC(env, dom1);
+  int c = Domain_JavaToC(env, dom2);
+  fdd_setpair(p, b, c);
+  check_error(env);
+}
+
+/*
+ * Class:     org_sf_javabdd_BuDDyFactory_BuDDyBDDPairing
+ * Method:    set
+ * Signature: ([Lorg/sf/javabdd/BDDDomain;[Lorg/sf/javabdd/BDDDomain;)V
+ */
+JNIEXPORT void JNICALL Java_org_sf_javabdd_BuDDyFactory_00024BuDDyBDDPairing_set___3Lorg_sf_javabdd_BDDDomain_2_3Lorg_sf_javabdd_BDDDomain_2
+  (JNIEnv *env, jobject o, jobjectArray arr1, jobjectArray arr2)
+{
+  bddPair* p = Pair_JavaToC(env, o);
+  int *a1;
+  int *a2;
+  jint size1 = (*env)->GetArrayLength(env, arr1);
+  jint size2 = (*env)->GetArrayLength(env, arr2);
+  int i;
+  if (size1 != size2) {
+    jclass cls = (*env)->FindClass(env, "java/lang/IllegalArgumentException");
+    (*env)->ThrowNew(env, cls, "array sizes do not match");
+    (*env)->DeleteLocalRef(env, cls);
+    return;
+  }
+  a1 = (int*) malloc(size1 * sizeof(int*));
+  a2 = (int*) malloc(size1 * sizeof(int*));
+  for (i=0; i<size1; ++i) {
+    jobject obj1 = (*env)->GetObjectArrayElement(env, arr1, i);
+    jobject obj2 = (*env)->GetObjectArrayElement(env, arr2, i);
+    a1[i] = Domain_JavaToC(env, obj1);
+    a2[i] = Domain_JavaToC(env, obj2);
+    (*env)->DeleteLocalRef(env, obj1);
+    (*env)->DeleteLocalRef(env, obj2);
+  }
+  fdd_setpairs(p, a1, a2, size1);
+  free(a1);
+  free(a2);
+  check_error(env);
+}
+
+/*
+ * Class:     org_sf_javabdd_BuDDyFactory_BuDDyBDDPairing
+ * Method:    reset
+ * Signature: ()V
+ */
+JNIEXPORT void JNICALL Java_org_sf_javabdd_BuDDyFactory_00024BuDDyBDDPairing_reset
+  (JNIEnv *env, jobject o)
+{
+  bddPair* p = Pair_JavaToC(env, o);
+  bdd_resetpair(p);
   check_error(env);
 }

@@ -515,6 +515,15 @@ public abstract class BDD {
      */
     public abstract double logSatCount(BDD varset);
     
+    public abstract boolean equals(BDD that);
+    
+    public boolean equals(Object o) {
+        if (!(o instanceof BDD)) return false;
+        return this.equals((BDD) o);
+    }
+    
+    public abstract int hashCode();
+    
     /**
      * Increases the reference count on a node.  Reference counting is done on
      * externally-referenced nodes only.
@@ -530,6 +539,10 @@ public abstract class BDD {
      * Compare to bdd_delref.
      */
     protected abstract void delRef();
+    
+    public void free() {
+        this.delRef();
+    }
     
     protected BDD() { }
     
