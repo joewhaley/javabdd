@@ -6,9 +6,9 @@ import org.sf.javabdd.*;
 public class NQueens {
     public static BDDFactory B;
 
-    static int N; /* Size of the chess board */
-    static BDD[][] X; /* BDD variable array */
-    static BDD queen; /* N-queen problem express as a BDD */
+    public static int N; /* Size of the chess board */
+    public static BDD[][] X; /* BDD variable array */
+    public static BDD queen; /* N-queen problem expressed as a BDD */
 
     public static void main(String[] args) {
         if (args.length != 1) {
