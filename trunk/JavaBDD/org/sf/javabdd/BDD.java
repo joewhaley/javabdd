@@ -516,14 +516,22 @@ public abstract class BDD {
         }
         
         int num = 0;
-        for (BDD n = this; !n.isZero() && !n.isOne() ; n = n.high())
+        BDD n = this.id();
+        do {
             num++;
+            BDD n2 = n.high();
+            n.free(); n = n2;
+        } while (!n.isZero() && !n.isOne());
 
         int[] varset = new int[num];
    
         num = 0;
-        for (BDD n = this; !n.isZero() && !n.isOne() ; n = n.high())
+        n = this.id();
+        do {
             varset[num++] = n.var();
+            BDD n2 = n.high();
+            n.free(); n = n2;
+        } while (!n.isZero() && !n.isOne());
         
         return varset;
     }
@@ -613,7 +621,6 @@ public abstract class BDD {
         int n;
         boolean[] store;
         long[] res;
-        BDD p = this;
 
         if (this.isZero())
             return null;
@@ -623,14 +630,19 @@ public abstract class BDD {
         int bddvarnum = factory.varNum();
         store = new boolean[bddvarnum];
 
+        BDD p = this.id();
         while (!p.isOne() && !p.isZero()) {
-            if (!p.low().isZero()) {
+            BDD lo = p.low();
+            if (!lo.isZero()) {
                 store[p.var()] = false;
-                p = p.low();
+                BDD p2 = p.low();
+                p.free(); p = p2;
             } else {
                 store[p.var()] = true;
-                p = p.high();
+                BDD p2 = p.high();
+                p.free(); p = p2;
             }
+            lo.free();
         }
 
         int fdvarnum = factory.numberOfDomains();
@@ -751,13 +763,17 @@ public abstract class BDD {
         map.put(getFactory().one(), new Integer(1));
         printdot_rec(out, 1, visited, map);
         
+        for (Iterator i = map.keySet().iterator(); i.hasNext(); ) {
+            BDD b = (BDD) i.next();
+            b.free();
+        }
         out.println("}");
     }
 
     int printdot_rec(PrintStream out, int current, boolean[] visited, HashMap map) {
         Integer ri = ((Integer) map.get(this));
         if (ri == null) {
-            map.put(this, ri = new Integer(++current));
+            map.put(this.id(), ri = new Integer(++current));
         }
         int r = ri.intValue();
         if (visited[r])
@@ -770,12 +786,12 @@ public abstract class BDD {
         BDD l = this.low(), h = this.high();
         Integer li = ((Integer) map.get(l));
         if (li == null) {
-            map.put(l, li = new Integer(++current));
+            map.put(l.id(), li = new Integer(++current));
         }
         int low = li.intValue();
         Integer hi = ((Integer) map.get(h));
         if (hi == null) {
-            map.put(h, hi = new Integer(++current));
+            map.put(h.id(), hi = new Integer(++current));
         }
         int high = hi.intValue();
 
@@ -783,7 +799,9 @@ public abstract class BDD {
         out.println(r+" -> "+high+" [style=filled];");
 
         current = l.printdot_rec(out, current, visited, map);
+        l.free();
         current = h.printdot_rec(out, current, visited, map);
+        h.free();
         return current;
     }
 
@@ -831,8 +849,13 @@ public abstract class BDD {
         if (varset.isZero() || varset.isOne() || isZero()) /* empty set */
             return 0.;
 
-        for (BDD n = varset; !n.isOne() && !n.isZero(); n = n.high())
+        BDD n = varset.id();
+        do {
+            BDD n2 = n.high();
+            n.free(); n = n2;
             unused--;
+        } while (!n.isOne() && !n.isZero());
+        n.free();
 
         unused = satCount() / Math.pow(2.0, unused);
 
@@ -1100,10 +1123,14 @@ public abstract class BDD {
             sb.append('>');
         } else {
             set[r.var()] = 1;
-            fdd_printset_rec(bdd, sb, ts, r.low(), set);
+            BDD lo = r.low();
+            fdd_printset_rec(bdd, sb, ts, lo, set);
+            lo.free();
             
             set[r.var()] = 2;
-            fdd_printset_rec(bdd, sb, ts, r.high(), set);
+            BDD hi = r.high();
+            fdd_printset_rec(bdd, sb, ts, hi, set);
+            hi.free();
             
             set[r.var()] = 0;
         }
