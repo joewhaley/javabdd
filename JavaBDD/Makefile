@@ -65,6 +65,7 @@ else
   CUDD_DLL_NAME = libcudd.so
   CAL_DLL_NAME = libcal.so
   ifeq (${CC},icc)    # Intel Linux compiler
+    CFLAGS = -D_REENTRANT -D_GNU_SOURCE -O2 -unroll -ipo -ipo_obj
     LINKFLAGS = -shared -static-libcxa
   endif
 endif
@@ -164,7 +165,7 @@ dlls: $(BUDDY_DLL_NAME) $(CUDD_DLL_NAME) $(CAL_DLL_NAME)
 
 $(BUDDY_DLL_NAME): $(BUDDY_OBJS)
 	$(LINK) $(DLL_OUTPUT_OPTION)$@ $(BUDDY_OBJS) $(LINKFLAGS)
-#	$(LINK) $(INCLUDES) $(CFLAGS) $(DLL_OUTPUT_OPTION)$@ $(DLL_SRCS) -MLd -LDd -Zi /link /libpath:$(JDK_ROOT)/lib 
+#	$(LINK) $(INCLUDES) $(CFLAGS) $(DLL_OUTPUT_OPTION)$@ $(BUDDY_SRCS) -MLd -LDd -Zi /link /libpath:$(JDK_ROOT)/lib 
 
 $(CUDD_DLL_NAME): $(CUDD_OBJS)
 	$(LINK) $(DLL_OUTPUT_OPTION)$@ $(CUDD_OBJS) $(LINKFLAGS)
@@ -172,14 +173,14 @@ $(CUDD_DLL_NAME): $(CUDD_OBJS)
 $(CAL_DLL_NAME): $(CAL_OBJS)
 	$(LINK) $(DLL_OUTPUT_OPTION)$@ $(CAL_OBJS) $(LINKFLAGS)
 
-buddy_jni.o: buddy_jni.c $(BUDDY_INCLUDE)
-	$(CC) $(CFLAGS) $(INCLUDES) -c $(OBJECT_OUTPUT_OPTION)$@ $<
+buddy_jni.o: $(BUDDY_INCLUDE)
 
-cudd_jni.o: cudd_jni.c $(CUDD_INCLUDE)
-	$(CC) $(CFLAGS) $(INCLUDES) -c $(OBJECT_OUTPUT_OPTION)$@ $<
+cudd_jni.o: $(CUDD_INCLUDE)
 
-cal_jni.o: cal_jni.c $(CAL_INCLUDE)
-	$(CC) $(CFLAGS) $(INCLUDES) -c $(OBJECT_OUTPUT_OPTION)$@ $<
+cal_jni.o: $(CAL_INCLUDE)
+
+$(CAL_OBJS): %.o: %.c
+	$(CC) $(CAL_CFLAGS) $(INCLUDES) -c $(OBJECT_OUTPUT_OPTION)$@ $<
 
 .c.o:
 	$(CC) $(CFLAGS) $(INCLUDES) -c $(OBJECT_OUTPUT_OPTION)$@ $<
@@ -210,13 +211,22 @@ $(JAR_NAME): $(BUDDY_CLASSFILE) $(CUDD_CLASSFILE) $(CAL_CLASSFILE) $(EXAMPLE_CLA
 	$(JAR) cfm $(JAR_NAME) javabddManifest $(JAVA_CLASSFILES) $(EXAMPLE_CLASSFILES)
 
 pdo:
-	icl -Qprof_gen $(INCLUDES) $(CFLAGS) $(DLL_OUTPUT_OPTION)$(BUDDY_DLL_NAME) $(DLL_SRCS) -LD /link /libpath:$(JDK_ROOT)/lib 
+	icl -Qprof_gen $(INCLUDES) $(CFLAGS) $(DLL_OUTPUT_OPTION)$(BUDDY_DLL_NAME) $(BUDDY_SRCS) -LD /link /libpath:$(JDK_ROOT)/lib 
 	$(JAVA) NQueens 12
-	icl -Qprof_use $(INCLUDES) $(CFLAGS) $(DLL_OUTPUT_OPTION)$(BUDDY_DLL_NAME) $(DLL_SRCS) -LD /link /libpath:$(JDK_ROOT)/lib 
+	icl -Qprof_use $(INCLUDES) $(CFLAGS) $(DLL_OUTPUT_OPTION)$(BUDDY_DLL_NAME) $(BUDDY_SRCS) -LD /link /libpath:$(JDK_ROOT)/lib 
 	$(JAVA) NQueens 12
 
+ipo:	buddy_jni.h
+	icc -D_REENTRANT -D_GNU_SOURCE -O2 -unroll -ipo $(INCLUDES) -shared -static-libcxa $(DLL_OUTPUT_OPTION)libbuddy.so $(BUDDY_SRCS)
+
+pdogen: buddy_jni.h
+	icc -D_REENTRANT -D_GNU_SOURCE -O2 -unroll -prof_gen $(INCLUDES) -shared -static-libcxa $(DLL_OUTPUT_OPTION)libbuddy.so $(BUDDY_SRCS)
+
+pdouse: buddy_jni.h
+	icc -D_REENTRANT -D_GNU_SOURCE -O2 -unroll -prof_use -ipo $(INCLUDES) -shared -static-libcxa $(DLL_OUTPUT_OPTION)libbuddy.so $(BUDDY_SRCS)
+
 opt_report:
-	icl -Qopt_report -Qopt_report_phase all $(INCLUDES) $(CFLAGS) $(DLL_OUTPUT_OPTION)buddy.dll $(DLL_SRCS) -LD /link /libpath:$(JDK_ROOT)/lib 
+	icl -Qopt_report -Qopt_report_phase all $(INCLUDES) $(CFLAGS) $(DLL_OUTPUT_OPTION)buddy.dll $(BUDDY_SRCS) -LD /link /libpath:$(JDK_ROOT)/lib 
 
 test:	$(EXAMPLE_CLASSFILES)
 	$(JAVA) NQueens 8
