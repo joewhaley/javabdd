@@ -214,8 +214,8 @@ JNIEXPORT void JNICALL Java_org_sf_javabdd_CUDDFactory_done0
     Cudd_Deref((DdNode *)(intptr_cast_type) bdd_one);
     Cudd_Deref((DdNode *)(intptr_cast_type) bdd_zero);
     
-    fprintf(stderr, "Garbage collections: %d  Time spent: %f\n",
-    	Cudd_ReadGarbageCollections(manager), Cudd_ReadGarbageCollectionTime(manager)/1000.);
+    fprintf(stderr, "Garbage collections: %d  Time spent: %dms\n",
+    	Cudd_ReadGarbageCollections(manager), Cudd_ReadGarbageCollectionTime(manager));
     
     bdds = Cudd_CheckZeroRef(manager);
     if (bdds > 0) fprintf(stderr, "Note: %d BDDs still in memory when terminating\n", bdds);
