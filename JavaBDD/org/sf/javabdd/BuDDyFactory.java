@@ -52,21 +52,26 @@ public class BuDDyFactory extends BDDFactory {
      */
     public BDD one() { return new BuDDyBDD(1); }
     
-    /**
-     * @see org.sf.javabdd.BDDFactory#buildCube(int, int, java.util.Collection)
-     */
-    public BDD buildCube(int value, int width, Collection var) {
-        return this.buildCube0(value, width, (BuDDyBDD[]) var.toArray(new BuDDyBDD[var.size()]));
+    protected BDD makeNode(int level, BDD low, BDD high) {
+        return makeNode0(level, (BuDDyBDD) low, (BuDDyBDD) high);
     }
-    protected native BuDDyBDD buildCube0(int value, int width, BuDDyBDD[] var);
+    protected native BuDDyBDD makeNode0(int level, BuDDyBDD low, BuDDyBDD high);
+    
+    /**
+     * @see org.sf.javabdd.BDDFactory#buildCube(int, java.util.Collection)
+     */
+    public BDD buildCube(int value, Collection var) {
+        return this.buildCube0(value, (BuDDyBDD[]) var.toArray(new BuDDyBDD[var.size()]));
+    }
+    protected native BuDDyBDD buildCube0(int value, BuDDyBDD[] var);
 
     /**
      * @see org.sf.javabdd.BDDFactory#buildCube(int, int, int[])
      */
-    public BDD buildCube(int value, int width, int[] var) {
-        return buildCube1(value, width, var);
+    public BDD buildCube(int value, int[] var) {
+        return buildCube1(value, var);
     }
-    protected native BDD buildCube1(int value, int width, int[] var);
+    protected native BDD buildCube1(int value, int[] var);
 
     /**
      * @see org.sf.javabdd.BDDFactory#makeSet(int[])
@@ -358,6 +363,11 @@ public class BuDDyFactory extends BDDFactory {
          * @see org.sf.javabdd.BDD#var()
          */
         public native int var();
+        
+        /**
+         * @see org.sf.javabdd.BDD#level()
+         */
+        public native int level();
         
         /**
          * @see org.sf.javabdd.BDD#high()
@@ -675,6 +685,8 @@ public class BuDDyFactory extends BDDFactory {
             this._id = id;
         }
         
+        public BDDFactory getFactory() { return INSTANCE; }
+        
         /**
          * @see org.sf.javabdd.BDDDomain#getIndex()
          */
@@ -771,18 +783,18 @@ public class BuDDyFactory extends BDDFactory {
         /**
          * @see org.sf.javabdd.BDDPairing#set(org.sf.javabdd.BDD, org.sf.javabdd.BDD)
          */
-        public void set(BDD oldvar, BDD newvar) {
-            set2((BuDDyBDD) oldvar, (BuDDyBDD) newvar);
+        public void set(int oldvar, BDD newvar) {
+            set2(oldvar, (BuDDyBDD) newvar);
         }
-        protected native void set2(BuDDyBDD oldvar, BuDDyBDD newvar);
+        protected native void set2(int oldvar, BuDDyBDD newvar);
         
         /**
          * @see org.sf.javabdd.BDDPairing#set(org.sf.javabdd.BDD[], org.sf.javabdd.BDD[])
          */
-        public void set(BDD[] oldvar, BDD[] newvar) {
+        public void set(int[] oldvar, BDD[] newvar) {
             set3(oldvar, newvar);
         }
-        protected native void set3(BDD[] oldvar, BDD[] newvar);
+        protected native void set3(int[] oldvar, BDD[] newvar);
         
         /**
          * @see org.sf.javabdd.BDDPairing#set(org.sf.javabdd.BDDDomain, org.sf.javabdd.BDDDomain)

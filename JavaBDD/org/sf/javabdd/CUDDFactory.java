@@ -54,27 +54,8 @@ public class CUDDFactory extends BDDFactory {
         return new CUDDBDD(one);
     }
 
-    /* (non-Javadoc)
-     * @see org.sf.javabdd.BDDFactory#buildCube(int, int, java.util.Collection)
-     */
-    public BDD buildCube(int value, int width, Collection var) {
-        throw new UnsupportedOperationException();
-    }
-
-    /* (non-Javadoc)
-     * @see org.sf.javabdd.BDDFactory#buildCube(int, int, int[])
-     */
-    public BDD buildCube(int value, int width, int[] var) {
-        throw new UnsupportedOperationException();
-    }
-
-    /* (non-Javadoc)
-     * @see org.sf.javabdd.BDDFactory#makeSet(int[])
-     */
-    public BDD makeSet(int[] v) {
-        throw new UnsupportedOperationException();
-    }
-
+    protected native BDD makeNode(int level, BDD low, BDD high);
+    
     /* (non-Javadoc)
      * @see org.sf.javabdd.BDDFactory#initialize(int, int)
      */
@@ -99,7 +80,7 @@ public class CUDDFactory extends BDDFactory {
      */
     public int setMaxNodeNum(int size) {
         // TODO Auto-generated method stub
-        return 0;
+        throw new UnsupportedOperationException();
     }
 
     /* (non-Javadoc)
@@ -107,7 +88,7 @@ public class CUDDFactory extends BDDFactory {
      */
     public void setMinFreeNodes(int x) {
         // TODO Auto-generated method stub
-        
+        throw new UnsupportedOperationException();
     }
 
     /* (non-Javadoc)
@@ -115,6 +96,7 @@ public class CUDDFactory extends BDDFactory {
      */
     public int setMaxIncrease(int x) {
         // TODO Auto-generated method stub
+        System.err.println("Warning: setMaxIncrease() not yet implemented");
         return 0;
     }
 
@@ -123,6 +105,7 @@ public class CUDDFactory extends BDDFactory {
      */
     public int setCacheRatio(int x) {
         // TODO Auto-generated method stub
+        System.err.println("Warning: setCacheRatio() not yet implemented");
         return 0;
     }
 
@@ -135,14 +118,6 @@ public class CUDDFactory extends BDDFactory {
      * @see org.sf.javabdd.BDDFactory#setVarNum(int)
      */
     public native int setVarNum(int num);
-
-    /* (non-Javadoc)
-     * @see org.sf.javabdd.BDDFactory#extVarNum(int)
-     */
-    public int extVarNum(int num) {
-        // TODO Auto-generated method stub
-        return 0;
-    }
 
     /* (non-Javadoc)
      * @see org.sf.javabdd.BDDFactory#ithVar(int)
@@ -163,7 +138,7 @@ public class CUDDFactory extends BDDFactory {
      */
     public void printAll() {
         // TODO Auto-generated method stub
-        
+        throw new UnsupportedOperationException();
     }
 
     /* (non-Javadoc)
@@ -171,7 +146,7 @@ public class CUDDFactory extends BDDFactory {
      */
     public void printTable(BDD b) {
         // TODO Auto-generated method stub
-        
+        throw new UnsupportedOperationException();
     }
 
     /* (non-Javadoc)
@@ -179,7 +154,7 @@ public class CUDDFactory extends BDDFactory {
      */
     public BDD load(String filename) {
         // TODO Auto-generated method stub
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     /* (non-Javadoc)
@@ -187,7 +162,7 @@ public class CUDDFactory extends BDDFactory {
      */
     public void save(String filename, BDD var) {
         // TODO Auto-generated method stub
-        
+        throw new UnsupportedOperationException();
     }
 
     /* (non-Javadoc)
@@ -205,7 +180,7 @@ public class CUDDFactory extends BDDFactory {
      */
     public void reorder(ReorderMethod m) {
         // TODO Auto-generated method stub
-        
+        throw new UnsupportedOperationException();
     }
 
     /* (non-Javadoc)
@@ -213,7 +188,7 @@ public class CUDDFactory extends BDDFactory {
      */
     public void autoReorder(ReorderMethod method) {
         // TODO Auto-generated method stub
-        
+        throw new UnsupportedOperationException();
     }
 
     /* (non-Javadoc)
@@ -221,7 +196,7 @@ public class CUDDFactory extends BDDFactory {
      */
     public void autoReorder(ReorderMethod method, int max) {
         // TODO Auto-generated method stub
-        
+        throw new UnsupportedOperationException();
     }
 
     /* (non-Javadoc)
@@ -229,7 +204,7 @@ public class CUDDFactory extends BDDFactory {
      */
     public ReorderMethod getReorderMethod() {
         // TODO Auto-generated method stub
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     /* (non-Javadoc)
@@ -237,7 +212,7 @@ public class CUDDFactory extends BDDFactory {
      */
     public int getReorderTimes() {
         // TODO Auto-generated method stub
-        return 0;
+        throw new UnsupportedOperationException();
     }
 
     /* (non-Javadoc)
@@ -245,7 +220,7 @@ public class CUDDFactory extends BDDFactory {
      */
     public void disableReorder() {
         // TODO Auto-generated method stub
-        
+        System.err.println("Warning: disableReorder() not yet implemented");
     }
 
     /* (non-Javadoc)
@@ -253,7 +228,7 @@ public class CUDDFactory extends BDDFactory {
      */
     public void enableReorder() {
         // TODO Auto-generated method stub
-        
+        System.err.println("Warning: enableReorder() not yet implemented");
     }
 
     /* (non-Javadoc)
@@ -261,7 +236,7 @@ public class CUDDFactory extends BDDFactory {
      */
     public int reorderVerbose(int v) {
         // TODO Auto-generated method stub
-        return 0;
+        throw new UnsupportedOperationException();
     }
 
     /* (non-Javadoc)
@@ -269,7 +244,7 @@ public class CUDDFactory extends BDDFactory {
      */
     public void setVarOrder(int[] neworder) {
         // TODO Auto-generated method stub
-        
+        System.err.println("Warning: setVarOrder() not yet implemented");
     }
 
     /* (non-Javadoc)
@@ -277,7 +252,7 @@ public class CUDDFactory extends BDDFactory {
      */
     public void addVarBlock(BDD var, boolean fixed) {
         // TODO Auto-generated method stub
-        
+        throw new UnsupportedOperationException();
     }
 
     /* (non-Javadoc)
@@ -285,7 +260,7 @@ public class CUDDFactory extends BDDFactory {
      */
     public void addVarBlock(int first, int last, boolean fixed) {
         // TODO Auto-generated method stub
-        
+        throw new UnsupportedOperationException();
     }
 
     /* (non-Javadoc)
@@ -293,7 +268,7 @@ public class CUDDFactory extends BDDFactory {
      */
     public void varBlockAll() {
         // TODO Auto-generated method stub
-        
+        throw new UnsupportedOperationException();
     }
 
     /* (non-Javadoc)
@@ -301,7 +276,7 @@ public class CUDDFactory extends BDDFactory {
      */
     public void clearVarBlocks() {
         // TODO Auto-generated method stub
-        
+        throw new UnsupportedOperationException();
     }
 
     /* (non-Javadoc)
@@ -309,7 +284,7 @@ public class CUDDFactory extends BDDFactory {
      */
     public void printOrder() {
         // TODO Auto-generated method stub
-        
+        throw new UnsupportedOperationException();
     }
 
     /* (non-Javadoc)
@@ -317,7 +292,7 @@ public class CUDDFactory extends BDDFactory {
      */
     public int nodeCount(Collection r) {
         // TODO Auto-generated method stub
-        return 0;
+        throw new UnsupportedOperationException();
     }
 
     /* (non-Javadoc)
@@ -325,7 +300,7 @@ public class CUDDFactory extends BDDFactory {
      */
     public int getAllocNum() {
         // TODO Auto-generated method stub
-        return 0;
+        throw new UnsupportedOperationException();
     }
 
     /* (non-Javadoc)
@@ -333,7 +308,7 @@ public class CUDDFactory extends BDDFactory {
      */
     public int getNodeNum() {
         // TODO Auto-generated method stub
-        return 0;
+        throw new UnsupportedOperationException();
     }
 
     /* (non-Javadoc)
@@ -341,7 +316,7 @@ public class CUDDFactory extends BDDFactory {
      */
     public int reorderGain() {
         // TODO Auto-generated method stub
-        return 0;
+        throw new UnsupportedOperationException();
     }
 
     /* (non-Javadoc)
@@ -349,15 +324,14 @@ public class CUDDFactory extends BDDFactory {
      */
     public void printStat() {
         // TODO Auto-generated method stub
-        
+        throw new UnsupportedOperationException();
     }
 
     /* (non-Javadoc)
      * @see org.sf.javabdd.BDDFactory#makePair()
      */
     public BDDPairing makePair() {
-        // TODO Auto-generated method stub
-        return null;
+        return new CUDDBDDPairing();
     }
 
     /* (non-Javadoc)
@@ -365,55 +339,130 @@ public class CUDDFactory extends BDDFactory {
      */
     public void swapVar(int v1, int v2) {
         // TODO Auto-generated method stub
-        
+        throw new UnsupportedOperationException();
     }
+
+    protected CUDDBDDDomain[] domain;
+    protected int fdvarnum;
+    protected int firstbddvar;
 
     /* (non-Javadoc)
      * @see org.sf.javabdd.BDDFactory#extDomain(int[])
      */
-    public BDDDomain[] extDomain(int[] domainSizes) {
-        // TODO Auto-generated method stub
-        return null;
+    public BDDDomain[] extDomain(int[] dom) {
+        int offset = fdvarnum;
+        int binoffset;
+        int extravars = 0;
+        int n, bn;
+        boolean more;
+        int num = dom.length;
+
+        /* Build domain table */
+        if (domain == null) /* First time */ {
+            domain = new CUDDBDDDomain[num];
+        } else /* Allocated before */ {
+            if (fdvarnum + num > domain.length) {
+                int fdvaralloc = domain.length + Math.max(num, domain.length);
+                CUDDBDDDomain[] d2 = new CUDDBDDDomain[fdvaralloc];
+                System.arraycopy(domain, 0, d2, 0, domain.length);
+                domain = d2;
+            }
+        }
+
+        /* Create bdd variable tables */
+        for (n = 0; n < num; n++) {
+            domain[n + fdvarnum] = new CUDDBDDDomain(n + fdvarnum, dom[n]);
+            extravars += domain[n + fdvarnum].varNum();
+        }
+
+        binoffset = firstbddvar;
+        int bddvarnum = INSTANCE.varNum();
+        if (firstbddvar + extravars > bddvarnum)
+            INSTANCE.setVarNum(firstbddvar + extravars);
+
+        /* Set correct variable sequence (interleaved) */
+        for (bn = 0, more = true; more; bn++) {
+            more = false;
+
+            for (n = 0; n < num; n++) {
+                if (bn < domain[n + fdvarnum].varNum()) {
+                    more = true;
+                    domain[n + fdvarnum].ivar[bn] = binoffset++;
+                }
+            }
+        }
+
+        for (n = 0; n < num; n++) {
+            domain[n + fdvarnum].var =
+                INSTANCE.makeSet(domain[n + fdvarnum].ivar);
+            //domain[n+fdvarnum].var.addRef();
+        }
+
+        fdvarnum += num;
+        firstbddvar += extravars;
+
+        BDDDomain[] r = new BDDDomain[num];
+        System.arraycopy(domain, offset, r, 0, num);
+        return r;
     }
 
     /* (non-Javadoc)
      * @see org.sf.javabdd.BDDFactory#overlapDomain(org.sf.javabdd.BDDDomain, org.sf.javabdd.BDDDomain)
      */
     public BDDDomain overlapDomain(BDDDomain d1, BDDDomain d2) {
-        // TODO Auto-generated method stub
-        return null;
-    }
+        CUDDBDDDomain d;
+        int n;
 
-    /* (non-Javadoc)
-     * @see org.sf.javabdd.BDDFactory#makeSet(org.sf.javabdd.BDDDomain[])
-     */
-    public BDD makeSet(BDDDomain[] v) {
-        // TODO Auto-generated method stub
-        return null;
+        CUDDBDDDomain cd1 = (CUDDBDDDomain) d1;
+        CUDDBDDDomain cd2 = (CUDDBDDDomain) d2;
+
+        int fdvaralloc = domain.length;
+        if (fdvarnum + 1 > fdvaralloc) {
+            fdvaralloc += fdvaralloc;
+            CUDDBDDDomain[] domain2 = new CUDDBDDDomain[fdvaralloc];
+            System.arraycopy(domain, 0, domain2, 0, domain.length);
+            domain = domain2;
+        }
+
+        d = domain[fdvarnum];
+        d.realsize = cd1.realsize * cd2.realsize;
+        d.ivar = new int[cd1.varNum() + cd2.varNum()];
+
+        for (n = 0; n < cd1.varNum(); n++)
+            d.ivar[n] = cd1.ivar[n];
+        for (n = 0; n < cd2.varNum(); n++)
+            d.ivar[cd1.varNum() + n] = cd2.ivar[n];
+
+        d.var = INSTANCE.makeSet(d.ivar);
+        //bdd_addref(d.var);
+
+        fdvarnum++;
+        return d;
     }
 
     /* (non-Javadoc)
      * @see org.sf.javabdd.BDDFactory#clearAllDomains()
      */
     public void clearAllDomains() {
-        // TODO Auto-generated method stub
-        
+        domain = null;
+        fdvarnum = 0;
+        firstbddvar = 0;
     }
 
     /* (non-Javadoc)
      * @see org.sf.javabdd.BDDFactory#numberOfDomains()
      */
     public int numberOfDomains() {
-        // TODO Auto-generated method stub
-        return 0;
+        return fdvarnum;
     }
 
     /* (non-Javadoc)
      * @see org.sf.javabdd.BDDFactory#getDomain(int)
      */
     public BDDDomain getDomain(int i) {
-        // TODO Auto-generated method stub
-        return null;
+        if (i < 0 || i >= fdvarnum)
+            throw new IndexOutOfBoundsException();
+        return domain[i];
     }
     
     /**
@@ -437,7 +486,7 @@ public class CUDDFactory extends BDDFactory {
         public BDDFactory getFactory() {
             return INSTANCE;
         }
-
+        
         /* (non-Javadoc)
          * @see org.sf.javabdd.BDD#isZero()
          */
@@ -495,7 +544,7 @@ public class CUDDFactory extends BDDFactory {
          */
         public BDD veccompose(BDDPairing pair) {
             // TODO Auto-generated method stub
-            return null;
+            throw new UnsupportedOperationException();
         }
 
         /* (non-Javadoc)
@@ -503,7 +552,7 @@ public class CUDDFactory extends BDDFactory {
          */
         public BDD constrain(BDD that) {
             // TODO Auto-generated method stub
-            return null;
+            throw new UnsupportedOperationException();
         }
 
         /* (non-Javadoc)
@@ -511,7 +560,7 @@ public class CUDDFactory extends BDDFactory {
          */
         public BDD exist(BDD var) {
             // TODO Auto-generated method stub
-            return null;
+            throw new UnsupportedOperationException();
         }
 
         /* (non-Javadoc)
@@ -519,7 +568,7 @@ public class CUDDFactory extends BDDFactory {
          */
         public BDD forAll(BDD var) {
             // TODO Auto-generated method stub
-            return null;
+            throw new UnsupportedOperationException();
         }
 
         /* (non-Javadoc)
@@ -527,7 +576,7 @@ public class CUDDFactory extends BDDFactory {
          */
         public BDD unique(BDD var) {
             // TODO Auto-generated method stub
-            return null;
+            throw new UnsupportedOperationException();
         }
 
         /* (non-Javadoc)
@@ -540,7 +589,7 @@ public class CUDDFactory extends BDDFactory {
          */
         public BDD simplify(BDD d) {
             // TODO Auto-generated method stub
-            return null;
+            throw new UnsupportedOperationException();
         }
 
         /* (non-Javadoc)
@@ -563,7 +612,7 @@ public class CUDDFactory extends BDDFactory {
          */
         public BDD applyAll(BDD that, BDDOp opr, BDD var) {
             // TODO Auto-generated method stub
-            return null;
+            throw new UnsupportedOperationException();
         }
 
         /* (non-Javadoc)
@@ -571,7 +620,7 @@ public class CUDDFactory extends BDDFactory {
          */
         public BDD applyEx(BDD that, BDDOp opr, BDD var) {
             // TODO Auto-generated method stub
-            return null;
+            throw new UnsupportedOperationException();
         }
 
         /* (non-Javadoc)
@@ -579,7 +628,7 @@ public class CUDDFactory extends BDDFactory {
          */
         public BDD applyUni(BDD that, BDDOp opr, BDD var) {
             // TODO Auto-generated method stub
-            return null;
+            throw new UnsupportedOperationException();
         }
 
         /* (non-Javadoc)
@@ -592,7 +641,7 @@ public class CUDDFactory extends BDDFactory {
          */
         public BDD fullSatOne() {
             // TODO Auto-generated method stub
-            return null;
+            throw new UnsupportedOperationException();
         }
 
         /* (non-Javadoc)
@@ -600,7 +649,7 @@ public class CUDDFactory extends BDDFactory {
          */
         public BDD satOneSet(BDD var, BDD pol) {
             // TODO Auto-generated method stub
-            return null;
+            throw new UnsupportedOperationException();
         }
 
         /* (non-Javadoc)
@@ -608,47 +657,70 @@ public class CUDDFactory extends BDDFactory {
          */
         public List allsat() {
             // TODO Auto-generated method stub
-            return null;
-        }
-
-        /* (non-Javadoc)
-         * @see org.sf.javabdd.BDD#scanSet()
-         */
-        public int[] scanSet() {
-            // TODO Auto-generated method stub
-            return null;
-        }
-
-        /* (non-Javadoc)
-         * @see org.sf.javabdd.BDD#scanSetDomains()
-         */
-        public int[] scanSetDomains() {
-            // TODO Auto-generated method stub
-            return null;
-        }
-
-        /* (non-Javadoc)
-         * @see org.sf.javabdd.BDD#scanVar(org.sf.javabdd.BDDDomain)
-         */
-        public int scanVar(BDDDomain d) {
-            // TODO Auto-generated method stub
-            return 0;
-        }
-
-        /* (non-Javadoc)
-         * @see org.sf.javabdd.BDD#scanAllVar()
-         */
-        public int[] scanAllVar() {
-            // TODO Auto-generated method stub
-            return null;
+            throw new UnsupportedOperationException();
         }
 
         /* (non-Javadoc)
          * @see org.sf.javabdd.BDD#replace(org.sf.javabdd.BDDPairing)
          */
-        public BDD replace(BDDPairing pair) {
-            // TODO Auto-generated method stub
-            return null;
+        public BDD replace(BDDPairing p) {
+            // TODO very inefficient.
+            if (this.isZero())
+                return INSTANCE.zero();
+            BDD res;
+            CUDDBDDPairing pair = (CUDDBDDPairing) p;
+            CUDDBDD[] replacepair = pair.result;
+            int replacelast = pair.last;
+            //int replaceid = pair.id << 2 | CACHEID_REPLACE;
+            INSTANCE.disableReorder();
+            res = replace_rec(this, replacepair, replacelast);
+            INSTANCE.enableReorder();
+            return res;
+        }
+
+        static BDD replace_rec(BDD r, CUDDBDD[] replacepair, int replacelast) {
+            BDD res;
+   
+            if (r.isZero() || r.isOne() || r.level() > replacelast)
+                return r;
+
+            BDD low = replace_rec(r.low(), replacepair, replacelast);
+            BDD high = replace_rec(r.high(), replacepair, replacelast);
+            res = bdd_correctify(replacepair[r.level()].level(), low, high);
+            low.free();
+            high.free();
+
+            return res;
+        }
+
+        static BDD bdd_correctify(int level, BDD l, BDD r) {
+            BDD res;
+   
+            if (level < l.level() && level < r.level())
+                return INSTANCE.makeNode(level, l, r);
+
+            if (level == l.level() || level == r.level()) {
+                throw new BDDException();
+            }
+
+            if (l.level() == r.level()) {
+                BDD low = bdd_correctify(level, l.low(), r.low());
+                BDD high = bdd_correctify(level, l.high(), r.high());
+                res = INSTANCE.makeNode(l.level(), low, high);
+                low.free(); high.free();
+            } else if (l.level() < r.level()) {
+                BDD low = bdd_correctify(level, l.low(), r);
+                BDD high = bdd_correctify(level, l.high(), r);
+                res = INSTANCE.makeNode(l.level(), low, high);
+                low.free(); high.free();
+            } else {
+                BDD low = bdd_correctify(level, l, r.low());
+                BDD high = bdd_correctify(level, l, r.high());
+                res = INSTANCE.makeNode(r.level(), low, high);
+                low.free(); high.free();
+            }
+            
+            return res;
         }
 
         /* (non-Javadoc)
@@ -656,60 +728,7 @@ public class CUDDFactory extends BDDFactory {
          */
         public void replaceWith(BDDPairing pair) {
             // TODO Auto-generated method stub
-            
-        }
-
-        /* (non-Javadoc)
-         * @see org.sf.javabdd.BDD#printSet()
-         */
-        public void printSet() {
-            BDDFactory f = this.getFactory();
-            int[] set = new int[f.varNum()];
-            bdd_printset_rec(f, this, set);
-        }
-        
-        static void bdd_printset_rec(BDDFactory f, BDD r, int[] set) {
-            int n;
-            boolean first;
-
-            if (r.isZero())
-                return;
-            else if (r.isOne()) {
-                System.out.print('<');
-                first = true;
-
-                for (n = 0; n < set.length; n++) {
-                    if (set[n] > 0) {
-                        if (!first)
-                            System.out.print(", ");
-                        first = false;
-                        System.out.print(f.level2Var(n));
-                        System.out.print(':');
-                        System.out.print((set[n] == 2 ? 1 : 0));
-                    }
-                }
-                System.out.print('>');
-            } else {
-                set[f.var2Level(r.var())] = 1;
-                BDD rl = r.low();
-                bdd_printset_rec(f, rl, set);
-                rl.free();
-
-                set[f.var2Level(r.var())] = 2;
-                BDD rh = r.high();
-                bdd_printset_rec(f, rh, set);
-                rh.free();
-
-                set[f.var2Level(r.var())] = 0;
-            }
-        }
-
-        /* (non-Javadoc)
-         * @see org.sf.javabdd.BDD#printSetWithDomains()
-         */
-        public void printSetWithDomains() {
-            // TODO Auto-generated method stub
-            
+            throw new UnsupportedOperationException();
         }
 
         /* (non-Javadoc)
@@ -717,7 +736,7 @@ public class CUDDFactory extends BDDFactory {
          */
         public void printDot() {
             // TODO Auto-generated method stub
-            
+            throw new UnsupportedOperationException();
         }
 
         /* (non-Javadoc)
@@ -736,35 +755,11 @@ public class CUDDFactory extends BDDFactory {
         public native double satCount();
 
         /* (non-Javadoc)
-         * @see org.sf.javabdd.BDD#satCount(org.sf.javabdd.BDD)
-         */
-        public double satCount(BDD varset) {
-            // TODO Auto-generated method stub
-            return 0;
-        }
-
-        /* (non-Javadoc)
-         * @see org.sf.javabdd.BDD#logSatCount()
-         */
-        public double logSatCount() {
-            // TODO Auto-generated method stub
-            return 0;
-        }
-
-        /* (non-Javadoc)
-         * @see org.sf.javabdd.BDD#logSatCount(org.sf.javabdd.BDD)
-         */
-        public double logSatCount(BDD varset) {
-            // TODO Auto-generated method stub
-            return 0;
-        }
-
-        /* (non-Javadoc)
          * @see org.sf.javabdd.BDD#varProfile()
          */
         public int[] varProfile() {
             // TODO Auto-generated method stub
-            return null;
+            throw new UnsupportedOperationException();
         }
 
         /* (non-Javadoc)
@@ -801,134 +796,180 @@ public class CUDDFactory extends BDDFactory {
      */
     public static class CUDDBDDDomain extends BDDDomain {
 
+        /* The index of this domain. */
+        int index;
+
+        /* The specified domain (0...N-1) */
+        int realsize;
+        /* Variable indices for the variable set */
+        int[] ivar;
+        /* The BDD variable set */
+        BDD var;
+
+        private CUDDBDDDomain(int index, int range) {
+            
+            int calcsize = 2;
+            
+            if (range <= 0  || range > Integer.MAX_VALUE/2)
+                throw new InternalError();
+
+            this.index = index;
+            
+            this.realsize = range;
+            int binsize = 1;
+
+            while (calcsize < range)
+            {
+               binsize++;
+               calcsize <<= 1;
+            }
+
+            this.ivar = new int[binsize];
+            this.var = INSTANCE.one();
+            
+        }
+
+        public BDDFactory getFactory() { return INSTANCE; }
+
         /* (non-Javadoc)
          * @see org.sf.javabdd.BDDDomain#getIndex()
          */
         public int getIndex() {
-            // TODO Auto-generated method stub
-            return 0;
-        }
-
-        /* (non-Javadoc)
-         * @see org.sf.javabdd.BDDDomain#domain()
-         */
-        public BDD domain() {
-            // TODO Auto-generated method stub
-            return null;
+            return index;
         }
 
         /* (non-Javadoc)
          * @see org.sf.javabdd.BDDDomain#size()
          */
         public int size() {
-            // TODO Auto-generated method stub
-            return 0;
-        }
-
-        /* (non-Javadoc)
-         * @see org.sf.javabdd.BDDDomain#buildEquals(org.sf.javabdd.BDDDomain)
-         */
-        public BDD buildEquals(BDDDomain that) {
-            // TODO Auto-generated method stub
-            return null;
+            return this.realsize;
         }
 
         /* (non-Javadoc)
          * @see org.sf.javabdd.BDDDomain#set()
          */
         public BDD set() {
-            // TODO Auto-generated method stub
-            return null;
-        }
-
-        /* (non-Javadoc)
-         * @see org.sf.javabdd.BDDDomain#ithVar(int)
-         */
-        public BDD ithVar(int val) {
-            // TODO Auto-generated method stub
-            return null;
+            return var.id();
         }
 
         /* (non-Javadoc)
          * @see org.sf.javabdd.BDDDomain#varNum()
          */
         public int varNum() {
-            // TODO Auto-generated method stub
-            return 0;
+            return this.ivar.length;
         }
 
         /* (non-Javadoc)
          * @see org.sf.javabdd.BDDDomain#vars()
          */
         public int[] vars() {
-            // TODO Auto-generated method stub
-            return null;
+            return this.ivar;
         }
     }
 
     /**
      * CUDDBDDPairing
      * 
-     * @author John Whaley
+     * @author SUIF User
      * @version $Id$
      */
     public static class CUDDBDDPairing extends BDDPairing {
+
+        CUDDBDD[] result;
+        int last;
+
+        private CUDDBDDPairing() {
+            this.result = new CUDDBDD[INSTANCE.varNum()];
+            for (int n = 0; n < result.length; n++)
+                this.result[n] =
+                    (CUDDBDD) INSTANCE.ithVar(INSTANCE.level2Var(n));
+
+            this.last = -1;
+        }
 
         /* (non-Javadoc)
          * @see org.sf.javabdd.BDDPairing#set(int, int)
          */
         public void set(int oldvar, int newvar) {
-            // TODO Auto-generated method stub
-            
+            int bddvarnum = INSTANCE.varNum();
+            if (oldvar < 0 || oldvar > bddvarnum - 1)
+                throw new BDDException();
+            if (newvar < 0 || newvar > bddvarnum - 1)
+                throw new BDDException();
+
+            this.result[INSTANCE.var2Level(oldvar)].free();
+            this.result[INSTANCE.var2Level(oldvar)] = (CUDDBDD) INSTANCE.ithVar(newvar);
+
+            this.last = Math.max(this.last, INSTANCE.var2Level(oldvar));
         }
 
         /* (non-Javadoc)
-         * @see org.sf.javabdd.BDDPairing#set(int[], int[])
+         * @see org.sf.javabdd.BDDPairing#set(int, org.sf.javabdd.BDD)
          */
-        public void set(int[] oldvar, int[] newvar) {
-            // TODO Auto-generated method stub
-            
-        }
+        public void set(int oldvar, BDD newvar) {
+            int bddvarnum = INSTANCE.varNum();
+            if (oldvar < 0 || oldvar >= bddvarnum)
+                throw new BDDException();
+            int oldlevel = INSTANCE.var2Level(oldvar);
 
-        /* (non-Javadoc)
-         * @see org.sf.javabdd.BDDPairing#set(org.sf.javabdd.BDD, org.sf.javabdd.BDD)
-         */
-        public void set(BDD oldvar, BDD newvar) {
-            // TODO Auto-generated method stub
-            
-        }
+            this.result[oldlevel].free();
+            this.result[oldlevel] = (CUDDBDD) newvar.id();
 
-        /* (non-Javadoc)
-         * @see org.sf.javabdd.BDDPairing#set(org.sf.javabdd.BDD[], org.sf.javabdd.BDD[])
-         */
-        public void set(BDD[] oldvar, BDD[] newvar) {
-            // TODO Auto-generated method stub
-            
-        }
-
-        /* (non-Javadoc)
-         * @see org.sf.javabdd.BDDPairing#set(org.sf.javabdd.BDDDomain, org.sf.javabdd.BDDDomain)
-         */
-        public void set(BDDDomain p1, BDDDomain p2) {
-            // TODO Auto-generated method stub
-            
-        }
-
-        /* (non-Javadoc)
-         * @see org.sf.javabdd.BDDPairing#set(org.sf.javabdd.BDDDomain[], org.sf.javabdd.BDDDomain[])
-         */
-        public void set(BDDDomain[] p1, BDDDomain[] p2) {
-            // TODO Auto-generated method stub
-            
+            this.last = Math.max(oldlevel, this.last);
         }
 
         /* (non-Javadoc)
          * @see org.sf.javabdd.BDDPairing#reset()
          */
         public void reset() {
-            // TODO Auto-generated method stub
-            
+            for (int n = 0; n < this.result.length; n++)
+                this.result[n] = (CUDDBDD) INSTANCE.ithVar(INSTANCE.level2Var(n));
+            this.last = 0;
         }
+        
+        public String toString() {
+            StringBuffer sb = new StringBuffer();
+            for (int i=0; i<result.length; ++i) {
+                if (i > 0) sb.append(',');
+                sb.append(i);
+                sb.append('=');
+                sb.append(result[i]);
+            }
+            sb.append(" last=");
+            sb.append(last);
+            return sb.toString();
+        }
+    }
+
+    public static void main(String[] args) {
+        BDDFactory bdd = init(1000000, 100000);
+        
+        BDDDomain[] doms = bdd.extDomain(new int[] {50, 10, 15, 20, 15});
+        
+        BDD b = bdd.one();
+        for (int i=0; i<doms.length-1; ++i) {
+            b.andWith(doms[i].ithVar(i));
+        }
+        
+        for (int i=0; i<bdd.numberOfDomains(); ++i) {
+            BDDDomain d = bdd.getDomain(i);
+            int[] ivar = d.vars();
+            System.out.print("Domain #"+i+":");
+            for (int j=0; j<ivar.length; ++j) {
+                System.out.print(' ');
+                System.out.print(j);
+                System.out.print(':');
+                System.out.print(ivar[j]);
+            }
+            System.out.println();
+        }
+        
+        BDDPairing p = bdd.makePair(doms[2], doms[doms.length-1]);
+        System.out.println("Pairing: "+p);
+        
+        System.out.println("Before replace(): "+b);
+        BDD c = b.replace(p);
+        System.out.println("After replace(): "+c);
     }
 
 }

@@ -9,6 +9,8 @@ package org.sf.javabdd;
  */
 public abstract class BDDDomain {
 
+    public abstract BDDFactory getFactory();
+
     /**
      * Returns the index of this domain.
      */ 
@@ -21,7 +23,22 @@ public abstract class BDDDomain {
      * 
      * Compare to fdd_domain.
      */ 
-    public abstract BDD domain();
+    public BDD domain() {
+        BDDFactory factory = getFactory();
+        
+        /* Encode V<=X-1. V is the variables in 'var' and X is the domain size */
+        int val = size() - 1;
+        BDD d = factory.one();
+        int[] ivar = vars();
+        for (int n = 0; n < this.varNum(); n++) {
+            if ((val & 0x1) != 0)
+                d.orWith(factory.nithVar(ivar[n]));
+            else
+                d.andWith(factory.nithVar(ivar[n]));
+            val >>= 1;
+        }
+        return d;
+    }
 
     /**
      * Returns the size of the domain for this finite domain block.
@@ -39,7 +56,27 @@ public abstract class BDDDomain {
      * @param that
      * @return BDD
      */
-    public abstract BDD buildEquals(BDDDomain that);
+    public BDD buildEquals(BDDDomain that) {
+        if (this.size() != that.size()) {
+            throw new BDDException();
+        }
+   
+        BDDFactory factory = getFactory();
+        BDD e = factory.one();
+        
+        int[] this_ivar = this.vars();
+        int[] that_ivar = that.vars();
+        
+        for (int n=0 ; n<this.varNum() ; n++)
+        {
+            BDD a = factory.ithVar(this_ivar[n]);
+            BDD b = factory.ithVar(that_ivar[n]);
+            a.applyWith(b, BDDFactory.biimp);
+            e.andWith(a);
+        }
+
+        return e;
+    }
     
     /**
      * Returns the variable set that contains the variables used to define this
@@ -59,7 +96,24 @@ public abstract class BDDDomain {
      * 
      * @return BDD
      */
-    public abstract BDD ithVar(int val);
+    public BDD ithVar(int val) {
+        if (val < 0 || val >= this.size()) {
+            throw new BDDException();
+        }
+
+        BDDFactory factory = getFactory();
+        BDD v = factory.one();
+        int[] ivar = this.vars();
+        for (int n = 0; n < ivar.length; n++) {
+            if ((val & 0x1) != 0)
+                v.andWith(factory.ithVar(ivar[n]));
+            else
+                v.andWith(factory.nithVar(ivar[n]));
+            val >>= 1;
+        }
+
+        return v;
+    }
     
     /**
      * Returns the number of BDD variables used for this finite domain block.
