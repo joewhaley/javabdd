@@ -33,7 +33,7 @@
       Grab the JavaBDD source code from CVS, and extract the BuDDy/CUDD/CAL
       native code.  Edit the Makefile to specify the path where to find
       the native code.
-      (The default in the Makefile is <code>buddy22/src</code> for BuDDy,
+      (The default in the Makefile is <code>buddy/src</code> for BuDDy,
       <code>cudd-2.4.0</code> for CUDD, and <code>cal-2.1</code> for CAL.)
       It will automatically identify the path to the JDK, as long as you have
       it installed in the default location (C:/j2sdk* on Windows,
