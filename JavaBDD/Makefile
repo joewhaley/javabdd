@@ -11,6 +11,7 @@ BUDDY_SRC = buddy22/src
 
 ifeq (${OS},Windows_NT)
   JDK_ROOT = $(firstword $(wildcard c:/j2sdk*))
+  CLASSPATH = .\;jdd.jar
   CC = gcc
   CFLAGS = -Wall -O3 -mno-cygwin
   OBJECT_OUTPUT_OPTION = -o$(space)
@@ -37,6 +38,7 @@ ifeq (${OS},Windows_NT)
   endif
 else
   JDK_ROOT = $(firstword $(wildcard /usr/java/j2sdk*))
+  CLASSPATH = .:jdd.jar
   CFLAGS = -D_REENTRANT -D_GNU_SOURCE -O3
   OBJECT_OUTPUT_OPTION = -o$(space)
   LINK = $(CC)
@@ -74,7 +76,7 @@ JNI_CLASSNAMES = org.sf.javabdd.BuDDyFactory \
 JNI_INCLUDE = buddy_jni.h
 EXAMPLE_SOURCES = NQueens.java
 EXAMPLE_CLASSFILES = $(EXAMPLE_SOURCES:%.java=%.class)
-JAR_NAME = javabdd_0.6.jar
+JAR_NAME = javabdd.jar
 
 DLL_SRCS  = buddy_jni.c \
 	$(BUDDY_SRC)/bddio.c $(BUDDY_SRC)/bddop.c $(BUDDY_SRC)/bvec.c \
@@ -101,10 +103,10 @@ $(JNI_INCLUDE): $(JNI_CLASSFILE)
 	$(JAVAH) -jni -o $(JNI_INCLUDE) $(JNI_CLASSNAMES)
 
 $(JNI_CLASSFILE): $(JAVA_SOURCES)
-	$(JAVAC) $(JAVA_SOURCES)
+	$(JAVAC) -classpath $(CLASSPATH) $(JAVA_SOURCES)
 
 $(EXAMPLE_CLASSFILES): $(EXAMPLE_SOURCES)
-	$(JAVAC) $(EXAMPLE_SOURCES)
+	$(JAVAC) -classpath $(CLASSPATH) $(EXAMPLE_SOURCES)
 
 examples: $(EXAMPLE_CLASSFILES)
 
