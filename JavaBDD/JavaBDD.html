@@ -14,6 +14,7 @@
   <li><a href="#Download">Download</a></li>
   <li><a href="#Compiling">Compiling</a></li>
   <li><a href="#Installation">Installation</a></li>
+  <li><a href="#Performance">Performance</a></li>
   <li><a href="#History">History</a></li>
   <li><a href="#Acknowledgements">Acknowledgements</a></li>
   <li><a href="#Links">Links</a></li>
@@ -26,13 +27,17 @@
 
 <p>JavaBDD is a Java library for manipulating BDDs (Binary Decision
 Diagrams).  Binary decision diagrams are widely used in model
-checking, formal verification, optimizing circuit diagrams, etc.</p>
+checking, formal verification, optimizing circuit diagrams, etc.  For
+an excellent overview of the BDD data structure, see this set of <a
+href="http://www.itu.dk/people/hra/notes-index.html">lecture notes</a>
+by Henrik Reif Andersen.</p>
 
 <p>The JavaBDD API is based on that of the popular <a
-href="http://www.itu.dk/research/buddy/">BuDDy</a> package.  However,
-JavaBDD's API is designed to be object-oriented.  The ugly C function
-interface and reference counting schemes have been hidden underneath a
-uniform, object-oriented interface.</p>
+href="http://www.itu.dk/research/buddy/">BuDDy</a> package, a BDD
+package written in C by J&oslash;rn Lind-Nielsen.  However, JavaBDD's
+API is designed to be object-oriented.  The ugly C function interface
+and reference counting schemes have been hidden underneath a uniform,
+object-oriented interface.</p>
 
 <p>JavaBDD includes a 100% Java implementation.  It can also interface
 with two popular BDD libraries written in C via a JNI interface: <a
@@ -42,7 +47,7 @@ href="http://vlsi.colorado.edu/~fabio/CUDD/cuddIntro.html">CUDD</a>.
 
 <p>JavaBDD is designed for high performance applications, so it also
 exposes many of the lower level options of the BDD library, like cache
-sizes and advanced variable ordering.</p>
+sizes and advanced variable reordering.</p>
 
 <h2><a name="Download"></a>Download</h2>
 
@@ -56,21 +61,21 @@ sizes and advanced variable ordering.</p>
 
 <h2><a name="Compiling"></a>Compiling</h2>
 
-<p>It is easiest to download one of the prebuilt binaries.  If you
-want to build it yourself and use the interface to BuDDy and/or CUDD,
-you will also need the BuDDy (and/or CUDD) source code, available from
-the <a href="http://www.itu.dk/research/buddy/">BuDDy homepage</a>
-(and/or the <a
-href="http://vlsi.colorado.edu/~fabio/CUDD/cuddIntro.html">CUDD
+<p>It is easiest to download one of the pre-built binaries.  If you
+want to build it yourself with the interface to BuDDy and/or CUDD, you
+will also need the BuDDy (and/or CUDD) source code, available from the
+<a href="http://www.itu.dk/research/buddy/">BuDDy homepage</a> (and/or
+the <a href="http://vlsi.colorado.edu/~fabio/CUDD/cuddIntro.html">CUDD
 homepage</a>).</p>
 
-<p>Grab the JavaBDD source code from CVS.  On Windows, you will need
-cygwin or mingw installed.  The Makefile assumes that you have the
-BuDDy source code in buddy22/src.  It will automatically identify the
-path to the JDK, as long as you have it installed in the default
-location (C:/j2sdk* on Windows, /usr/java/j2sdk* on Linux).  Finally,
-do a <tt>"make"</tt> and everything should work.  Other make targets
-are "examples", "javadoc", "jar", and "test".</p>
+<p>Grab the JavaBDD source code from CVS.  To build JavaBDD on
+Windows, you will need cygwin or mingw installed.  The Makefile
+assumes that you have the BuDDy source code in buddy22/src.  It will
+automatically identify the path to the JDK, as long as you have it
+installed in the default location (C:/j2sdk* on Windows,
+/usr/java/j2sdk* on Linux).  Finally, do a <tt>"make"</tt> and
+everything should work.  Other make targets are "examples", "javadoc",
+"jar", and "test".</p>
 
 <p>CUDD uses the Makefile.cudd makefile.  To build, do a "make -f
 Makefile.cudd".  The CUDD makefile contains the same targets as the
@@ -93,9 +98,35 @@ you want to compile and/or run with JavaBDD.</p>
 <p>The JavaBDD jar file contains a simple example that solves an NxN
 queens problem.  You can run this example by simply typing:</p>
 
-<p><tt>java -jar javabdd_0.4.jar</tt> <i>N</i></p>
+<p><tt>java -jar javabdd_0.5.jar</tt> <i>N</i></p>
 
 <p>where <i>N</i> is the size of the board (e.g. 8).</p>
+
+<h2><a name="Performance"></a>Performance Comparison</h2>
+
+<p>Here are the timings of solving the 12x12 NQueens problem on my
+home machine (2.4GHz P4, WinXP, Sun JDK 1.4.2).  This test simply does
+simple logic operations.  It primarily tests the speed of node
+creation and BDD garbage collection.  The command line I used to test
+was:</p>
+
+<p><tt>java -ms320m -mx320m -Dbdd=<i>package</i> -jar javabdd_0.5.jar</tt> <i>N</i></p>
+
+<table border=2>
+<tr> <td> Package      </td> <td> Time </td> <td> Peak Memory Usage </td> </tr>
+<tr> <td> buddy        </td> <td> 77s  </td> <td> 150mb  </td> </tr>
+<tr> <td> cudd         </td> <td> 127s </td> <td> 171mb  </td> </tr>
+<tr> <td> java -server </td> <td> 158s </td> <td> 320mb  </td> </tr>
+<tr> <td> java -client </td> <td> 171s </td> <td> 295mb  </td> </tr>
+</table>
+
+<p>Don't make any assumptions from these results about the relative
+efficiency of C and Java.  The Java source code is a direct
+translation of the C source code, and therefore there are many, many
+inefficiencies that would not be present if it had been implemented
+from scratch in Java.  At best, you could use this information as an
+example of the type of performance you will see if you directly
+translate a performance library written in C into Java.</p>
 
 <h2><a name="History"></a>History</h2>
 
@@ -107,7 +138,7 @@ queens problem.  You can run this example by simply typing:</p>
   factory, so the native library is no longer necessary.</li>
 
   <li>Java implementation of variable domains.  Domains can be up to
-  2^64 in size!<li>
+  2^64 in size!</li>
 
   <li>Java implementation of bit vectors, along with the associated
   operations (add, subtract, multiply, divide, etc.)</li>
