@@ -510,7 +510,7 @@ public abstract class BDDFactory {
         
         for (Iterator it = visited.keySet().iterator(); it.hasNext(); ) {
             BDD b = (BDD) it.next();
-            b.free();
+            if (b != r) b.free();
         }
     }
 
