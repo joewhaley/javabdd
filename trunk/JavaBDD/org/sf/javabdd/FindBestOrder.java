@@ -21,6 +21,12 @@ import java.math.BigInteger;
  */
 public class FindBestOrder {
 
+    static BDDFactory bdd = null;
+    boolean newbdd = true;
+    BDD b1 = null;
+    BDD b2 = null;
+    BDD b3 = null;
+
     String filename0 = "fbo.bi";
     String filename1 = "fbo.1";
     String filename2 = "fbo.2";
@@ -78,6 +84,9 @@ public class FindBestOrder {
         f1.delete();
         f2.delete();
         f3.delete();
+        if (b1 != null) b1.free();
+        if (b2 != null) b2.free();
+        if (b3 != null) b3.free();
     }
     
     public void writeBDDConfig(BDDFactory bdd, String fileName) throws IOException {
@@ -106,6 +115,14 @@ public class FindBestOrder {
         } catch (InterruptedException x) {
         }
         t.stop();
+        if (t.totalTime == Long.MAX_VALUE) {
+            b1 = null;
+            b2 = null;
+            b3 = null;
+            bdd = null;
+            newbdd = true;
+            System.gc();
+        }
         if (t.time < bestCalcTime) {
             bestOrder = varOrder;
             bestCalcTime = t.time;
@@ -131,24 +148,30 @@ public class FindBestOrder {
         
         public void run() {
             long total = System.currentTimeMillis();
-            BDDFactory bdd = JavaFactory.init(nodeTableSize, cacheSize);
-            bdd.setMaxIncrease(maxIncrease);
-            readBDDConfig(bdd);
+            if (bdd == null) {
+                bdd = JavaFactory.init(nodeTableSize, cacheSize);
+                bdd.setMaxIncrease(maxIncrease);
+                readBDDConfig(bdd);
+            }
             int[] varorder = bdd.makeVarOrdering(reverse, varOrderToTry);
             bdd.setVarOrder(varorder);
             //System.out.println("\nTrying ordering "+varOrderToTry);
             try {
-                BDD b1 = bdd.load(filename1);
-                BDD b2 = bdd.load(filename2);
-                BDD b3 = bdd.load(filename3);
+                if (newbdd) {
+                    b1 = bdd.load(filename1);
+                    b2 = bdd.load(filename2);
+                    b3 = bdd.load(filename3);
+                    newbdd = false;
+                }
                 long t = System.currentTimeMillis();
                 BDD result = b1.applyEx(b2, op, b3);
                 time = System.currentTimeMillis() - t;
-                b1.free(); b2.free(); b3.free(); result.free();
+                //b1.free(); b2.free(); b3.free(); 
+                result.free();
             } catch (IOException x) {
             }
             System.out.println("Ordering: "+varOrderToTry+" time: "+time);
-            bdd.done();
+            //bdd.done();
             totalTime = System.currentTimeMillis() - total;
         }
         
