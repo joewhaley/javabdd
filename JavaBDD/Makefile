@@ -28,6 +28,9 @@ else
   INCLUDES = -I. -I$(JDK_ROOT)/include -I$(BUDDY_SRC) \
              -I$(JDK_ROOT)/include/linux
   DLL_NAME = libbuddy.so
+  ifeq (${CC},icc)
+    LINKFLAGS = -shared -static-libcxa
+  endif
 endif
 
 # The recommended c compiler flags
