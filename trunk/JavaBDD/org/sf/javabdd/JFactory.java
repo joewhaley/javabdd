@@ -4768,7 +4768,7 @@ public class JFactory extends BDDFactory {
         }
     }
 
-    public static boolean SWAPCOUNT = false;
+    public static final boolean SWAPCOUNT = false;
 
     int reorder_downSimple(int var0) {
         int toBeProcessed = 0;
