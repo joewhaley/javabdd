@@ -25,7 +25,8 @@ import java.lang.reflect.Method;
  */
 public abstract class BDDFactory {
 
-    /** Initializes a BDD factory with the given initial node table size
+    /**
+     * Initializes a BDD factory with the given initial node table size
      * and operation cache size.  Tries to use the "buddy" native library;
      * if it fails, it falls back to the "java" library.
      * 
@@ -38,7 +39,8 @@ public abstract class BDDFactory {
         return init(bddpackage, nodenum, cachesize);
     }
 
-    /** Initializes a BDD factory of the given type with the given initial
+    /**
+     * Initializes a BDD factory of the given type with the given initial
      * node table size and operation cache size.  The type is a string that
      * can be "buddy", "cudd", "cal", "j", "java", "jdd", "test", "typed", or
      * a name of a class that has an init() method that returns a BDDFactory.
@@ -240,7 +242,18 @@ public abstract class BDDFactory {
      */
     public abstract void done();
 
+    /**
+     * Sets the error condition.  This will cause the BDD package to throw an
+     * exception at the next garbage collection.
+     * 
+     * @param code  the error code to set
+     */
+    public abstract void setError(int code);
     
+    /**
+     * Clears any outstanding error condition.
+     */
+    public abstract void clearError();
     
     /**** CACHE/TABLE PARAMETERS ****/
     
@@ -635,10 +648,9 @@ public abstract class BDDFactory {
      * instance the current number of variables is 3 and neworder contains
      * [1; 0; 2] then the new variable order is v1<v0<v2.
      * 
-     * @param neworder
+     * @param neworder  new variable order
      */
     public abstract void setVarOrder(int[] neworder);
-
 
     
     /**** VARIABLE BLOCKS ****/
