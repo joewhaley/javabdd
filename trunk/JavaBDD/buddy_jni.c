@@ -1863,16 +1863,17 @@ JNIEXPORT jintArray JNICALL Java_org_sf_javabdd_BuDDyFactory_00024BuDDyBDD_scanS
 /*
  * Class:     org_sf_javabdd_BuDDyFactory_BuDDyBDD
  * Method:    scanVar
- * Signature: (I)I
+ * Signature: (Lorg/sf/javabdd/BDDDomain;)I
  */
 JNIEXPORT jint JNICALL Java_org_sf_javabdd_BuDDyFactory_00024BuDDyBDD_scanVar
-  (JNIEnv *env, jobject o, jint i)
+  (JNIEnv *env, jobject o, jobject p)
 {
   BDD b = BDD_JavaToC(env, o);
+  int domain = Domain_JavaToC(env, p);
 #if defined(TRACE_BUDDYLIB)
-  printf("fdd_scanvar(%d, %d)\n", b, i);
+  printf("fdd_scanvar(%d, %d)\n", b, domain);
 #endif
-  jint result = fdd_scanvar(b, i);
+  jint result = fdd_scanvar(b, domain);
   return result;
 }
 

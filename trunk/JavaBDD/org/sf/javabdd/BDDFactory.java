@@ -543,6 +543,12 @@ public abstract class BDDFactory {
      */
     public abstract int numberOfDomains();
     
+    /**
+     * Returns the ith finite domain block, as defined by calls to
+     * extDomain().
+     */
+    public abstract BDDDomain getDomain(int i);
+    
     // TODO: fdd_file_hook, fdd_strm_hook
     
     /**
