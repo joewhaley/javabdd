@@ -485,7 +485,7 @@ JNIEXPORT jobject JNICALL Java_org_sf_javabdd_BuDDyFactory_makePair
 
   cls = (*env)->FindClass(env, "org/sf/javabdd/BuDDyFactory$BuDDyBDDPairing");
   if (cls != NULL) {
-    jmethodID mid = (*env)->GetMethodID(env, cls, "<init>", "(I)V");
+    jmethodID mid = (*env)->GetMethodID(env, cls, "<init>", "(J)V");
     if (mid != NULL) {
       bddPair* pair = bdd_newpair();
       jlong param = (jlong) pair;
@@ -838,6 +838,120 @@ JNIEXPORT void JNICALL Java_org_sf_javabdd_BuDDyFactory_printStat
 {
   bdd_printstat();
   check_error(env);
+}
+
+/*
+ * Class:     org_sf_javabdd_BuDDyFactory
+ * Method:    extDomain
+ * Signature: ([I)[Lorg/sf/javabdd/BDDDomain;
+ */
+JNIEXPORT jobjectArray JNICALL Java_org_sf_javabdd_BuDDyFactory_extDomain
+  (JNIEnv *env, jobject o, jintArray arr)
+{
+  int i, domnum;
+  jint *a;
+  jobjectArray result;
+  jclass cls;
+  jmethodID mid;
+  jint size = (*env)->GetArrayLength(env, arr);
+  a = (*env)->GetPrimitiveArrayCritical(env, arr, NULL);
+  domnum = fdd_extdomain((int*)a, size);
+  (*env)->ReleasePrimitiveArrayCritical(env, arr, a, JNI_ABORT);
+  if (check_error(env)) return NULL;
+
+  cls = (*env)->FindClass(env, "org/sf/javabdd/BuDDyFactory$BuDDyBDDDomain");
+  if (cls == NULL) return NULL;
+  mid = (*env)->GetMethodID(env, cls, "<init>", "(I)V");
+  if (mid == NULL) return NULL;
+  result = (*env)->NewObjectArray(env, size, cls, NULL);
+  if (result == NULL) return NULL;
+  for (i=0; i<size; ++i) {
+    jobject obj = (*env)->NewObject(env, cls, mid, domnum+i);
+    if (obj == NULL) return NULL;
+    (*env)->SetObjectArrayElement(env, result, i, obj);
+    (*env)->DeleteLocalRef(env, obj);
+  }
+  (*env)->DeleteLocalRef(env, cls);
+  return result;
+}
+
+/*
+ * Class:     org_sf_javabdd_BuDDyFactory
+ * Method:    overlapDomain
+ * Signature: (Lorg/sf/javabdd/BDDDomain;Lorg/sf/javabdd/BDDDomain;)Lorg/sf/javabdd/BDDDomain;
+ */
+JNIEXPORT jobject JNICALL Java_org_sf_javabdd_BuDDyFactory_overlapDomain
+  (JNIEnv *env, jobject o, jobject dom1, jobject dom2)
+{
+  jclass cls;
+  jmethodID mid;
+  jobject result;
+  int d1 = Domain_JavaToC(env, dom1);
+  int d2 = Domain_JavaToC(env, dom2);
+  int d3 = fdd_overlapdomain(d1, d2);
+  if (check_error(env)) return NULL;
+  cls = (*env)->FindClass(env, "org/sf/javabdd/BuDDyFactory$BuDDyBDDDomain");
+  if (cls == NULL) return NULL;
+  mid = (*env)->GetMethodID(env, cls, "<init>", "(I)V");
+  if (mid == NULL) return NULL;
+  result = (*env)->NewObject(env, cls, mid, d3);
+  (*env)->DeleteLocalRef(env, cls);
+  return result;
+}
+
+/*
+ * Class:     org_sf_javabdd_BuDDyFactory
+ * Method:    makeSet
+ * Signature: ([Lorg/sf/javabdd/BDDDomain;)Lorg/sf/javabdd/BDD;
+ */
+JNIEXPORT jobject JNICALL Java_org_sf_javabdd_BuDDyFactory_makeSet___3Lorg_sf_javabdd_BDDDomain_2
+  (JNIEnv *env, jobject o, jobjectArray arr)
+{
+  int *a;
+  jint size = (*env)->GetArrayLength(env, arr);
+  int i;
+  bdd b;
+  jobject result;
+  a = (int*) malloc(size * sizeof(int*));
+  for (i=0; i<size; ++i) {
+    jobject obj = (*env)->GetObjectArrayElement(env, arr, i);
+    a[i] = Domain_JavaToC(env, obj);
+    (*env)->DeleteLocalRef(env, obj);
+  }
+  b = fdd_makeset(a, size);
+  free(a);
+  if (check_error(env)) return NULL;
+  result = BDD_CToJava(env, b);
+  return result;
+}
+
+/*
+ * Class:     org_sf_javabdd_BuDDyFactory
+ * Method:    clearAllDomains
+ * Signature: ()V
+ */
+JNIEXPORT void JNICALL Java_org_sf_javabdd_BuDDyFactory_clearAllDomains
+  (JNIEnv *env, jobject o)
+{
+  fdd_clearall();
+}
+
+/*
+
+ * Class:     org_sf_javabdd_BuDDyFactory
+
+ * Method:    numberOfDomains
+
+ * Signature: ()I
+
+ */
+
+JNIEXPORT jint JNICALL Java_org_sf_javabdd_BuDDyFactory_numberOfDomains
+
+  (JNIEnv *env, jobject o)
+{
+  jint result = fdd_domainnum();
+  return result;
 }
 
 /* class org_sf_javabdd_BuDDyFactory_BuDDyBDD */
