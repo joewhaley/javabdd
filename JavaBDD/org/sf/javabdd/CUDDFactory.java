@@ -359,6 +359,7 @@ public class CUDDFactory extends BDDFactory {
     static class CUDDBDD extends BDD {
 
         private long _ddnode_ptr;
+        static final long INVALID_BDD = -1;
         
         private CUDDBDD(long ddnode) {
             this._ddnode_ptr = ddnode;
@@ -611,16 +612,27 @@ public class CUDDFactory extends BDDFactory {
          */
         protected native void delRef();
 
-        static final boolean USE_FINALIZER = true;
+        static final boolean USE_FINALIZER = false;
         
+        /* (non-Javadoc)
+         * @see java.lang.Object#finalize()
+         */
         protected void finalize() throws Throwable {
             super.finalize();
             if (USE_FINALIZER) {
                 if (false && _ddnode_ptr >= 0) {
                     System.out.println("BDD not freed! "+System.identityHashCode(this));
                 }
-                this.delRef();
+                this.free();
             }
+        }
+        
+        /* (non-Javadoc)
+         * @see org.sf.javabdd.BDD#free()
+         */
+        public void free() {
+            delRef();
+            _ddnode_ptr = INVALID_BDD;
         }
     }
     
