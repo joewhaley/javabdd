@@ -1187,6 +1187,8 @@ public class JFactory extends BDDFactory {
             break;
         }
 
+        //validate(res);
+        
         checkresize();
         return res;
     }
@@ -2806,6 +2808,8 @@ public class JFactory extends BDDFactory {
             gcstats.num = gbcollectnum;
             gbc_handler(false, gcstats);
         }
+        
+        //validate_all();
     }
 
     int bdd_addref(int root) {
@@ -3231,6 +3235,7 @@ public class JFactory extends BDDFactory {
         BddCache_done(appexcache); appexcache = null;
         BddCache_done(replacecache); replacecache = null;
         BddCache_done(misccache); misccache = null;
+        BddCache_done(countcache); countcache = null;
 
         if (supportSet != null) {
             free(supportSet);
@@ -5990,7 +5995,38 @@ public class JFactory extends BDDFactory {
         CacheStats s = cachestats;
         out.print(s.toString());
     }
+    
+    public void validateAll() {
+        validate_all();
+    }
 
+    public void validateBDD(BDD b) {
+        validate(((bdd)b)._index);
+    }
+    
+    void validate_all() {
+        int n;
+        for (n = bddnodesize - 1; n >= 2; n--) {
+            if (HASREF(n)) {
+                validate(n);
+            }
+        }
+    }
+    void validate(int k) {
+        validate(k, -1);
+    }
+    void validate(int k, int lastLevel) {
+        if (k < 2) return;
+        int lev = LEVEL(k);
+        //System.out.println("Level("+k+") = "+lev);
+        if (lev <= lastLevel)
+            throw new BDDException(lev+" <= "+lastLevel);
+        //System.out.println("Low:");
+        validate(LOW(k), lev);
+        //System.out.println("High:");
+        validate(HIGH(k), lev);
+    }
+    
     /* (non-Javadoc)
      * @see net.sf.javabdd.BDDFactory#createDomain(int, java.math.BigInteger)
      */
