@@ -29,6 +29,8 @@ public class JavaFactory extends BDDFactory {
 
     static final boolean VERIFY_ASSERTIONS = false;
     
+    private JavaFactory() { }
+    
     /* (non-Javadoc)
      * @see org.sf.javabdd.BDDFactory#init(int, int)
      */

@@ -31,7 +31,7 @@ public class TypedBDDFactory extends BDDFactory {
     
     BDDFactory factory;
     
-    TypedBDDFactory(BDDFactory f) {
+    public TypedBDDFactory(BDDFactory f) {
         this.factory = f;
     }
     

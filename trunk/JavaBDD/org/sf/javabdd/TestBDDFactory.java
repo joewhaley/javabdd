@@ -23,7 +23,7 @@ public class TestBDDFactory extends BDDFactory {
 
     BDDFactory f1, f2;
 
-    TestBDDFactory(BDDFactory a, BDDFactory b) {
+    public TestBDDFactory(BDDFactory a, BDDFactory b) {
         f1 = a; f2 = b;
     }
 
