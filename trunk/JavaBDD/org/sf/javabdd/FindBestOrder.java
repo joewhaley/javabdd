@@ -114,13 +114,17 @@ public class FindBestOrder {
         } catch (InterruptedException x) {
         }
         t.stop();
+        Thread.yield(); // Help ThreadDeath exception to propagate.
         if (t.totalTime == Long.MAX_VALUE) {
+            System.out.println("Thread taking too long, aborted.");
+            System.out.print("Free memory: "+Runtime.getRuntime().freeMemory());
             b1 = null;
             b2 = null;
             b3 = null;
             bdd = null;
             newbdd = true;
             System.gc();
+            System.out.println(" bytes -> "+Runtime.getRuntime().freeMemory()+" bytes");
         }
         if (t.time < bestCalcTime) {
             bestOrder = varOrder;
