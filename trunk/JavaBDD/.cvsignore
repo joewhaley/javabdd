@@ -1,2 +1,5 @@
 buddy_jni.h
 cudd_jni.h
+*.jar
+buddy22
+cudd-2.3.1
