@@ -127,9 +127,7 @@ JNIEXPORT void JNICALL Java_org_sf_javabdd_CALFactory_done0
     //if (bdds > 0) fprintf(stderr, "Note: %d BDDs still in memory when terminating\n", bdds);
     m = manager;
     manager = NULL; // race condition with delRef
-    printf("Calling Cal_BddManagerQuit(%x)...\n", m);
     Cal_BddManagerQuit(m);
-    printf("done.\n");
 }
 
 /*
@@ -498,10 +496,11 @@ JNIEXPORT jdouble JNICALL Java_org_sf_javabdd_CALFactory_00024CALBDD_satCount0
   (JNIEnv *env, jclass cl, jlong a)
 {
     Cal_Bdd d;
+    double result = 1.0;
+    int k = Cal_BddVars(manager);
+    while (--k >= 0) result *= 2.0;
     d = (Cal_Bdd) (intptr_cast_type) a;
-    printf("satCount not implemented.\n");
-    //return Cudd_CountMinterm(manager, d, varcount);
-    return 0;
+    return Cal_BddSatisfyingFraction(manager, d) * result;
 }
 
 /*
