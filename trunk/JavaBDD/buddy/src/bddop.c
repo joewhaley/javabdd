@@ -852,9 +852,10 @@ static BDD and_itr(BDD l0, BDD r0)
   *s_ptr++ = r0;
   
   while (s_top != s_ptr) {
-    int hash, lev;
+    int lev;
     BDD l1, r1, res1;
     BddCacheData3 *entry;
+    int entryNum;
   outer:
     r1 = *(--s_ptr);
     l1 = *(--s_ptr);
@@ -875,7 +876,8 @@ static BDD and_itr(BDD l0, BDD r0)
 #endif
 #endif
 
-      entry = BddCache_lookup(&andcache, ANDHASH(l1,r1));
+      entryNum = ANDHASH(l1,r1) % andcache.tablesize;
+      entry = &andcache.table[entryNum];
       if (entry->a == l1  &&  entry->b == r1) {
 #ifdef CACHESTATS
 	bddcachestats.opHit++;
@@ -887,7 +889,7 @@ static BDD and_itr(BDD l0, BDD r0)
 #endif
 	*s_ptr++ = l1;
 	*s_ptr++ = r1;
-	*s_ptr++ = (int)(entry - andcache.table);
+	*s_ptr++ = entryNum;
 	if (LEVEL(l1) == LEVEL(r1)) {
 	  *s_ptr++ = LEVEL(l1);
 	  *s_ptr++ = HIGH(l1);
@@ -925,10 +927,10 @@ static BDD and_itr(BDD l0, BDD r0)
       if (lev < 0) {
         goto outer;
       }
-      hash =  *(--s_ptr);
+      entryNum =  *(--s_ptr);
       r1 =  *(--s_ptr);
       l1 =  *(--s_ptr);
-      entry = &andcache.table[hash];
+      entry = &andcache.table[entryNum];
       res1 = bdd_makenode(lev, READREF(2), READREF(1));
       POPREF(2);
       
@@ -2663,18 +2665,30 @@ static int relprod_rec(int l, int r)
    return res;
 }
 
+/* An iterative version of relprod. */
 static int relprod_itr(int l0, int r0)
 {
   int res;
   int* s_top;
   int* s_ptr;
+#if defined(USE_ALLOCA)
   s_top = s_ptr = alloca(bddvarnum * sizeof(int) * 9);
+#else
+  if (gstack_size < bddvarnum) {
+    if (gstack != NULL) free(gstack);
+    if ((gstack=NEW(int,bddvarnum*9)) == NULL)
+      bdd_error(BDD_MEMORY);
+    gstack_size = bddvarnum;
+  }
+  s_top = s_ptr = gstack;
+#endif
   *s_ptr++ = l0;
   *s_ptr++ = r0;
   
   while (s_top != s_ptr) {
-    int hash, lev, l1, r1, res1;
+    int lev, l1, r1, res1;
     BddCacheData4 *entry;
+    int entryNum;
   outer:
     r1 = *(--s_ptr);
     l1 = *(--s_ptr);
@@ -2706,7 +2720,8 @@ static int relprod_itr(int l0, int r0)
 #endif
 	applyop = bddop_or;
       } else {
-	entry = BddCache_lookup(&appexcache, APPEXHASH(l1,r1,bddop_and));
+        entryNum = APPEXHASH(l1,r1,bddop_and) % appexcache.tablesize;
+        entry = &appexcache.table[entryNum];
 	if (entry->a == l1  &&  entry->b == r1  &&  entry->r.c == appexid) {
 #ifdef CACHESTATS
 	  bddcachestats.opHit++;
@@ -2718,7 +2733,7 @@ static int relprod_itr(int l0, int r0)
 #endif
 	  *s_ptr++ = l1;
 	  *s_ptr++ = r1;
-	  *s_ptr++ = (int)(entry - appexcache.table);
+	  *s_ptr++ = entryNum;
 	  if (LEVEL(l1) == LEVEL(r1)) {
 	    *s_ptr++ = LEVEL(l1);
 	    *s_ptr++ = HIGH(l1);
@@ -2757,10 +2772,10 @@ static int relprod_itr(int l0, int r0)
       if (lev < 0) {
         goto outer;
       }
-      hash =  *(--s_ptr);
-      r1 =  *(--s_ptr);
-      l1 =  *(--s_ptr);
-      entry = &appexcache.table[hash];
+      entryNum = *(--s_ptr);
+      r1 = *(--s_ptr);
+      l1 = *(--s_ptr);
+      entry = &appexcache.table[entryNum];
       if (INVARSET(lev)) {
 #if defined(SPECIALIZE_OR)
         res1 = or_rec(READREF(2), READREF(1));
