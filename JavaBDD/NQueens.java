@@ -62,8 +62,7 @@ public class NQueens {
         /* Build requirements for each variable(field) */
         for (i = 0; i < N; i++)
             for (j = 0; j < N; j++) {
-                System.out.println("Adding position " + i + "," + j);
-                System.out.flush();
+                System.out.print("Adding position " + i + "," + j+"\r");
                 build(i, j);
             }
 
