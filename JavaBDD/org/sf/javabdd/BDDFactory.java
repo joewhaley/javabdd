@@ -12,17 +12,51 @@ import java.util.Collection;
  */
 public abstract class BDDFactory {
 
+    /**
+     * Logical 'and'.
+     */
     public static final BDDOp and   = new BDDOp(0, "and");
+    /**
+     * Logical 'xor'.
+     */
     public static final BDDOp xor   = new BDDOp(1, "xor");
+    /**
+     * Logical 'or'.
+     */
     public static final BDDOp or    = new BDDOp(2, "or");
+    /**
+     * Logical 'nand'.
+     */
     public static final BDDOp nand  = new BDDOp(3, "nand");
+    /**
+     * Logical 'nor'.
+     */
     public static final BDDOp nor   = new BDDOp(4, "nor");
+    /**
+     * Logical 'implication'.
+     */
     public static final BDDOp imp   = new BDDOp(5, "imp");
+    /**
+     * Logical 'bi-implication'.
+     */
     public static final BDDOp biimp = new BDDOp(6, "biimp");
+    /**
+     * Set difference.
+     */
     public static final BDDOp diff  = new BDDOp(7, "diff");
+    /**
+     * Less than.
+     */
     public static final BDDOp less  = new BDDOp(8, "less");
+    /**
+     * Inverse implication.
+     */
     public static final BDDOp invimp = new BDDOp(9, "invimp");
 
+    /**
+     * Enumeration class for binary operations on BDDs.  Use the static
+     * fields in BDDFactory to access the different binary operations.
+     */
     public static class BDDOp {
         final int id; final String name;
         private BDDOp(int id, String name) {
@@ -71,7 +105,6 @@ public abstract class BDDFactory {
      */
     public abstract BDD makeSet(int[] v);
     
-    // TODO: bdd_scanset
 
     
     /**** STARTUP / SHUTDOWN ****/
@@ -165,7 +198,7 @@ public abstract class BDDFactory {
      * @param num
      */
     public abstract int extVarNum(int num);
-    // TODO: handle error code for extvarnum
+    // TODO: handle error code for extvarnum (?)
     
     /**
      * Returns a BDD representing the I'th variable.  (One node with the
@@ -214,7 +247,7 @@ public abstract class BDDFactory {
      * Compare to bdd_load.
      */
     public abstract BDD load(String filename);
-    // TODO: error code from bdd_load
+    // TODO: error code from bdd_load (?)
     
     /**
      * Saves a BDD to a file.
@@ -222,10 +255,9 @@ public abstract class BDDFactory {
      * Compare to bdd_save.
      */
     public abstract void save(String filename, BDD var);
-    // TODO: error code from bdd_save
+    // TODO: error code from bdd_save (?)
     
     // TODO: bdd_strm_hook, bdd_file_hook, bdd_blockfile_hook
-    // TODO: bdd_varprofile
     // TODO: bdd_versionnum, bdd_versionstr
     
     
@@ -307,7 +339,17 @@ public abstract class BDDFactory {
      */
     public abstract int reorderVerbose(int v);
     
-    // TODO: bdd_setvarorder
+    /**
+     * This function sets the current variable order to be the one defined by
+     * neworder.  The variable parameter neworder is interpreted as a sequence
+     * of variable indices and the new variable order is exactly this sequence.
+     * The array must contain all the variables defined so far. If, for
+     * instance the current number of variables is 3 and neworder contains
+     * [1; 0; 2] then the new variable order is v1<v0<v2.
+     * 
+     * @param neworder
+     */
+    public abstract void setVarOrder(int[] neworder);
 
 
     
@@ -446,7 +488,6 @@ public abstract class BDDFactory {
     
     // TODO: bdd_sizeprobe_hook, bdd_reorder_hook, bdd_resize_hook, bdd_gbc_hook
     // TODO: bdd_reorder_probe
-    // TODO: bdd_error_hook, bdd_clear_error, bdd_errstring
     
     // TODO: bvec functions
 
@@ -503,7 +544,6 @@ public abstract class BDDFactory {
     public abstract int numberOfDomains();
     
     // TODO: fdd_file_hook, fdd_strm_hook
-    // TODO: fdd_intaddvarblock
     
     /**
      * @see java.lang.Object#finalize()
@@ -552,6 +592,10 @@ public abstract class BDDFactory {
      */
     public static final ReorderMethod REORDER_RANDOM  = new ReorderMethod(7, "RANDOM");
     
+    /**
+     * Enumeration class for method reordering techniques.  Use the static fields
+     * in BDDFactory to access the different reordering techniques.
+     */
     public static class ReorderMethod {
         final int id; final String name;
         private ReorderMethod(int id, String name) {

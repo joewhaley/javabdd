@@ -220,6 +220,11 @@ public class BuDDyFactory extends BDDFactory {
     public native int reorderVerbose(int v);
 
     /**
+     * @see org.sf.javabdd.BDDFactory#setVarOrder(int[])
+     */
+    public native void setVarOrder(int[] neworder);
+    
+    /**
      * @see org.sf.javabdd.BDDFactory#addVarBlock(org.sf.javabdd.BDD, boolean)
      */
     public native void addVarBlock(BDD var, boolean fixed);
@@ -303,6 +308,9 @@ public class BuDDyFactory extends BDDFactory {
         return 0;
     }
 
+    /**
+     * An implementation of a BDD class, used by the BuDDy interface.
+     */
     public static class BuDDyBDD extends BDD {
     
         private int _id;
@@ -470,6 +478,11 @@ public class BuDDyFactory extends BDDFactory {
         public native double logSatCount();
         
         /**
+         * @see org.sf.javabdd.BDD#varProfile()
+         */
+        public native int[] varProfile();
+        
+        /**
          * @see org.sf.javabdd.BDD#logSatCount(org.sf.javabdd.BDD)
          */
         public native double logSatCount(BDD varset);
@@ -538,6 +551,9 @@ public class BuDDyFactory extends BDDFactory {
 
     }
     
+    /**
+     * An implementation of a BDDDomain, used by the BuDDy interface.
+     */
     public static class BuDDyBDDDomain extends BDDDomain {
         private int _id;
         
@@ -582,6 +598,9 @@ public class BuDDyFactory extends BDDFactory {
         
     }
     
+    /**
+     * An implementation of a BDDPairing, used by the BuDDy interface.
+     */
     public static class BuDDyBDDPairing extends BDDPairing {
         
         private long _ptr;
