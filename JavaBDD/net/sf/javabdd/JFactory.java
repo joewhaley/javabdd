@@ -3131,14 +3131,14 @@ public class JFactory extends BDDFactory {
 
         if (oldsize > newsize) return 0;
         
-        bddnodesize = newsize;
-        resize_handler(oldsize, bddnodesize);
+        resize_handler(oldsize, newsize);
         
         int[] newnodes;
         int n;
-        newnodes = new int[bddnodesize*__node_size];
+        newnodes = new int[newsize*__node_size];
         System.arraycopy(bddnodes, 0, newnodes, 0, bddnodes.length);
         bddnodes = newnodes;
+        bddnodesize = newsize;
 
         if (doRehash)
             for (n = 0; n < oldsize; n++)
