@@ -125,7 +125,7 @@
 					cudd
 				</td>
 				<td>
-					127s
+					111s
 				</td>
 				<td>
 					171mb
@@ -164,13 +164,16 @@
 		<p><i>Version 0.6 - October 31, 2003</i></p>
 		<ul>
 			<li>
+			Fixed security problems by adding better null and type checking.  It should
+			no longer be possible to crash the VM by passing in unexpected values.
+			<li>
 			Updated API:&nbsp;applyWith(), etc.&nbsp;methods return the&nbsp;'this' 
 			pointer, for easier nested operations.
 			<li>
 			Addition of typed BDD factory, for type checking of BDD code.
 			<li>
-				Code cleanups. BuDDy interface is a few percent faster by moving object 
-				allocations into Java code.</li>
+				Code cleanups. JNI interface was made a few percent faster by moving
+				object allocations into Java code.</li>
 		</ul>
 		<p><i>Version 0.5 - August 4, 2003</i></p>
 		<ul>
