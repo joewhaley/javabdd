@@ -22,14 +22,16 @@
             href="installing.html"/>
       <item name="Performance"
             href="performance.html"/>
+      <item name="Links"
+            href="links.html"/>
     </menu>
     <menu name="Downloads">
       <item name="JavaBDD for Windows"
-            href="http://dl.sourceforge.net/javabdd/javabdd_1.0b1.zip"/>
+            href="http://prdownloads.sourceforge.net/javabdd/javabdd_1.0b1.zip"/>
       <item name="JavaBDD for Linux"
-            href="http://dl.sourceforge.net/javabdd/javabdd_1.0b1.tar.gz"/>
+            href="http://prdownloads.sourceforge.net/javabdd/javabdd_1.0b1.tar.gz"/>
       <item name="JavaBDD Source code"
-            href="http://dl.sourceforge.net/javabdd/javabdd_src_1.0b1.tar.gz"/>
+            href="http://prdownloads.sourceforge.net/javabdd/javabdd_src_1.0b1.tar.gz"/>
     </menu>
   </body>
 </project>
