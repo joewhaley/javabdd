@@ -42,13 +42,29 @@
 /*************************************************************************
 *************************************************************************/
 
-int BddCache_init(BddCache *cache, int size)
+int BddCache3_init(BddCache3 *cache, int size)
 {
    int n;
 
    size = bdd_prime_gte(size);
    
-   if ((cache->table=NEW(BddCacheData,size)) == NULL)
+   if ((cache->table=NEW(BddCacheData3,size)) == NULL)
+      return bdd_error(BDD_MEMORY);
+   
+   for (n=0 ; n<size ; n++)
+      cache->table[n].a = -1;
+   cache->tablesize = size;
+   
+   return 0;
+}
+
+int BddCache4_init(BddCache4 *cache, int size)
+{
+   int n;
+
+   size = bdd_prime_gte(size);
+   
+   if ((cache->table=NEW(BddCacheData4,size)) == NULL)
       return bdd_error(BDD_MEMORY);
    
    for (n=0 ; n<size ; n++)
@@ -59,7 +75,7 @@ int BddCache_init(BddCache *cache, int size)
 }
 
 
-void BddCache_done(BddCache *cache)
+void BddCache3_done(BddCache3 *cache)
 {
    free(cache->table);
    cache->table = NULL;
@@ -67,7 +83,15 @@ void BddCache_done(BddCache *cache)
 }
 
 
-int BddCache_resize(BddCache *cache, int newsize)
+void BddCache4_done(BddCache4 *cache)
+{
+   free(cache->table);
+   cache->table = NULL;
+   cache->tablesize = 0;
+}
+
+
+int BddCache3_resize(BddCache3 *cache, int newsize)
 {
    int n;
 
@@ -75,7 +99,25 @@ int BddCache_resize(BddCache *cache, int newsize)
 
    newsize = bdd_prime_gte(newsize);
    
-   if ((cache->table=NEW(BddCacheData,newsize)) == NULL)
+   if ((cache->table=NEW(BddCacheData3,newsize)) == NULL)
+      return bdd_error(BDD_MEMORY);
+   
+   for (n=0 ; n<newsize ; n++)
+      cache->table[n].a = -1;
+   cache->tablesize = newsize;
+   
+   return 0;
+}
+
+int BddCache4_resize(BddCache4 *cache, int newsize)
+{
+   int n;
+
+   free(cache->table);
+
+   newsize = bdd_prime_gte(newsize);
+   
+   if ((cache->table=NEW(BddCacheData4,newsize)) == NULL)
       return bdd_error(BDD_MEMORY);
    
    for (n=0 ; n<newsize ; n++)
@@ -86,7 +128,14 @@ int BddCache_resize(BddCache *cache, int newsize)
 }
 
 
-void BddCache_reset(BddCache *cache)
+void BddCache3_reset(BddCache3 *cache)
+{
+   register int n;
+   for (n=0 ; n<cache->tablesize ; n++)
+      cache->table[n].a = -1;
+}
+
+void BddCache4_reset(BddCache4 *cache)
 {
    register int n;
    for (n=0 ; n<cache->tablesize ; n++)
