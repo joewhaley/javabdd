@@ -37,11 +37,10 @@ public class FindBestOrder {
     int cacheSize;
     int maxIncrease;
 
-    public FindBestOrder(BDD b1, BDD b2, BDD dom, BDDFactory.BDDOp op,
-                         int nodeTableSize,
-                         int cacheSize, int maxIncrease, long bestTime, long delayTime)
-        throws IOException {
-        this.op = op;
+    File f0, f1, f2, f3;
+    
+    public FindBestOrder(int nodeTableSize, int cacheSize, int maxIncrease,
+                         long bestTime, long delayTime) {
         this.bestCalcTime = bestTime;
         this.bestTotalTime = Long.MAX_VALUE;
         //this.nodeTableSize = b1.getFactory().getAllocNum();
@@ -49,22 +48,36 @@ public class FindBestOrder {
         this.cacheSize = cacheSize;
         this.maxIncrease = maxIncrease;
         this.DELAY_TIME = delayTime;
-        File f = File.createTempFile("fbo", "a");
-        filename0 = f.getAbsolutePath();
-        f.deleteOnExit();
-        f = File.createTempFile("fbo", "b");
-        filename1 = f.getAbsolutePath();
-        f.deleteOnExit();
-        f = File.createTempFile("fbo", "c");
-        filename2 = f.getAbsolutePath();
-        f.deleteOnExit();
-        f = File.createTempFile("fbo", "d");
-        filename3 = f.getAbsolutePath();
-        f.deleteOnExit();
+    }
+    
+    public void init(BDD b1, BDD b2, BDD dom, BDDFactory.BDDOp op) throws IOException {
+        this.op = op;
+        f0 = File.createTempFile("fbo", "a");
+        filename0 = f0.getAbsolutePath();
+        f0.deleteOnExit();
+        f1 = File.createTempFile("fbo", "b");
+        filename1 = f1.getAbsolutePath();
+        f1.deleteOnExit();
+        f2 = File.createTempFile("fbo", "c");
+        filename2 = f2.getAbsolutePath();
+        f2.deleteOnExit();
+        f3 = File.createTempFile("fbo", "d");
+        filename3 = f3.getAbsolutePath();
+        f3.deleteOnExit();
+        //System.out.print("Writing BDDs to files...");
         writeBDDConfig(b1.getFactory(), filename0);
         b1.getFactory().save(filename1, b1);
         b2.getFactory().save(filename2, b2);
         dom.getFactory().save(filename3, dom);
+        //System.out.println("done.");
+    }
+    
+    public void cleanup() {
+        //System.out.println("Cleaning up temporary files.");
+        f0.delete();
+        f1.delete();
+        f2.delete();
+        f3.delete();
     }
     
     public void writeBDDConfig(BDDFactory bdd, String fileName) throws IOException {
