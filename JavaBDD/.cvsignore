@@ -1,5 +1,8 @@
 buddy_jni.h
 cudd_jni.h
 *.jar
+*.dll
+*.ext
+*.lib
 buddy22
 cudd-2.3.1
