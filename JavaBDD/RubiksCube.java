@@ -220,7 +220,7 @@ public class RubiksCube {
 
     static void p(BDD b, int d) {
         BDDDomain dom = bdd.getDomain(d);
-        int v = b.scanVar(dom);
+        int v = (int) b.scanVar(dom);
         String s = Integer.toString(v);
         s = "   ".substring(s.length())+s;
         System.out.print(s);

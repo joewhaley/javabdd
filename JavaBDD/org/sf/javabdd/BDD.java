@@ -509,7 +509,7 @@ public abstract class BDD {
     }
 
     /**
-     * <p>Scans this BDD and copies the stored variables into an integer array of
+     * <p>Scans this BDD and copies the stored variables into a integer array of
      * variable numbers.  The numbers returned are guaranteed to be in
      * ascending order.</p>
      * 
@@ -572,11 +572,11 @@ public abstract class BDD {
      * @param d domain to scan
      * @return one satisfying assignment for that domain
      */
-    public int scanVar(BDDDomain d) {
+    public long scanVar(BDDDomain d) {
         if (this.isZero())
            return -1;
-        int[] allvar = this.scanAllVar();
-        int res = allvar[d.getIndex()];
+        long[] allvar = this.scanAllVar();
+        long res = allvar[d.getIndex()];
         return res;
     }
     
@@ -589,10 +589,10 @@ public abstract class BDD {
      * 
      * @return int[] containing one satisfying assignment of all the defined domains
      */
-    public int[] scanAllVar() {
+    public long[] scanAllVar() {
         int n;
         boolean[] store;
-        int[] res;
+        long[] res;
         BDD p = this;
 
         if (this.isZero())
@@ -614,13 +614,13 @@ public abstract class BDD {
         }
 
         int fdvarnum = factory.numberOfDomains();
-        res = new int[fdvarnum];
+        res = new long[fdvarnum];
 
         for (n = 0; n < fdvarnum; n++) {
             BDDDomain dom = factory.getDomain(n);
             int[] ivar = dom.vars();
 
-            int val = 0;
+            long val = 0;
             for (int m = dom.varNum() - 1; m >= 0; m--)
                 if (store[ivar[m]])
                     val = val * 2 + 1;
