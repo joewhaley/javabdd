@@ -45,29 +45,28 @@ public class BuDDyFactory extends BDDFactory {
     /**
      * @see org.sf.javabdd.BDDFactory#zero()
      */
-    public BDD zero() { return _getZero(); }
-
-    protected native BuDDyBDD _getZero();
+    public BDD zero() { return new BuDDyBDD(0); }
 
     /**
      * @see org.sf.javabdd.BDDFactory#one()
      */
-    public BDD one() { return _getOne(); }
-
-    protected native BuDDyBDD _getOne();
+    public BDD one() { return new BuDDyBDD(1); }
     
     /**
      * @see org.sf.javabdd.BDDFactory#buildCube(int, int, java.util.Collection)
      */
     public BDD buildCube(int value, int width, Collection var) {
-        return this.buildCube(value, width, (BuDDyBDD[]) var.toArray(new BuDDyBDD[var.size()]));
+        return this.buildCube0(value, width, (BuDDyBDD[]) var.toArray(new BuDDyBDD[var.size()]));
     }
-    private native BuDDyBDD buildCube(int value, int width, BuDDyBDD[] var);
+    protected native BuDDyBDD buildCube0(int value, int width, BuDDyBDD[] var);
 
     /**
      * @see org.sf.javabdd.BDDFactory#buildCube(int, int, int[])
      */
-    public native BDD buildCube(int value, int width, int[] var);
+    public BDD buildCube(int value, int width, int[] var) {
+        return buildCube1(value, width, var);
+    }
+    protected native BDD buildCube1(int value, int width, int[] var);
 
     /**
      * @see org.sf.javabdd.BDDFactory#makeSet(int[])
@@ -89,10 +88,9 @@ public class BuDDyFactory extends BDDFactory {
      */
     public void done() {
         INSTANCE = null;
-        _done();
+        done0();
     }
-
-    protected native void _done();
+    protected native void done0();
 
     /**
      * @see org.sf.javabdd.BDDFactory#setMaxNodeNum(int)
@@ -157,8 +155,8 @@ public class BuDDyFactory extends BDDFactory {
     /**
      * @see org.sf.javabdd.BDDFactory#printTable(org.sf.javabdd.BDD)
      */
-    public void printTable(BDD b) { printTable((BuDDyBDD) b); }
-    private native void printTable(BuDDyBDD b);
+    public void printTable(BDD b) { printTable0((BuDDyBDD) b); }
+    protected native void printTable0(BuDDyBDD b);
 
     /**
      * @see org.sf.javabdd.BDDFactory#load(java.lang.String)
@@ -168,8 +166,8 @@ public class BuDDyFactory extends BDDFactory {
     /**
      * @see org.sf.javabdd.BDDFactory#save(java.lang.String, org.sf.javabdd.BDD)
      */
-    public void save(String filename, BDD v) { save(filename, (BuDDyBDD) v); }
-    public native void save(String filename, BuDDyBDD v);
+    public void save(String filename, BDD v) { save0(filename, (BuDDyBDD) v); }
+    protected native void save0(String filename, BuDDyBDD v);
 
     /**
      * @see org.sf.javabdd.BDDFactory#level2Var(int)
@@ -189,12 +187,18 @@ public class BuDDyFactory extends BDDFactory {
     /**
      * @see org.sf.javabdd.BDDFactory#autoReorder(org.sf.javabdd.BDDFactory.ReorderMethod)
      */
-    public native void autoReorder(BDDFactory.ReorderMethod method);
+    public void autoReorder(BDDFactory.ReorderMethod method) {
+        autoReorder0(method);
+    }
+    protected native void autoReorder0(BDDFactory.ReorderMethod method);
 
     /**
      * @see org.sf.javabdd.BDDFactory#autoReorder(org.sf.javabdd.BDDFactory.ReorderMethod, int)
      */
-    public native void autoReorder(BDDFactory.ReorderMethod method, int max);
+    public void autoReorder(BDDFactory.ReorderMethod method, int max) {
+        autoReorder1(method, max);
+    }
+    protected native void autoReorder1(BDDFactory.ReorderMethod method, int max);
 
     /**
      * @see org.sf.javabdd.BDDFactory#getReorderMethod()
@@ -229,13 +233,16 @@ public class BuDDyFactory extends BDDFactory {
     /**
      * @see org.sf.javabdd.BDDFactory#addVarBlock(org.sf.javabdd.BDD, boolean)
      */
-    public void addVarBlock(BDD var, boolean fixed) { addVarBlock((BuDDyBDD) var, fixed); }
-    private native void addVarBlock(BuDDyBDD var, boolean fixed);
+    public void addVarBlock(BDD var, boolean fixed) { addVarBlock0((BuDDyBDD) var, fixed); }
+    private native void addVarBlock0(BuDDyBDD var, boolean fixed);
 
     /**
      * @see org.sf.javabdd.BDDFactory#addVarBlock(int, int, boolean)
      */
-    public native void addVarBlock(int first, int last, boolean fixed);
+    public void addVarBlock(int first, int last, boolean fixed) {
+        addVarBlock1(first, last, fixed);
+    }
+    protected native void addVarBlock1(int first, int last, boolean fixed);
 
     /**
      * @see org.sf.javabdd.BDDFactory#varBlockAll()
@@ -327,6 +334,20 @@ public class BuDDyFactory extends BDDFactory {
         }
         
         /**
+         * @see org.sf.javabdd.BDD#isZero()
+         */
+        public boolean isZero() {
+            return _id == 0;
+        }
+        
+        /**
+         * @see org.sf.javabdd.BDD#isOne()
+         */
+        public boolean isOne() {
+            return _id == 1;
+        }
+        
+        /**
          * @see org.sf.javabdd.BDD#var()
          */
         public native int var();
@@ -355,73 +376,73 @@ public class BuDDyFactory extends BDDFactory {
          * @see org.sf.javabdd.BDD#ite(org.sf.javabdd.BDD, org.sf.javabdd.BDD)
          */
         public BDD ite(BDD thenBDD, BDD elseBDD) {
-            return ite((BuDDyBDD) thenBDD, (BuDDyBDD) elseBDD);
+            return ite0((BuDDyBDD) thenBDD, (BuDDyBDD) elseBDD);
         }
-        private native BuDDyBDD ite(BuDDyBDD thenBDD, BuDDyBDD elseBDD);
+        protected native BuDDyBDD ite0(BuDDyBDD thenBDD, BuDDyBDD elseBDD);
         
         /**
          * @see org.sf.javabdd.BDD#relprod(org.sf.javabdd.BDD, org.sf.javabdd.BDD)
          */
         public BDD relprod(BDD that, BDD var) {
-            return relprod((BuDDyBDD) that, var);
+            return relprod0((BuDDyBDD) that, (BuDDyBDD) var);
         }
-        public native BuDDyBDD relprod(BuDDyBDD that, BuDDyBDD var);
+        protected native BuDDyBDD relprod0(BuDDyBDD that, BuDDyBDD var);
         
         /**
          * @see org.sf.javabdd.BDD#compose(org.sf.javabdd.BDD, int)
          */
         public BDD compose(BDD that, int var) {
-            return compose((BuDDyBDD) that, var);
+            return compose0((BuDDyBDD) that, var);
         }
-        public native BuDDyBDD compose(BuDDyBDD that, int var);
+        protected native BuDDyBDD compose0(BuDDyBDD that, int var);
         
         /**
          * @see org.sf.javabdd.BDD#constrain(org.sf.javabdd.BDD)
          */
         public BDD constrain(BDD that) {
-            return constrain((BuDDyBDD) that);
+            return constrain0((BuDDyBDD) that);
         }
-        public native BuDDyBDD constrain(BuDDyBDD that);
+        protected native BuDDyBDD constrain0(BuDDyBDD that);
         
         /**
          * @see org.sf.javabdd.BDD#exist(org.sf.javabdd.BDD)
          */
         public BDD exist(BDD var) {
-            return exist((BuDDyBDD) var);
+            return exist0((BuDDyBDD) var);
         }
-        public native BuDDyBDD exist(BuDDyBDD var);
+        protected native BuDDyBDD exist0(BuDDyBDD var);
         
         /**
          * @see org.sf.javabdd.BDD#forAll(org.sf.javabdd.BDD)
          */
         public BDD forAll(BDD var) {
-            return forAll((BuDDyBDD) var);
+            return forAll0((BuDDyBDD) var);
         }
-        public native BuDDyBDD forAll(BuDDyBDD var);
+        protected native BuDDyBDD forAll0(BuDDyBDD var);
         
         /**
          * @see org.sf.javabdd.BDD#unique(org.sf.javabdd.BDD)
          */
         public BDD unique(BDD var) {
-            return unique((BuDDyBDD) var);
+            return unique0((BuDDyBDD) var);
         }
-        public native BuDDyBDD unique(BuDDyBDD var);
+        protected native BuDDyBDD unique0(BuDDyBDD var);
         
         /**
          * @see org.sf.javabdd.BDD#restrict(org.sf.javabdd.BDD)
          */
         public BDD restrict(BDD var) {
-            return restrict((BuDDyBDD) var);
+            return restrict0((BuDDyBDD) var);
         }
-        public native BuDDyBDD restrict(BuDDyBDD var);
+        protected native BuDDyBDD restrict0(BuDDyBDD var);
         
         /**
          * @see org.sf.javabdd.BDD#simplify(org.sf.javabdd.BDD)
          */
         public BDD simplify(BDD d) {
-            return simplify((BuDDyBDD) d);
+            return simplify0((BuDDyBDD) d);
         }
-        public native BuDDyBDD simplify(BuDDyBDD d);
+        protected native BuDDyBDD simplify0(BuDDyBDD d);
         
         /**
          * @see org.sf.javabdd.BDD#support()
@@ -432,41 +453,41 @@ public class BuDDyFactory extends BDDFactory {
          * @see org.sf.javabdd.BDD#apply(org.sf.javabdd.BDD, org.sf.javabdd.BDDFactory.BDDOp)
          */
         public BDD apply(BDD that, BDDFactory.BDDOp opr) {
-            return apply((BuDDyBDD) that, opr);
+            return apply0((BuDDyBDD) that, opr);
         }
-        public native BuDDyBDD apply(BuDDyBDD that, BDDFactory.BDDOp opr);
+        protected native BuDDyBDD apply0(BuDDyBDD that, BDDFactory.BDDOp opr);
         
         /**
          * @see org.sf.javabdd.BDD#applyWith(org.sf.javabdd.BDD, org.sf.javabdd.BDDFactory.BDDOp)
          */
         public void applyWith(BDD that, BDDFactory.BDDOp opr) {
-            applyWith((BuDDyBDD) that, opr);
+            applyWith0((BuDDyBDD) that, opr);
         }
-        public native void applyWith(BuDDyBDD that, BDDFactory.BDDOp opr);
+        protected native void applyWith0(BuDDyBDD that, BDDFactory.BDDOp opr);
         
         /**
          * @see org.sf.javabdd.BDD#applyAll(org.sf.javabdd.BDD, org.sf.javabdd.BDDFactory.BDDOp, org.sf.javabdd.BDD)
          */
         public BDD applyAll(BDD that, BDDFactory.BDDOp opr, BDD var) {
-            return applyAll((BuDDyBDD) that, opr, (BuDDyBDD) var);
+            return applyAll0((BuDDyBDD) that, opr, (BuDDyBDD) var);
         }
-        public native BuDDyBDD applyAll(BuDDyBDD that, BDDFactory.BDDOp opr, BuDDyBDD var);
+        protected native BuDDyBDD applyAll0(BuDDyBDD that, BDDFactory.BDDOp opr, BuDDyBDD var);
         
         /**
          * @see org.sf.javabdd.BDD#applyEx(org.sf.javabdd.BDD, org.sf.javabdd.BDDFactory.BDDOp, org.sf.javabdd.BDD)
          */
         public BDD applyEx(BDD that, BDDFactory.BDDOp opr, BDD var) {
-            return applyEx((BuDDyBDD) that, opr, (BuDDyBDD) var);
+            return applyEx0((BuDDyBDD) that, opr, (BuDDyBDD) var);
         }
-        public native BuDDyBDD applyEx(BuDDyBDD that, BDDFactory.BDDOp opr, BuDDyBDD var);
+        protected native BuDDyBDD applyEx0(BuDDyBDD that, BDDFactory.BDDOp opr, BuDDyBDD var);
         
         /**
          * @see org.sf.javabdd.BDD#applyUni(org.sf.javabdd.BDD, org.sf.javabdd.BDDFactory.BDDOp, org.sf.javabdd.BDD)
          */
         public BDD applyUni(BDD that, BDDFactory.BDDOp opr, BDD var) {
-            return applyUni((BuDDyBDD) that, opr, (BuDDyBDD) var);
+            return applyUni0((BuDDyBDD) that, opr, (BuDDyBDD) var);
         }
-        public native BuDDyBDD applyUni(BuDDyBDD that, BDDFactory.BDDOp opr, BuDDyBDD var);
+        protected native BuDDyBDD applyUni0(BuDDyBDD that, BDDFactory.BDDOp opr, BuDDyBDD var);
         
         /**
          * @see org.sf.javabdd.BDD#satOne()
@@ -482,18 +503,17 @@ public class BuDDyFactory extends BDDFactory {
          * @see org.sf.javabdd.BDD#satOneSet(org.sf.javabdd.BDD, org.sf.javabdd.BDD)
          */
         public BDD satOneSet(BDD var, BDD pol) {
-            return satOneSet((BuDDyBDD) var, (BuDDyBDD) pol);
+            return satOneSet0((BuDDyBDD) var, (BuDDyBDD) pol);
         }
-        public native BuDDyBDD satOneSet(BuDDyBDD var, BuDDyBDD pol);
+        protected native BuDDyBDD satOneSet0(BuDDyBDD var, BuDDyBDD pol);
         
         /**
          * @see org.sf.javabdd.BDD#allsat()
          */
         public List allsat() {
-            return Arrays.asList(_allsat());
+            return Arrays.asList(allsat0());
         }
-        
-        protected native byte[][] _allsat();
+        protected native byte[][] allsat0();
         
         /**
          * @see org.sf.javabdd.BDD#printSet()
@@ -518,33 +538,39 @@ public class BuDDyFactory extends BDDFactory {
         /**
          * @see org.sf.javabdd.BDD#satCount()
          */
-        public native double satCount();
+        public double satCount() {
+            return satCount0();
+        }
+        protected native double satCount0();
         
         /**
          * @see org.sf.javabdd.BDD#satCount(org.sf.javabdd.BDD)
          */
         public double satCount(BDD varset) {
-            return satCount((BuDDyBDD) varset);
+            return satCount1((BuDDyBDD) varset);
         }
-        public native double satCount(BuDDyBDD varset);
+        protected native double satCount1(BuDDyBDD varset);
         
         /**
          * @see org.sf.javabdd.BDD#logSatCount()
          */
-        public native double logSatCount();
-        
-        /**
-         * @see org.sf.javabdd.BDD#varProfile()
-         */
-        public native int[] varProfile();
+        public double logSatCount() {
+            return logSatCount0();
+        }
+        protected native double logSatCount0();
         
         /**
          * @see org.sf.javabdd.BDD#logSatCount(org.sf.javabdd.BDD)
          */
         public double logSatCount(BDD varset) {
-            return logSatCount((BuDDyBDD) varset);
+            return logSatCount1((BuDDyBDD) varset);
         }
-        public native double logSatCount(BuDDyBDD varset);
+        protected native double logSatCount1(BuDDyBDD varset);
+        
+        /**
+         * @see org.sf.javabdd.BDD#varProfile()
+         */
+        public native int[] varProfile();
         
         /**
          * @see org.sf.javabdd.BDD#addRef()
@@ -568,9 +594,9 @@ public class BuDDyFactory extends BDDFactory {
          * @see org.sf.javabdd.BDD#veccompose(org.sf.javabdd.BDDPairing)
          */
         public BDD veccompose(BDDPairing pair) {
-            return veccompose((BuDDyBDDPairing) pair);
+            return veccompose0((BuDDyBDDPairing) pair);
         }
-        public native BuDDyBDD veccompose(BuDDyBDDPairing pair);
+        protected native BuDDyBDD veccompose0(BuDDyBDDPairing pair);
         
         /**
          * @see org.sf.javabdd.BDD#scanSet()
@@ -586,9 +612,9 @@ public class BuDDyFactory extends BDDFactory {
          * @see org.sf.javabdd.BDD#scanVar(org.sf.javabdd.BDDDomain)
          */
         public int scanVar(BDDDomain var) {
-            return scanVar((BuDDyBDDDomain) var);
+            return scanVar0((BuDDyBDDDomain) var);
         }
-        public native int scanVar(BuDDyBDDDomain var);
+        protected native int scanVar0(BuDDyBDDDomain var);
         
         /**
          * @see org.sf.javabdd.BDD#scanAllVar()
@@ -599,9 +625,17 @@ public class BuDDyFactory extends BDDFactory {
          * @see org.sf.javabdd.BDD#replace(org.sf.javabdd.BDDPairing)
          */
         public BDD replace(BDDPairing pair) {
-            return replace((BuDDyBDDPairing) pair);
+            return replace0((BuDDyBDDPairing) pair);
         }
-        public native BuDDyBDD replace(BuDDyBDDPairing pair);
+        protected native BuDDyBDD replace0(BuDDyBDDPairing pair);
+        
+        /**
+         * @see org.sf.javabdd.BDD#replaceWith(org.sf.javabdd.BDDPairing)
+         */
+        public void replaceWith(BDDPairing pair) {
+            replaceWith0((BuDDyBDDPairing) pair); 
+        }
+        protected native void replaceWith0(BuDDyBDDPairing pair);
         
         /**
          * @see org.sf.javabdd.BDD#printSetWithDomains()
@@ -653,9 +687,9 @@ public class BuDDyFactory extends BDDFactory {
          * @see org.sf.javabdd.BDDDomain#buildEquals(org.sf.javabdd.BDDDomain)
          */
         public BDD buildEquals(BDDDomain that) {
-            return buildEquals((BuDDyBDDDomain) that);
+            return buildEquals0((BuDDyBDDDomain) that);
         }
-        public native BuDDyBDD buildEquals(BuDDyBDDDomain that);
+        protected native BuDDyBDD buildEquals0(BuDDyBDDDomain that);
         
         /**
          * @see org.sf.javabdd.BDDDomain#set()
@@ -714,38 +748,50 @@ public class BuDDyFactory extends BDDFactory {
         /**
          * @see org.sf.javabdd.BDDPairing#set(int, int)
          */
-        public native void set(int oldvar, int newvar);
+        public void set(int oldvar, int newvar) {
+            set0(oldvar, newvar);
+        }
+        protected native void set0(int oldvar, int newvar);
         
         /**
          * @see org.sf.javabdd.BDDPairing#set(int[], int[])
          */
-        public native void set(int[] oldvar, int[] newvar);
+        public void set(int[] oldvar, int[] newvar) {
+            set1(oldvar, newvar);
+        }
+        protected native void set1(int[] oldvar, int[] newvar);
         
         /**
          * @see org.sf.javabdd.BDDPairing#set(org.sf.javabdd.BDD, org.sf.javabdd.BDD)
          */
         public void set(BDD oldvar, BDD newvar) {
-            set((BuDDyBDD) oldvar, (BuDDyBDD) newvar);
+            set2((BuDDyBDD) oldvar, (BuDDyBDD) newvar);
         }
-        public native void set(BuDDyBDD oldvar, BuDDyBDD newvar);
+        protected native void set2(BuDDyBDD oldvar, BuDDyBDD newvar);
         
         /**
          * @see org.sf.javabdd.BDDPairing#set(org.sf.javabdd.BDD[], org.sf.javabdd.BDD[])
          */
-        public native void set(BDD[] oldvar, BDD[] newvar);
+        public void set(BDD[] oldvar, BDD[] newvar) {
+            set3(oldvar, newvar);
+        }
+        protected native void set3(BDD[] oldvar, BDD[] newvar);
         
         /**
          * @see org.sf.javabdd.BDDPairing#set(org.sf.javabdd.BDDDomain, org.sf.javabdd.BDDDomain)
          */
         public void set(BDDDomain p1, BDDDomain p2) {
-            set((BuDDyBDDDomain) p1, (BuDDyBDDDomain) p2);
+            set4((BuDDyBDDDomain) p1, (BuDDyBDDDomain) p2);
         }
-        public native void set(BuDDyBDDDomain p1, BuDDyBDDDomain p2);
+        protected native void set4(BuDDyBDDDomain p1, BuDDyBDDDomain p2);
         
         /**
          * @see org.sf.javabdd.BDDPairing#set(org.sf.javabdd.BDDDomain[], org.sf.javabdd.BDDDomain[])
          */
-        public native void set(BDDDomain[] p1, BDDDomain[] p2);
+        public void set(BDDDomain[] p1, BDDDomain[] p2) {
+            set5(p1, p2);
+        }
+        protected native void set5(BDDDomain[] p1, BDDDomain[] p2);
         
         /**
          * @see org.sf.javabdd.BDDPairing#reset()
@@ -763,7 +809,7 @@ public class BuDDyFactory extends BDDFactory {
         /**
          * Free the memory allocated for this pair.
          */
-        private native void free();
+        protected native void free();
         
     }
     
