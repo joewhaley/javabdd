@@ -211,22 +211,6 @@ public class CUDDFactory extends BDDFactory {
     }
 
     /* (non-Javadoc)
-     * @see org.sf.javabdd.BDDFactory#load(java.lang.String)
-     */
-    public BDD load(String filename) {
-        // TODO Implement this.
-        throw new UnsupportedOperationException();
-    }
-
-    /* (non-Javadoc)
-     * @see org.sf.javabdd.BDDFactory#save(java.lang.String, org.sf.javabdd.BDD)
-     */
-    public void save(String filename, BDD var) {
-        // TODO Implement this.
-        throw new UnsupportedOperationException();
-    }
-
-    /* (non-Javadoc)
      * @see org.sf.javabdd.BDDFactory#level2Var(int)
      */
     public int level2Var(int level) {
@@ -366,17 +350,17 @@ public class CUDDFactory extends BDDFactory {
      * @see org.sf.javabdd.BDDFactory#getAllocNum()
      */
     public int getAllocNum() {
-        // TODO Implement this.
-        throw new UnsupportedOperationException();
+        return getAllocNum0();
     }
+    private static native int getAllocNum0();
 
     /* (non-Javadoc)
      * @see org.sf.javabdd.BDDFactory#getNodeNum()
      */
     public int getNodeNum() {
-        // TODO Implement this.
-        throw new UnsupportedOperationException();
+        return getNodeNum0();
     }
+    private static native int getNodeNum0();
 
     /* (non-Javadoc)
      * @see org.sf.javabdd.BDDFactory#reorderGain()
@@ -524,17 +508,21 @@ public class CUDDFactory extends BDDFactory {
          * @see org.sf.javabdd.BDD#exist(org.sf.javabdd.BDD)
          */
         public BDD exist(BDD var) {
-            // TODO Implement this.
-            throw new UnsupportedOperationException();
+            CUDDBDD c = (CUDDBDD) var;
+            long b = exist0(_ddnode_ptr, c._ddnode_ptr);
+            return new CUDDBDD(b);
         }
+        private static native long exist0(long b, long c);
 
         /* (non-Javadoc)
          * @see org.sf.javabdd.BDD#forAll(org.sf.javabdd.BDD)
          */
         public BDD forAll(BDD var) {
-            // TODO Implement this.
-            throw new UnsupportedOperationException();
+            CUDDBDD c = (CUDDBDD) var;
+            long b = forAll0(_ddnode_ptr, c._ddnode_ptr);
+            return new CUDDBDD(b);
         }
+        private static native long forAll0(long b, long c);
 
         /* (non-Javadoc)
          * @see org.sf.javabdd.BDD#unique(org.sf.javabdd.BDD)
