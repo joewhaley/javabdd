@@ -12,13 +12,10 @@ CUDD_SRC = cudd-2.3.1
 ifeq (${OS},Windows_NT)
   JDK_ROOT = c:/j2sdk1.4.1_02
   CC = gcc
-#  CFLAGS = -Wall -O3 -mno-cygwin
-  CFLAGS = -Wall -g -mno-cygwin
+  CFLAGS = -Wall -O3 -mno-cygwin
   OBJECT_OUTPUT_OPTION = -o$(space)
   LINK = dllwrap
-#  LINKFLAGS = -s -mno-cygwin -mwindows --target=i386-mingw32 \
-#              --add-stdcall-alias --driver-name gcc
-  LINKFLAGS = -mno-cygwin -mwindows --target=i386-mingw32 \
+  LINKFLAGS = -s -mno-cygwin -mwindows --target=i386-mingw32 \
               --add-stdcall-alias --driver-name gcc
   DLL_OUTPUT_OPTION = -o$(space)
   INCLUDES = -I. -I$(JDK_ROOT)/include \
