@@ -10,7 +10,7 @@
 BUDDY_SRC = buddy22/src
 
 ifeq (${OS},Windows_NT)
-  JDK_ROOT = c:/j2sdk1.4.2
+  JDK_ROOT = c:/j2sdk1.4.1_02
   CC = gcc
   CFLAGS = -Wall -O3 -mno-cygwin
   OBJECT_OUTPUT_OPTION = -o$(space)
@@ -86,7 +86,7 @@ DLL_OBJS  = $(DLL_SRCS:.c=.o)
 all: $(DLL_NAME)
 
 $(DLL_NAME): $(DLL_OBJS)
-	$(LINK) $(DLL_OUTPUT_OPTION)$@ $? $(LINKFLAGS)
+	$(LINK) $(DLL_OUTPUT_OPTION)$@ $(DLL_OBJS) $(LINKFLAGS)
 
 buddy_jni.o: buddy_jni.c $(JNI_INCLUDE)
 	$(CC) $(CFLAGS) $(INCLUDES) -c $(OBJECT_OUTPUT_OPTION)$@ $<
