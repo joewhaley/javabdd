@@ -234,15 +234,15 @@
     <report>
       maven-tasklist-plugin
     </report>
-<!-- TOO EXPENSIVE
-    <report>
-      maven-checkstyle-plugin
-    </report>
     <report>
       maven-javadoc-plugin
     </report>
     <report>
       maven-jxr-plugin
+    </report>
+<!-- TOO EXPENSIVE
+    <report>
+      maven-checkstyle-plugin
     </report>
     <report>
       maven-pmd-plugin
