@@ -29,5 +29,7 @@ public class R1 extends TestCase {
         bdd.setVarNum(20);
         double s2 = x.satCount(set);
         Assert.assertEquals(s1, s2, 0.00001);
+        x.free(); set.free();
+        bdd.done();
     }
 }
