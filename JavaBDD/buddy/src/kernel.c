@@ -180,91 +180,87 @@ ALSO   {* bdd\_done, bdd\_resize\_hook *}
 */
 int bdd_init(int initnodesize, int cs)
 {
-   int n, err;
-   char * str;
-
-
    /* Check to see if tracing is enabled */
-
-   if( (str = getenv("BUDDY_TRACE_FILE")) != NULL)
-   {
-	   trace_enable = 1;
-	   trace_init(str);
+   char * str;
+   if( (str = getenv("BUDDY_TRACE_FILE")) != NULL) {
+     trace_enable = 1;
+     trace_init(str);
    }
 
-   BUDDY_PROLOGUE;
-   ADD_ARG1(T_INT,initnodesize);
-   ADD_ARG1(T_INT,cs);
-   
-   srand48( SRAND48SEED ) ;
-
-   if (bddrunning)
-      RETURN(bdd_error(BDD_RUNNING));
-   
-   bddnodesize = bdd_prime_gte(initnodesize);
-   
-   if ((MAX_ALLOC_NODES == 0) ||
-       (alloced=(BddNode*)malloc(sizeof(BddNode)*MAX_ALLOC_NODES)) == NULL) {
-     if ((alloced=(BddNode*)malloc(sizeof(BddNode)*bddnodesize)) == NULL) {
-       RETURN(bdd_error(BDD_MEMORY));
+   {
+     int n, err;
+     BUDDY_PROLOGUE;
+     ADD_ARG1(T_INT,initnodesize);
+     ADD_ARG1(T_INT,cs);
+     
+     srand48( SRAND48SEED ) ;
+     
+     if (bddrunning)
+       RETURN(bdd_error(BDD_RUNNING));
+     
+     bddnodesize = bdd_prime_gte(initnodesize);
+     
+     if ((MAX_ALLOC_NODES == 0) ||
+	 (alloced=(BddNode*)malloc(sizeof(BddNode)*MAX_ALLOC_NODES)) == NULL) {
+       if ((alloced=(BddNode*)malloc(sizeof(BddNode)*bddnodesize)) == NULL) {
+	 RETURN(bdd_error(BDD_MEMORY));
+       }
+       MAX_ALLOC_NODES = bddnodesize;
      }
-     MAX_ALLOC_NODES = bddnodesize;
+     bddnodes = alloced;
+     
+     bddresized = 0;
+     
+     for (n=0 ; n<bddnodesize ; n++) {
+       CLRLEVELREF(n);
+       LOW(n) = -1;
+       bddnodes[n].hash = 0;
+       bddnodes[n].next = n+1;
+     }
+     bddnodes[bddnodesize-1].next = 0;
+     
+     SETREF(0, MAXREF);
+     SETREF(1, MAXREF);
+     LOW(0) = HIGH(0) = 0;
+     LOW(1) = HIGH(1) = 1;
+     
+     if ((err=bdd_operator_init(cs)) < 0) {
+       bdd_done();
+       RETURN(err);
+     }
+     
+     bddfreepos = 2;
+     bddfreenum = bddnodesize-2;
+     bddrunning = 1;
+     bddvarnum = 0;
+     gbcollectnum = 0;
+     gbcclock = 0;
+     cachesize = cs;
+     usednodes_nextreorder = bddnodesize;
+     bddmaxnodeincrease = DEFAULTMAXNODEINC;
+     
+     bdderrorcond = 0;
+     
+     bddcachestats.uniqueAccess = 0;
+     bddcachestats.uniqueChain = 0;
+     bddcachestats.uniqueHit = 0;
+     bddcachestats.uniqueMiss = 0;
+     bddcachestats.opHit = 0;
+     bddcachestats.opMiss = 0;
+     bddcachestats.swapCount = 0;
+     
+     bdd_gbc_hook(bdd_default_gbchandler);
+     bdd_error_hook(bdd_default_errhandler);
+     bdd_resize_hook(NULL);
+     bdd_pairs_init();
+     bdd_reorder_init();
+     bdd_fdd_init();
+     
+     if (setjmp(bddexception) != 0)
+       assert(0);
+     
+     RETURN(0);
    }
-   bddnodes = alloced;
-
-   bddresized = 0;
-   
-   for (n=0 ; n<bddnodesize ; n++)
-   {
-      CLRLEVELREF(n);
-      LOW(n) = -1;
-      bddnodes[n].hash = 0;
-      bddnodes[n].next = n+1;
-   }
-   bddnodes[bddnodesize-1].next = 0;
-
-   SETREF(0, MAXREF);
-   SETREF(1, MAXREF);
-   LOW(0) = HIGH(0) = 0;
-   LOW(1) = HIGH(1) = 1;
-   
-   if ((err=bdd_operator_init(cs)) < 0)
-   {
-      bdd_done();
-      RETURN(err);
-   }
-
-   bddfreepos = 2;
-   bddfreenum = bddnodesize-2;
-   bddrunning = 1;
-   bddvarnum = 0;
-   gbcollectnum = 0;
-   gbcclock = 0;
-   cachesize = cs;
-   usednodes_nextreorder = bddnodesize;
-   bddmaxnodeincrease = DEFAULTMAXNODEINC;
-
-   bdderrorcond = 0;
-   
-   bddcachestats.uniqueAccess = 0;
-   bddcachestats.uniqueChain = 0;
-   bddcachestats.uniqueHit = 0;
-   bddcachestats.uniqueMiss = 0;
-   bddcachestats.opHit = 0;
-   bddcachestats.opMiss = 0;
-   bddcachestats.swapCount = 0;
- 
-   bdd_gbc_hook(bdd_default_gbchandler);
-   bdd_error_hook(bdd_default_errhandler);
-   bdd_resize_hook(NULL);
-   bdd_pairs_init();
-   bdd_reorder_init();
-   bdd_fdd_init();
-   
-   if (setjmp(bddexception) != 0)
-      assert(0);
-
-   RETURN(0);
 }
 
 
@@ -1439,30 +1435,9 @@ int bdd_makenode(unsigned int level, int low, int high)
 }
 
 
-int bdd_noderesize(int doRehash)
-{
-   int oldsize = bddnodesize;
-   int newsize;
-   int n;
-
-   if (bddnodesize >= bddmaxnodesize  &&  bddmaxnodesize > 0)
-      return -1;
-   
-   newsize = bddnodesize << 1;
-
-   if (newsize > oldsize + bddmaxnodeincrease)
-      newsize = oldsize + bddmaxnodeincrease;
-
-   if (newsize > bddmaxnodesize  &&  bddmaxnodesize > 0)
-      newsize = bddmaxnodesize;
-   
-   return bdd_noderesize2(doRehash, oldsize, newsize);
-}
-
-int bdd_noderesize2(int doRehash, int oldsize, int newsize)
+static int bdd_noderesize2(int doRehash, int oldsize, int newsize)
 {
    int n;
-   
    newsize = bdd_prime_lte(newsize);
    
    if (oldsize > newsize) {
@@ -1506,6 +1481,45 @@ int bdd_noderesize2(int doRehash, int oldsize, int newsize)
    return 0;
 }
 
+int bdd_noderesize(int doRehash)
+{
+   int oldsize = bddnodesize;
+   int newsize;
+   int n;
+
+   if (bddnodesize >= bddmaxnodesize  &&  bddmaxnodesize > 0)
+      return -1;
+   
+   newsize = bddnodesize << 1;
+
+   if (newsize > oldsize + bddmaxnodeincrease)
+      newsize = oldsize + bddmaxnodeincrease;
+
+   if (newsize > bddmaxnodesize  &&  bddmaxnodesize > 0)
+      newsize = bddmaxnodesize;
+   
+   return bdd_noderesize2(doRehash, oldsize, newsize);
+}
+
+/*
+NAME    {* bdd\_setallocnum *}
+SECTION {* kernel *}
+SHORT   {* set the size of the node table *}
+PROTO   {* int bdd_setallocnum(int) *}
+DESCR   {* Sets the size of the node table.  Does nothing if the node
+           table is larger than the given size.  Returns the old size
+           of the node table. *)
+RETURN  {* The old size of the node table. *}
+ALSO    {* bdd\_getallocnum, bdd\_setmaxnodenum *}
+*/
+int bdd_setallocnum(int newsize)
+{
+   int old = bddnodesize;
+   BUDDY_PROLOGUE;
+   ADD_ARG1(T_INT,newsize);
+   bdd_noderesize2(1, old, newsize);
+   RETURN(old);
+}
 
 void bdd_checkreorder(void)
 {

@@ -339,13 +339,9 @@ JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_setNodeTableSize0
   int result;
   jnienv = env;
 #if defined(TRACE_BUDDYLIB)
-  printf("bdd_getallocnum()\n");
+  printf("bdd_setallocnum(%d)\n", size);
 #endif
-  result = bdd_getallocnum();
-#if defined(TRACE_BUDDYLIB)
-  printf("bdd_noderesize2(%d, %d, %d)\n", 1, result, size);
-#endif
-  bdd_noderesize2(1, result, size);
+  result = bdd_setallocnum(size);
   check_error(env);
   return result;
 }
