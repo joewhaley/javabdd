@@ -838,7 +838,7 @@ public abstract class BDDFactory {
         
         for (int i=0; i<doms.length; ++i) {
             if (!done[i]) {
-                throw new BDDException("missing domain #"+i);
+                throw new BDDException("missing domain #"+i+": "+getDomain(i));
             }
             doms[i] = getDomain(i);
         }
