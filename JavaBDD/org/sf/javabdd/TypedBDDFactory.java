@@ -872,6 +872,39 @@ public class TypedBDDFactory extends BDDFactory {
             return bdd.hashCode();
         }
 
+        public Iterator iterator() {
+            final BDD b = bdd.id();
+            final BDD domains = getDomains();
+            final BDD zero = TypedBDDFactory.this.zero();
+            return new Iterator() {
+
+                BDD last;
+                
+                public void remove() {
+                    if (last != null) {
+                        bdd.applyWith(last.id(), diff);
+                        last = null;
+                    } else {
+                        throw new IllegalStateException();
+                    }
+                }
+
+                public boolean hasNext() {
+                    return !b.isZero();
+                }
+
+                public Object next() {
+                    BDD c = b.satOneSet(domains, zero);
+                    b.applyWith(c.id(), diff);
+                    last = c;
+                    Set newDom = makeSet();
+                    newDom.addAll(dom);
+                    return new TypedBDD(c, newDom);
+                }
+                
+            };
+        }
+        
         /* (non-Javadoc)
          * @see org.sf.javabdd.BDD#addRef()
          */
