@@ -767,8 +767,17 @@ public abstract class BDD {
                         throw new InternalError("nodes["+j+"] should be null");
                     ++j;
                 }
-                if (j == levels.length)
-                    throw new BDDException("BDD contains variable not in iteration set: "+factory.level2Var(v));
+                if (j == levels.length) {
+                    StringBuffer sb = new StringBuffer();
+                    sb.append("BDD contains variable ");
+                    sb.append(factory.level2Var(v));
+                    sb.append(" not in iteration set: ");
+                    for (int k = 0; k < levels.length; ++k) {
+                        sb.append(factory.level2Var(k));
+                        if (k < levels.length) sb.append(",");
+                    }
+                    throw new BDDException(sb.toString());
+                }
                 i = j;
                 
                 // Put node in table.
