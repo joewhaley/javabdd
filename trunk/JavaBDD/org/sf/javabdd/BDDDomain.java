@@ -125,9 +125,9 @@ public abstract class BDDDomain {
                 b.biimpWith(bdd.ithVar(that.ivar[n]));
                 result.andWith(b);
             }
-            for ( ; n < that.varNum(); n++) {
-                BDD b = bdd.nithVar(this.ivar[n]);
-                b.andWith(bdd.nithVar(that.ivar[n]));
+            for ( ; n < Math.max(this.varNum(), that.varNum()); n++) {
+                BDD b = (n < this.varNum()) ? bdd.nithVar(this.ivar[n]) : bdd.one();
+                b.andWith((n < that.varNum()) ? bdd.nithVar(that.ivar[n]) : bdd.one());
                 result.andWith(b);
             }
             return result;
@@ -148,9 +148,9 @@ public abstract class BDDDomain {
             BDD b = x.bitvec[n].biimp(z.bitvec[n]);
             result.andWith(b);
         }
-        for ( ; n < that.varNum(); n++) {
-            BDD b = bdd.nithVar(this.ivar[n]);
-            b.andWith(bdd.nithVar(that.ivar[n]));
+        for ( ; n < Math.max(this.varNum(), that.varNum()); n++) {
+            BDD b = (n < this.varNum()) ? bdd.nithVar(this.ivar[n]) : bdd.one();
+            b.andWith((n < that.varNum()) ? bdd.nithVar(that.ivar[n]) : bdd.one());
             result.andWith(b);
         }
         x.free(); y.free(); z.free(); v.free();
