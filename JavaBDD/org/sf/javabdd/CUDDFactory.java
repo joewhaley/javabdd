@@ -471,6 +471,11 @@ public class CUDDFactory extends BDDFactory {
         public native BDD restrict(BDD var);
 
         /* (non-Javadoc)
+         * @see org.sf.javabdd.BDD#restrictWith(org.sf.javabdd.BDD)
+         */
+        public native void restrictWith(BDD var);
+        
+        /* (non-Javadoc)
          * @see org.sf.javabdd.BDD#simplify(org.sf.javabdd.BDD)
          */
         public BDD simplify(BDD d) {
@@ -606,6 +611,17 @@ public class CUDDFactory extends BDDFactory {
          */
         protected native void delRef();
 
+        static final boolean USE_FINALIZER = true;
+        
+        protected void finalize() throws Throwable {
+            super.finalize();
+            if (USE_FINALIZER) {
+                if (false && _ddnode_ptr >= 0) {
+                    System.out.println("BDD not freed! "+System.identityHashCode(this));
+                }
+                this.delRef();
+            }
+        }
     }
     
     /**
