@@ -515,6 +515,16 @@ public abstract class BDD {
      */
     public abstract double logSatCount(BDD varset);
     
+    /**
+     * Counts the number of times each variable occurs in this BDD.  The
+     * result is stored and returned in an integer array where the i'th
+     * position stores the number of times the i'th printing variable
+     * occurred in the BDD.
+     * 
+     * Compare to bdd_varprofile.
+     */
+    public abstract int[] varProfile();
+    
     public abstract boolean equals(BDD that);
     
     public boolean equals(Object o) {
