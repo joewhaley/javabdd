@@ -642,7 +642,11 @@ static BDD apply_rec(BDD l, BDD r)
   case bddop_and:
      if (andcache.table == NULL && BddCache3_init(&andcache,cachesize) < 0)
        return bdd_error(BDD_MEMORY);
+#if defined(AND_ITR)
+     return and_itr(l, r);
+#else
      return and_rec(l, r);
+#endif
 #endif
 #if defined(SPECIALIZE_OR)
   case bddop_or:
@@ -774,10 +778,14 @@ static BDD and_rec(BDD l, BDD r)
    if (ISONE(r))
      return l;
 
+#if PREFETCH > 0
    /* Prefetch nodes to get some concurrency between cache lookup
       and node table lookup. */
    _mm_prefetch(&bddnodes[l], 0);
+#if PREFETCH > 1
    _mm_prefetch(&bddnodes[r], 0);
+#endif
+#endif
 
    entry = BddCache_lookup(&andcache, ANDHASH(l,r));
    
@@ -821,12 +829,25 @@ static BDD and_rec(BDD l, BDD r)
    return res;
 }
 
+static int* gstack;
+static int gstack_size;
+
 static BDD and_itr(BDD l0, BDD r0)
 {
   BDD res;
   int* s_top;
   int* s_ptr;
+#if defined(USE_ALLOCA)
   s_top = s_ptr = alloca(bddvarnum * sizeof(int) * 9);
+#else
+  if (gstack_size < bddvarnum) {
+    if (gstack != NULL) free(gstack);
+    if ((gstack=NEW(int,bddvarnum*9)) == NULL)
+      bdd_error(BDD_MEMORY);
+    gstack_size = bddvarnum;
+  }
+  s_top = s_ptr = gstack;
+#endif
   *s_ptr++ = l0;
   *s_ptr++ = r0;
   
@@ -845,10 +866,14 @@ static BDD and_itr(BDD l0, BDD r0)
       res1 = r1;
     } else {
 
+#if PREFETCH > 0
       /* Prefetch nodes to get some concurrency between cache lookup
 	 and node table lookup. */
       _mm_prefetch(&bddnodes[l1], 0);
+#if PREFETCH > 1
       _mm_prefetch(&bddnodes[r1], 0);
+#endif
+#endif
 
       entry = BddCache_lookup(&andcache, ANDHASH(l1,r1));
       if (entry->a == l1  &&  entry->b == r1) {
@@ -940,10 +965,14 @@ static BDD or_rec(BDD l, BDD r)
    if (ISZERO(r))
      return l;
 
+#if PREFETCH > 0
    /* Prefetch nodes to get some concurrency between cache lookup
       and node table lookup. */
    _mm_prefetch(&bddnodes[l], 0);
+#if PREFETCH > 1
    _mm_prefetch(&bddnodes[r], 0);
+#endif
+#endif
 
    entry = BddCache_lookup(&orcache, ORHASH(l,r));
    
@@ -2424,7 +2453,11 @@ static int appquant_rec(int l, int r)
     if (orcache.table == NULL && BddCache3_init(&orcache,cachesize) < 0)
        return bdd_error(BDD_MEMORY);
 #endif
+#if defined(RELPROD_ITR)
+    return relprod_itr(l, r);
+#else
     return relprod_rec(l, r);
+#endif
   }
 #endif
 
@@ -2555,16 +2588,22 @@ static int relprod_rec(int l, int r)
    if (l == 1)
      return quant_rec(r);
    
+#if PREFETCH > 2
    /* Prefetch LOW(l) to get some concurrency between cache lookup
       and node table lookup.  LOW(l) is not that expensive because we
       need to load LEVEL(l) right after this anyway. */
    _mm_prefetch(&bddnodes[LOW(l)], 0);
+#endif
 
    if (LEVEL(l) > quantlast  &&  LEVEL(r) > quantlast)
    {
       applyop = bddop_and;
 #if defined(SPECIALIZE_AND)
-      res = and_rec(l,r);
+#if defined(AND_ITR)
+      res = and_itr(l, r);
+#else
+      res = and_rec(l, r);
+#endif
 #else
       res = apply_rec(l,r);
 #endif
@@ -2647,15 +2686,21 @@ static int relprod_itr(int l0, int r0)
       res1 = quant_rec(r1);
     } else {
 
+#if PREFETCH > 2
       /* Prefetch LOW(l1) to get some concurrency between cache lookup
 	 and node table lookup.  LOW(l1) is not that expensive because we
 	 need to load LEVEL(l1) right after this anyway. */
       _mm_prefetch(&bddnodes[LOW(l1)], 0);
+#endif
 
       if (LEVEL(l1) > quantlast  &&  LEVEL(r1) > quantlast) {
 	applyop = bddop_and;
 #if defined(SPECIALIZE_AND)
-	res1 = and_rec(l1,r1);
+#if defined(AND_ITR)
+        res1 = and_itr(l1, r1);
+#else
+        res1 = and_rec(l1, r1);
+#endif
 #else
 	res1 = apply_rec(l1,r1);
 #endif
