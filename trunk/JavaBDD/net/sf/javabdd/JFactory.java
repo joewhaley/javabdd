@@ -591,7 +591,12 @@ public class JFactory extends BDDFactory {
         
         BddCache copy() {
             BddCache that = new BddCache();
-            that.table = new BddCacheData[this.table.length];
+            boolean is_d = this.table instanceof BddCacheDataD[];
+            if (is_d) {
+                that.table = new BddCacheDataD[this.table.length];
+            } else {
+                that.table = new BddCacheDataI[this.table.length];
+            }
             that.tablesize = this.tablesize;
             for (int i = 0; i < table.length; ++i) {
                 that.table[i] = this.table[i].copy();
