@@ -65,7 +65,7 @@ else
   CUDD_DLL_NAME = libcudd.so
   CAL_DLL_NAME = libcal.so
   ifeq (${CC},icc)    # Intel Linux compiler
-    CFLAGS = -D_REENTRANT -D_GNU_SOURCE -O2 -unroll -ipo -ipo_obj
+    CFLAGS = -D_REENTRANT -D_GNU_SOURCE -O2 -Ob2 -ip
     LINKFLAGS = -shared -static-libcxa
   endif
 endif
@@ -217,13 +217,13 @@ pdo:
 	$(JAVA) NQueens 12
 
 ipo:	buddy_jni.h
-	icc -D_REENTRANT -D_GNU_SOURCE -O2 -unroll -ipo $(INCLUDES) -shared -static-libcxa $(DLL_OUTPUT_OPTION)libbuddy.so $(BUDDY_SRCS)
+	icc -D_REENTRANT -D_GNU_SOURCE -O2 -Ob2 -ipo $(INCLUDES) -shared -static-libcxa $(DLL_OUTPUT_OPTION)libbuddy.so $(BUDDY_SRCS)
 
 pdogen: buddy_jni.h
-	icc -D_REENTRANT -D_GNU_SOURCE -O2 -unroll -prof_gen $(INCLUDES) -shared -static-libcxa $(DLL_OUTPUT_OPTION)libbuddy.so $(BUDDY_SRCS)
+	icc -D_REENTRANT -D_GNU_SOURCE -O2 -Ob2 -prof_gen $(INCLUDES) -shared -static-libcxa $(DLL_OUTPUT_OPTION)libbuddy.so $(BUDDY_SRCS)
 
 pdouse: buddy_jni.h
-	icc -D_REENTRANT -D_GNU_SOURCE -O2 -unroll -prof_use -ipo $(INCLUDES) -shared -static-libcxa $(DLL_OUTPUT_OPTION)libbuddy.so $(BUDDY_SRCS)
+	icc -D_REENTRANT -D_GNU_SOURCE -O2 -Ob2 -prof_use -ipo $(INCLUDES) -shared -static-libcxa $(DLL_OUTPUT_OPTION)libbuddy.so $(BUDDY_SRCS)
 
 opt_report:
 	icl -Qopt_report -Qopt_report_phase all $(INCLUDES) $(CFLAGS) $(DLL_OUTPUT_OPTION)buddy.dll $(BUDDY_SRCS) -LD /link /libpath:$(JDK_ROOT)/lib 
