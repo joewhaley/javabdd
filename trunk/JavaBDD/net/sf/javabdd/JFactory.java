@@ -2462,7 +2462,11 @@ public class JFactory extends BDDFactory {
     }
 
     void gbc_handler(boolean pre, GCStats s) {
-        bdd_default_gbchandler(pre, s);
+        if (gc_callbacks == null) {
+            bdd_default_gbchandler(pre, s);
+        } else {
+            doCallbacks(gc_callbacks, pre?1:0);
+        }
     }
 
     void bdd_default_gbchandler(boolean pre, GCStats s) {
@@ -4211,6 +4215,11 @@ public class JFactory extends BDDFactory {
     }
 
     void reorder_handler(boolean b) {
+        if (reorder_callbacks == null) {
+            bdd_default_reohandler(b?1:0);
+        } else {
+            doCallbacks(reorder_callbacks, b?1:0);
+        }
     }
 
     int bdd_reorder_gain() {

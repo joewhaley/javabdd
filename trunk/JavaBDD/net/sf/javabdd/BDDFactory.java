@@ -1592,7 +1592,7 @@ public abstract class BDDFactory {
                 Object o = cb[0];
                 Method m = (Method) cb[1];
                 try {
-                    m.invoke(o, new Object[] { Integer.valueOf(val) } );
+                    m.invoke(o, new Object[] { new Integer(val) } );
                 } catch (IllegalArgumentException e) {
                     e.printStackTrace();
                 } catch (IllegalAccessException e) {
