@@ -21,6 +21,7 @@ public class JDDFactory extends BDDFactory {
     private JDDFactory(int nodenum, int cachesize) {
         bdd = new jdd.bdd.BDD(nodenum, cachesize);
         vars = new int[256];
+        jdd.util.Options.verbose = true;
     }
     
     /* (non-Javadoc)
@@ -547,16 +548,16 @@ public class JDDFactory extends BDDFactory {
      * @see org.sf.javabdd.BDDFactory#setMinFreeNodes(int)
      */
     public void setMinFreeNodes(int x) {
-        // TODO Auto-generated method stub
-        //throw new BDDException();
+        jdd.util.Configuration.minFreeNodesProcent = x;
     }
 
     /* (non-Javadoc)
      * @see org.sf.javabdd.BDDFactory#setMaxIncrease(int)
      */
     public int setMaxIncrease(int x) {
-        //throw new BDDException();
-        return 0;
+        int old = jdd.util.Configuration.maxNodeIncrease;
+        jdd.util.Configuration.maxNodeIncrease = x;
+        return old;
     }
 
     /* (non-Javadoc)
