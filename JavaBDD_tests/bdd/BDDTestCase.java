@@ -18,50 +18,67 @@ import net.sf.javabdd.BDDFactory;
  */
 public abstract class BDDTestCase extends TestCase implements Iterator {
     
-    static volatile Collection factories;
-    static final String[] factoryNames = {
+    public static final String[] factoryNames = {
         "net.sf.javabdd.BuDDyFactory",
-        "net.sf.javabdd.CUDDFactory",
-        "net.sf.javabdd.CALFactory",
         "net.sf.javabdd.JFactory",
+        //"net.sf.javabdd.CUDDFactory",
+        //"net.sf.javabdd.CALFactory",
         //"net.sf.javabdd.JDDFactory",
     };
     
-    static void initFactories(int nodenum, int cachesize) {
+    protected static Collection factories;
+    protected Iterator i;
+    protected int nodenum, cachesize;
+    
+    protected void initFactories() {
         if (factories != null) return;
-        synchronized (BDDTestCase.class) {
-            if (factories != null) return;
-            Collection f = new LinkedList();
-            for (int k = 0; k < factoryNames.length; ++k) {
-                String bddpackage = factoryNames[k];
-                try {
-                    Class c = Class.forName(bddpackage);
-                    Method m = c.getMethod("init", new Class[] { int.class, int.class });
-                    BDDFactory b = (BDDFactory) m.invoke(null, new Object[] { new Integer(nodenum), new Integer(cachesize) });
-                    f.add(b);
-                }
-                catch (Throwable _) {}
+        Collection f = new LinkedList();
+        for (int k = 0; k < factoryNames.length; ++k) {
+            String bddpackage = factoryNames[k];
+            try {
+                Class c = Class.forName(bddpackage);
+                Method m = c.getMethod("init", new Class[] { int.class, int.class });
+                BDDFactory b = (BDDFactory) m.invoke(null, new Object[] { new Integer(nodenum), new Integer(cachesize) });
+                f.add(b);
             }
-            factories = f;
+            catch (Throwable _) {
+                System.out.println("Failed: "+_);
+            }
         }
+        factories = f;
     }
     
-    protected Iterator i;
+    protected void destroyFactories() {
+        if (factories == null) return;
+        for (Iterator i = factories.iterator(); i.hasNext(); ) {
+            BDDFactory f = (BDDFactory) i.next();
+            f.done();
+        }
+        factories = null;
+    }
     
     public BDDTestCase(int nodenum, int cachesize) {
-        initFactories(nodenum, cachesize);
-        reset();
+        this.nodenum = nodenum;
+        this.cachesize = cachesize;
     }
     public BDDTestCase() {
         this(1000, 1000);
     }
     
+    protected void setUp() {
+        //System.out.println("Doing setUp()");
+        initFactories();
+        reset();
+    }
+    
     public BDDFactory nextFactory() {
-        return (BDDFactory) i.next();
+        BDDFactory f = (BDDFactory) i.next();
+        f.reset();
+        return f;
     }
     
     public Object next() {
-        return i.next();
+        return nextFactory();
     }
     
     public boolean hasNext() {
@@ -75,4 +92,10 @@ public abstract class BDDTestCase extends TestCase implements Iterator {
     public void reset() {
         i = factories.iterator();
     }
+    
+    protected void tearDown() {
+        //System.out.println("Doing tearDown()");
+        //destroyFactories();
+    }
+    
 }
