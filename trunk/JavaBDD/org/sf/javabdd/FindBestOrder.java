@@ -26,7 +26,7 @@ public class FindBestOrder {
     String filename2 = "fbo.2";
     String filename3 = "fbo.3";
     
-    static final long DELAY_TIME = 5000;
+    long DELAY_TIME = 30000;
     
     BDDFactory.BDDOp op;
     long bestCalcTime;
@@ -38,7 +38,7 @@ public class FindBestOrder {
     int maxIncrease;
 
     public FindBestOrder(BDD b1, BDD b2, BDD dom, BDDFactory.BDDOp op,
-                         int cacheSize, int maxIncrease, long bestTime)
+                         int cacheSize, int maxIncrease, long bestTime, long delayTime)
         throws IOException {
         this.op = op;
         this.bestCalcTime = bestTime;
@@ -46,6 +46,7 @@ public class FindBestOrder {
         this.nodeTableSize = b1.getFactory().getAllocNum();
         this.cacheSize = cacheSize;
         this.maxIncrease = maxIncrease;
+        this.DELAY_TIME = delayTime;
         File f = File.createTempFile("fbo", "a");
         filename0 = f.getAbsolutePath();
         f.deleteOnExit();
