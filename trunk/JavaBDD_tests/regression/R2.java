@@ -20,6 +20,7 @@ public class R2 extends BDDTestCase {
     }
     
     public void testR2() {
+        Assert.assertTrue(hasNext());
         while (hasNext()) {
             BDDFactory bdd = nextFactory();
             BDD zero = bdd.zero();

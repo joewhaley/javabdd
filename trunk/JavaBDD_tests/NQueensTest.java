@@ -23,6 +23,7 @@ public class NQueensTest extends BDDTestCase {
       24233937684440. };
     
     public void testNQueens() {
+        Assert.assertTrue(hasNext());
         while (hasNext()) {
             NQueens.B = nextFactory();
             for (int i = 1; i <= CHECK; ++i) {

@@ -21,6 +21,7 @@ public class R1 extends BDDTestCase {
     }
     
     public void testR1() {
+        Assert.assertTrue(hasNext());
         while (hasNext()) {
             BDDFactory bdd = nextFactory();
             BDDDomain d = bdd.extDomain(new int[] { 16 })[0];
