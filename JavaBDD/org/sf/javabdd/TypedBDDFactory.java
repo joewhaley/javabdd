@@ -978,8 +978,8 @@ public class TypedBDDFactory extends BDDFactory {
 
         public Iterator iterator(BDD var) {
             TypedBDD bdd1 = (TypedBDD) var;
-            if (!bdd1.dom.equals(dom)) {
-                out.println("Warning! iterator on the wrong domains: "+domainNames(dom)+" != "+domainNames(bdd1.dom));
+            if (!dom.containsAll(bdd1.dom)) {
+                out.println("Warning! iterator on non-existent domain(s): "+domainNames(dom)+" != "+domainNames(bdd1.dom));
             }
             return super.iterator(var);
         }
