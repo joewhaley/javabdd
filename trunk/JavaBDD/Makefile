@@ -68,8 +68,9 @@ else
   CAL_DLL_NAME = libcal.so
   ifeq (${CC},icc)    # Intel Linux compiler
     CFLAGS = -DSPECIALIZE_RELPROD -DSPECIALIZE_AND -DSPECIALIZE_OR -O2 -Ob2 -ip $(EXTRA_CFLAGS)
-    LINK = icc
-    LINKFLAGS = -static -shared $(CFLAGS)
+    LINK = xild  # Bug in icc link makes it ignore -static, so use xild
+    # Include libirc for _intel_fast_memset
+    LINKFLAGS = -static -shared /opt/intel_cc_80/lib/libirc.a
   endif
   ifeq (${CC},pathcc)    # Pathscale compiler
     CFLAGS = -DSPECIALIZE_RELPROD -DSPECIALIZE_AND -DSPECIALIZE_OR -m32 -O2 -fomit_frame_pointer $(EXTRA_CFLAGS)
