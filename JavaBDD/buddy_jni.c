@@ -2060,9 +2060,15 @@ JNIEXPORT jobject JNICALL Java_org_sf_javabdd_BuDDyFactory_00024BuDDyBDDDomain_b
   BDD result;
   jobject res;
   int size1 = fdd_varnum(d1);
-  int size2 = fdd_varnum(d1);
+  int size2 = fdd_varnum(d2);
   int n;
 
+  if (size1 != size2) {
+    jclass cls = (*env)->FindClass(env, "org/sf/javabdd/BDDException");
+    (*env)->ThrowNew(env, cls, "domain sizes not equal");
+    (*env)->DeleteLocalRef(env, cls);
+    return NULL;
+  }
   // assert size1 == size2;
 
   y = bvec_varfdd(d1);
