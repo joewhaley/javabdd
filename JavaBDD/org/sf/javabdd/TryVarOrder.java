@@ -41,9 +41,9 @@ public class TryVarOrder {
             else cl = makeClassLoader();
             Class c = cl.loadClass("org.sf.javabdd.BDDFactory");
             Method m = c.getMethod("init", new Class[] { String.class, int.class, int.class });
-            bdd = m.invoke(null, new Object[] { s, Integer.valueOf(nodeTableSize), Integer.valueOf(cacheSize) });
+            bdd = m.invoke(null, new Object[] { s, new Integer(nodeTableSize), new Integer(cacheSize) });
             m = c.getMethod("setMaxIncrease", new Class[] { int.class });
-            m.invoke(bdd, new Object[] { Integer.valueOf(maxIncrease) });
+            m.invoke(bdd, new Object[] { new Integer(maxIncrease) });
             
             BufferedReader in = null;
             try {
@@ -112,7 +112,7 @@ public class TryVarOrder {
         Constructor c = bddop_class.getConstructor(new Class[0]);
         bddoperation = c.newInstance(null);
         Method m = bddop_class.getMethod("setOp", new Class[] { int.class });
-        m.invoke(bddoperation, new Object[] { Integer.valueOf(op.id) });
+        m.invoke(bddoperation, new Object[] { new Integer(op.id) });
         m = bddop_class.getMethod("setFilenames", new Class[] { String.class, String.class, String.class });
         m.invoke(bddoperation, new Object[] { filename1, filename2, filename3 });
     }
