@@ -1026,8 +1026,11 @@ public abstract class BDDFactory {
         public long sumtime;
         public int num;
         
-        private GCStats() { }
+        protected GCStats() { }
         
+        /* (non-Javadoc)
+         * @see java.lang.Object#toString()
+         */
         public String toString() {
             StringBuffer sb = new StringBuffer();
             sb.append("Garbage collection #");
@@ -1050,15 +1053,64 @@ public abstract class BDDFactory {
     /**
      * Singleton object for GC statistics.
      */
-    protected final GCStats gcstats = new GCStats();
+    protected GCStats gcstats = new GCStats();
     
     /**
-     * <p>Return the current GC statistics.</p>
+     * <p>Return the current GC statistics for this BDD factory.</p>
      * 
      * @return  GC statistics
      */
     public GCStats getGCStats() {
         return gcstats;
+    }
+    
+    /**
+     * Stores statistics about reordering.
+     * 
+     * @author jwhaley
+     * @version $Id$
+     */
+    public static class ReorderStats {
+        
+        public long time;
+        public int usednum_before, usednum_after;
+        
+        protected ReorderStats() { }
+        
+        public int gain() {
+            if (usednum_before == 0)
+                return 0;
+
+            return (100 * (usednum_before - usednum_after)) / usednum_before;
+        }
+        
+        public String toString() {
+            StringBuffer sb = new StringBuffer();
+            sb.append("Went from ");
+            sb.append(usednum_before);
+            sb.append(" to ");
+            sb.append(usednum_after);
+            sb.append(" nodes, gain = ");
+            sb.append(gain());
+            sb.append("% (");
+            sb.append((float) time / 1000f);
+            sb.append(" sec)");
+            return sb.toString();
+        }
+    }
+    
+    /**
+     * Singleton object for reorder statistics.
+     */
+    protected ReorderStats reorderstats = new ReorderStats();
+    
+    /**
+     * <p>Return the current reordering statistics for this BDD factory.</p>
+     * 
+     * @return  reorder statistics
+     */
+    public ReorderStats getReorderStats() {
+        return reorderstats;
     }
     
     /**
@@ -1076,7 +1128,7 @@ public abstract class BDDFactory {
         public int opMiss;
         public int swapCount;
         
-        private CacheStats() { }
+        protected CacheStats() { }
         
         void copyFrom(CacheStats that) {
             this.uniqueAccess = that.uniqueAccess;
@@ -1140,7 +1192,16 @@ public abstract class BDDFactory {
     /**
      * Singleton object for cache statistics.
      */
-    protected final CacheStats cachestats = new CacheStats();
+    protected CacheStats cachestats = new CacheStats();
+    
+    /**
+     * <p>Return the current cache statistics for this BDD factory.</p>
+     * 
+     * @return  cache statistics
+     */
+    public CacheStats getCacheStats() {
+        return cachestats;
+    }
     
     // TODO: bdd_sizeprobe_hook
     // TODO: bdd_reorder_probe
@@ -1552,6 +1613,19 @@ public abstract class BDDFactory {
     }
     
     /**
+     * <p>Unregister a garbage collection callback that was previously
+     * registered.</p>
+     * 
+     * @param o  base object
+     * @param m  method
+     */
+    public void unregisterGCCallback(Object o, Method m) {
+        if (gc_callbacks == null) throw new BDDException();
+        if (!unregisterCallback(gc_callbacks, o, m))
+            throw new BDDException();
+    }
+    
+    /**
      * <p>Register a callback that is called when reordering is about
      * to occur.</p>
      * 
@@ -1561,6 +1635,19 @@ public abstract class BDDFactory {
     public void registerReorderCallback(Object o, Method m) {
         if (reorder_callbacks == null) reorder_callbacks = new LinkedList();
         registerCallback(reorder_callbacks, o, m);
+    }
+    
+    /**
+     * <p>Unregister a reorder callback that was previously
+     * registered.</p>
+     * 
+     * @param o  base object
+     * @param m  method
+     */
+    public void unregisterReorderCallback(Object o, Method m) {
+        if (reorder_callbacks == null) throw new BDDException();
+        if (!unregisterCallback(reorder_callbacks, o, m))
+            throw new BDDException();
     }
     
     /**
@@ -1575,8 +1662,80 @@ public abstract class BDDFactory {
         registerCallback(resize_callbacks, o, m);
     }
     
+    /**
+     * <p>Unregister a reorder callback that was previously
+     * registered.</p>
+     * 
+     * @param o  base object
+     * @param m  method
+     */
+    public void unregisterResizeCallback(Object o, Method m) {
+        if (resize_callbacks == null) throw new BDDException();
+        if (!unregisterCallback(resize_callbacks, o, m))
+            throw new BDDException();
+    }
+    
+    protected void gbc_handler(boolean pre, GCStats s) {
+        if (gc_callbacks == null) {
+            bdd_default_gbchandler(pre, s);
+        } else {
+            doCallbacks(gc_callbacks, new Integer(pre?1:0), s);
+        }
+    }
+    
+    protected static void bdd_default_gbchandler(boolean pre, GCStats s) {
+        if (!pre) {
+            System.err.println(s.toString());
+        }
+    }
+    
+    void reorder_handler(boolean b, ReorderStats s) {
+        if (b) {
+            s.usednum_before = getNodeNum();
+            s.time = System.currentTimeMillis();
+        } else {
+            s.time = System.currentTimeMillis() - s.time;
+            s.usednum_after = getNodeNum();
+        }
+        if (reorder_callbacks == null) {
+            bdd_default_reohandler(b, s);
+        } else {
+            doCallbacks(reorder_callbacks, new Integer(b?1:0), s);
+        }
+    }
+
+    protected void bdd_default_reohandler(boolean prestate, ReorderStats s) {
+        int verbose = 1;
+        if (verbose > 0) {
+            if (prestate) {
+                System.out.println("Start reordering");
+                s.usednum_before = getNodeNum();
+                s.time = System.currentTimeMillis();
+            } else {
+                s.time = System.currentTimeMillis() - s.time;
+                s.usednum_after = getNodeNum();
+                System.out.println("End reordering. "+s);
+            }
+        }
+    }
+
+    protected void resize_handler(int oldsize, int newsize) {
+        if (resize_callbacks == null) {
+            bdd_default_reshandler(oldsize, newsize);
+        } else {
+            doCallbacks(resize_callbacks, new Integer(oldsize), new Integer(newsize));
+        }
+    }
+
+    protected static void bdd_default_reshandler(int oldsize, int newsize) {
+        int verbose = 1;
+        if (verbose > 0) {
+            System.out.println("Resizing node table from "+oldsize+" to "+newsize);
+        }
+    }
+    
     protected void registerCallback(List callbacks, Object o, Method m) {
-        if (!m.isAccessible()) {
+        if (!Modifier.isPublic(m.getModifiers()) && !m.isAccessible()) {
             throw new BDDException("Callback method not accessible");
         }
         if (!Modifier.isStatic(m.getModifiers())) {
@@ -1587,9 +1746,11 @@ public abstract class BDDFactory {
                 throw new BDDException("Base object for callback method is the wrong type");
             }
         }
-        Class[] params = m.getParameterTypes();
-        if (params.length != 1 || params[0] != int.class) {
-            throw new BDDException("Wrong signature for callback");
+        if (false) {
+            Class[] params = m.getParameterTypes();
+            if (params.length != 1 || params[0] != int.class) {
+                throw new BDDException("Wrong signature for callback");
+            }
         }
         callbacks.add(new Object[] { o, m });
     }
@@ -1607,14 +1768,26 @@ public abstract class BDDFactory {
         return false;
     }
     
-    protected void doCallbacks(List callbacks, int val) {
+    protected void doCallbacks(List callbacks, Object arg1, Object arg2) {
         if (callbacks != null) {
             for (Iterator i = callbacks.iterator(); i.hasNext(); ) {
                 Object[] cb = (Object[]) i.next();
                 Object o = cb[0];
                 Method m = (Method) cb[1];
                 try {
-                    m.invoke(o, new Object[] { new Integer(val) } );
+                    switch (m.getParameterTypes().length) {
+                    case 0:
+                        m.invoke(o, new Object[] { } );
+                        break;
+                    case 1:
+                        m.invoke(o, new Object[] { arg1 } );
+                        break;
+                    case 2:
+                        m.invoke(o, new Object[] { arg1, arg2 } );
+                        break;
+                    default:
+                        throw new BDDException("Wrong number of arguments for "+m);
+                    }
                 } catch (IllegalArgumentException e) {
                     e.printStackTrace();
                 } catch (IllegalAccessException e) {
