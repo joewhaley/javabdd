@@ -72,7 +72,8 @@ else
     LINKFLAGS = -static -shared $(CFLAGS)
   endif
   ifeq (${CC},pathcc)    # Pathscale compiler
-    CFLAGS = -DSPECIALIZE_RELPROD -DSPECIALIZE_AND -DSPECIALIZE_OR -m32 -O2 $(EXTRA_CFLAGS)
+    CFLAGS = -DSPECIALIZE_RELPROD -DSPECIALIZE_AND -DSPECIALIZE_OR -m32 -O2 -fomit_frame_pointer $(EXTRA_CFLAGS)
+    # For 64-bit, eliminate -m32 and add -fPIC in CFLAGS.
     LINK = pathcc
     LINKFLAGS = -shared $(CFLAGS)
   endif
