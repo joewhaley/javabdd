@@ -260,9 +260,9 @@ JNIEXPORT jobject JNICALL Java_org_sf_javabdd_BuDDyFactory__1getOne
 /*
  * Class:     org_sf_javabdd_BuDDyFactory
  * Method:    buildCube
- * Signature: (II[Lorg/sf/javabdd/BDD;)Lorg/sf/javabdd/BDD;
+ * Signature: (II[Lorg/sf/javabdd/BuDDyFactory$BuDDyBDD;)Lorg/sf/javabdd/BuDDyFactory$BuDDyBDD;
  */
-JNIEXPORT jobject JNICALL Java_org_sf_javabdd_BuDDyFactory_buildCube__II_3Lorg_sf_javabdd_BDD_2
+JNIEXPORT jobject JNICALL Java_org_sf_javabdd_BuDDyFactory_buildCube__II_3Lorg_sf_javabdd_BuDDyFactory_00024BuDDyBDD_2
   (JNIEnv *env, jobject o, jint value, jint width, jobjectArray arr)
 {
   int i;
@@ -835,9 +835,9 @@ JNIEXPORT void JNICALL Java_org_sf_javabdd_BuDDyFactory_setVarOrder
 /*
  * Class:     org_sf_javabdd_BuDDyFactory
  * Method:    addVarBlock
- * Signature: (Lorg/sf/javabdd/BDD;Z)V
+ * Signature: (Lorg/sf/javabdd/BuDDyFactory$BuDDyBDD;Z)V
  */
-JNIEXPORT void JNICALL Java_org_sf_javabdd_BuDDyFactory_addVarBlock__Lorg_sf_javabdd_BDD_2Z
+JNIEXPORT void JNICALL Java_org_sf_javabdd_BuDDyFactory_addVarBlock__Lorg_sf_javabdd_BuDDyFactory_00024BuDDyBDD_2Z
   (JNIEnv *env, jobject o, jobject var, jboolean fixed)
 {
   BDD b = BDD_JavaToC(env, var);
@@ -1676,9 +1676,9 @@ JNIEXPORT jdouble JNICALL Java_org_sf_javabdd_BuDDyFactory_00024BuDDyBDD_satCoun
 /*
  * Class:     org_sf_javabdd_BuDDyFactory_BuDDyBDD
  * Method:    satCount
- * Signature: (Lorg/sf/javabdd/BDD;)D
+ * Signature: (Lorg/sf/javabdd/BuDDyFactory$BuDDyBDD;)D
  */
-JNIEXPORT jdouble JNICALL Java_org_sf_javabdd_BuDDyFactory_00024BuDDyBDD_satCount__Lorg_sf_javabdd_BDD_2
+JNIEXPORT jdouble JNICALL Java_org_sf_javabdd_BuDDyFactory_00024BuDDyBDD_satCount__Lorg_sf_javabdd_BuDDyFactory_00024BuDDyBDD_2
   (JNIEnv *env, jobject o, jobject that)
 {
   BDD b = BDD_JavaToC(env, o);
@@ -1981,7 +1981,7 @@ JNIEXPORT jint JNICALL Java_org_sf_javabdd_BuDDyFactory_00024BuDDyBDDDomain_size
 /*
  * Class:     org_sf_javabdd_BuDDyFactory_BuDDyBDDDomain
  * Method:    buildEquals
- * Signature: (Lorg/sf/javabdd/BDDDomain;)Lorg/sf/javabdd/BDD;
+ * Signature: (Lorg/sf/javabdd/BuDDyFactory$BuDDyBDDDomain;)Lorg/sf/javabdd/BuDDyFactory$BuDDyBDD;
  */
 JNIEXPORT jobject JNICALL Java_org_sf_javabdd_BuDDyFactory_00024BuDDyBDDDomain_buildEquals
   (JNIEnv *env, jobject o, jobject that)
@@ -2130,9 +2130,9 @@ JNIEXPORT void JNICALL Java_org_sf_javabdd_BuDDyFactory_00024BuDDyBDDPairing_set
 /*
  * Class:     org_sf_javabdd_BuDDyFactory_BuDDyBDDPairing
  * Method:    set
- * Signature: (Lorg/sf/javabdd/BDD;Lorg/sf/javabdd/BDD;)V
+ * Signature: (Lorg/sf/javabdd/BuDDyFactory$BuDDyBDD;Lorg/sf/javabdd/BuDDyFactory$BuDDyBDD;)V
  */
-JNIEXPORT void JNICALL Java_org_sf_javabdd_BuDDyFactory_00024BuDDyBDDPairing_set__Lorg_sf_javabdd_BDD_2Lorg_sf_javabdd_BDD_2
+JNIEXPORT void JNICALL Java_org_sf_javabdd_BuDDyFactory_00024BuDDyBDDPairing_set__Lorg_sf_javabdd_BuDDyFactory_00024BuDDyBDD_2Lorg_sf_javabdd_BuDDyFactory_00024BuDDyBDD_2
   (JNIEnv *env, jobject o, jobject that1, jobject that2)
 {
   bddPair* p = Pair_JavaToC(env, o);
