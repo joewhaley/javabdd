@@ -156,6 +156,13 @@
       <url>http://javaddlib.sourceforge.net/</url>
     </dependency>
 
+    <dependency>
+      <groupId>statcvs</groupId>
+      <artifactId>maven-statcvs-plugin</artifactId>
+      <version>2.5</version>
+      <type>plugin</type>
+    </dependency>
+
 <!-- TODO
     <dependency>
       <groupId>maven</groupId>
