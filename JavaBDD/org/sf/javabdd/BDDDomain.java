@@ -1,6 +1,9 @@
 package org.sf.javabdd;
 
 /**
+ * Represents a domain of BDD variables.  This is useful for finite state
+ * machines, among other things.
+ * 
  * @author John Whaley
  * @version $Id$
  */

@@ -1,6 +1,9 @@
 package org.sf.javabdd;
 
 /**
+ * Encodes a table of variable pairs.  This is used for replacing variables in a
+ * BDD.
+ * 
  * @author John Whaley
  * @version $Id$
  */
