@@ -438,6 +438,24 @@ JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_setMaxIncrease0
 
 /*
  * Class:     net_sf_javabdd_BuDDyFactory
+ * Method:    setIncreaseFactor0
+ * Signature: (D)D
+ */
+JNIEXPORT jdouble JNICALL Java_net_sf_javabdd_BuDDyFactory_setIncreaseFactor0
+  (JNIEnv *env, jclass cl, jdouble r)
+{
+  jdouble result;
+  jnienv = env;
+#if defined(TRACE_BUDDYLIB)
+  printf("bdd_setincreasefactor(%lf)\n", r);
+#endif
+  result = bdd_setincreasefactor(r);
+  check_error(env);
+  return result;
+}
+
+/*
+ * Class:     net_sf_javabdd_BuDDyFactory
  * Method:    setCacheRatio0
  * Signature: (I)I
  */
