@@ -24,8 +24,18 @@ public class NQueens {
         long time = System.currentTimeMillis();
 
         /* Initialize with reasonable nodes and cache size and NxN variables */
-        int numberOfNodes = (int) (Math.pow(4.4, N-6))*1000;
-        int cacheSize = 1000;
+        String numOfNodes = System.getProperty("bddnodes");
+        int numberOfNodes;
+        if (numOfNodes == null)
+            numberOfNodes = (int) (Math.pow(4.4, N-6))*1000;
+        else
+            numberOfNodes = Integer.parseInt(numOfNodes);
+        String cache = System.getProperty("bddcache");
+        int cacheSize;
+        if (cache == null)
+            cacheSize = 1000;
+        else
+            cacheSize = Integer.parseInt(cache);
         numberOfNodes = Math.max(1000, numberOfNodes);
         B = BDDFactory.init(numberOfNodes, cacheSize);
         B.setVarNum(N * N);
