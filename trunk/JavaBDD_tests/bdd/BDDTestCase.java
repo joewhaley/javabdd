@@ -6,6 +6,7 @@ package bdd;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import junit.framework.TestCase;
 import net.sf.javabdd.BDDFactory;
@@ -43,7 +44,9 @@ public abstract class BDDTestCase extends TestCase implements Iterator {
                 f.add(b);
             }
             catch (Throwable _) {
-                System.out.println("Failed: "+_);
+                if (_ instanceof InvocationTargetException)
+                    _ = ((InvocationTargetException)_).getTargetException();
+                System.out.println("Failed initializing "+bddpackage+": "+_);
             }
         }
         factories = f;
