@@ -736,13 +736,14 @@ public class JDDFactory extends BDDFactory {
         level2var = new int[vars.length];
         for (int i = 0; i < bdd.numberOfVariables(); ++i) {
             int k = neworder[i];
-            //System.out.println("Var "+i+" (node "+vars[i]+") in original order -> var "+k+" (node "+vars[k]+") in new order");
-            newvars[i] = vars[k];
-            var2level[i] = k;
-            level2var[k] = i;
+            //System.out.println("Var "+k+" (node "+vars[k]+") in original order -> var "+i+" (node "+vars[i]+") in new order");
+            newvars[k] = vars[i];
+            var2level[k] = i;
+            level2var[i] = k;
         }
         vars = newvars;
         
+        //System.out.println("Number of domains: "+numberOfDomains());
         for (int i = 0; i < numberOfDomains(); ++i) {
             BDDDomain d = getDomain(i);
             d.var = makeSet(d.ivar);
