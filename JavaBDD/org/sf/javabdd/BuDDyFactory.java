@@ -301,6 +301,15 @@ public class BuDDyFactory extends BDDFactory {
     public native int numberOfDomains();
 
     /**
+     * @see org.sf.javabdd.BDDFactory#getDomain()
+     */
+    public BDDDomain getDomain(int i) {
+        if (i < 0 || i >= numberOfDomains())
+            throw new IndexOutOfBoundsException(i+" is out of range");
+        return new BuDDyBDDDomain(i);
+    }
+
+    /**
      * An implementation of a BDD class, used by the BuDDy interface.
      */
     public static class BuDDyBDD extends BDD {
@@ -510,14 +519,14 @@ public class BuDDyFactory extends BDDFactory {
         public native int[] scanSet();
         
         /**
-         * @see org.sf.javabdd.BDD#scanSet()
+         * @see org.sf.javabdd.BDD#scanSetDomains()
          */
         public native int[] scanSetDomains();
         
         /**
-         * @see org.sf.javabdd.BDD#scanVar(int)
+         * @see org.sf.javabdd.BDD#scanVar(org.sf.javabdd.BDDDomain)
          */
-        public native int scanVar(int var);
+        public native int scanVar(BDDDomain var);
         
         /**
          * @see org.sf.javabdd.BDD#scanAllVar()
@@ -600,6 +609,27 @@ public class BuDDyFactory extends BDDFactory {
          */
         public native int[] vars();
         
+        /**
+         * @see java.lang.Object#equals()
+         */
+        public boolean equals(Object o) {
+            try {
+                return equals((BuDDyBDDDomain) o);
+            } catch (ClassCastException _) {
+                return false;
+            }
+        }
+        
+        public boolean equals(BuDDyBDDDomain that) {
+            return this._id == that._id;
+        }
+        
+        /**
+         * @see java.lang.Object#hashCode()
+         */
+        public int hashCode() {
+            return this._id;
+        }
     }
     
     /**

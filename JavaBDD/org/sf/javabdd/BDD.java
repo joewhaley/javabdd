@@ -415,15 +415,15 @@ public abstract class BDD {
     public abstract int[] scanSetDomains();
     
     /**
-     * Finds one satisfying assignment of the FDD variable var in this BDD and
-     * returns that value.
+     * Finds one satisfying assignment of the domain d in this BDD and returns
+     * that value.
      * 
      * Compare to fdd_scanvar.
      * 
-     * @param var
+     * @param d
      * @return int
      */
-    public abstract int scanVar(int var);
+    public abstract int scanVar(BDDDomain d);
     
     /**
      * Finds one satisfying assignment in this BDD of all the defined FDD
