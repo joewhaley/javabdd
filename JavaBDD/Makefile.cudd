@@ -10,12 +10,15 @@
 CUDD_SRC = cudd-2.3.1
 
 ifeq (${OS},Windows_NT)
-  JDK_ROOT = c:/j2sdk1.4.1_02
+  JDK_ROOT = $(firstword $(wildcard c:/j2sdk*))
   CC = gcc
-  CFLAGS = -Wall -O3 -mno-cygwin
+#  CFLAGS = -Wall -O3 -mno-cygwin
+  CFLAGS = -Wall -g -mno-cygwin
   OBJECT_OUTPUT_OPTION = -o$(space)
   LINK = dllwrap
-  LINKFLAGS = -s -mno-cygwin -mwindows --target=i386-mingw32 \
+#  LINKFLAGS = -s -mno-cygwin -mwindows --target=i386-mingw32 \
+#              --add-stdcall-alias --driver-name gcc
+  LINKFLAGS = -mno-cygwin -mwindows --target=i386-mingw32 \
               --add-stdcall-alias --driver-name gcc
   DLL_OUTPUT_OPTION = -o$(space)
   INCLUDES = -I. -I$(JDK_ROOT)/include \
@@ -27,11 +30,11 @@ ifeq (${OS},Windows_NT)
              -I$(JDK_ROOT)/include/win32
   DLL_NAME = cudd.dll
   ifeq (${CC},icl)    # Intel Windows compiler
-    CFLAGS = -O3
+    CFLAGS = -O3 -QaxW
     OBJECT_OUTPUT_OPTION = -Fo
-    LINK = icl
-    LINKFLAGS = -MLd -LDd -Zi /link /libpath:$(JDK_ROOT)/lib user32.lib gdi32.lib
-    DLL_OUTPUT_OPTION = -Fe
+    LINK = xilink
+    LINKFLAGS = /dll /libpath:$(JDK_ROOT)/lib user32.lib gdi32.lib
+    DLL_OUTPUT_OPTION = /out:
   endif
   ifeq (${CC},cl)     # Microsoft Visual C++ compiler
     CFLAGS = -O2
@@ -41,7 +44,7 @@ ifeq (${OS},Windows_NT)
     DLL_OUTPUT_OPTION = -Fe
   endif
 else
-  JDK_ROOT = /usr/java/j2sdk1.4.2
+  JDK_ROOT = $(firstword $(wildcard /usr/java/j2sdk*))
   CFLAGS = -D_REENTRANT -D_GNU_SOURCE -O3
   OBJECT_OUTPUT_OPTION = -o$(space)
   LINK = $(CC)
@@ -110,6 +113,8 @@ DLL_OBJS  = $(DLL_SRCS:.c=.o)
 
 all: $(DLL_NAME)
 
+dll: $(DLL_NAME)
+
 $(DLL_NAME): $(DLL_OBJS)
 	$(LINK) $(DLL_OUTPUT_OPTION)$@ $(DLL_OBJS) $(LINKFLAGS)
 
@@ -137,6 +142,15 @@ jar: $(JAR_NAME)
 
 $(JAR_NAME): $(JNI_CLASSFILE) $(EXAMPLE_CLASSFILES)
 	$(JAR) cvfm $(JAR_NAME) javabddManifest $(JAVA_CLASSFILES) $(EXAMPLE_CLASSFILES)
+
+pdo:
+	icl -Qprof_gen $(INCLUDES) $(CFLAGS) $(DLL_OUTPUT_OPTION)cudd.dll $(DLL_SRCS) -LD /link /libpath:$(JDK_ROOT)/lib 
+	$(JAVA) -Dbdd=cudd -Djava.library.path=. NQueens 12
+	icl -Qprof_use $(INCLUDES) $(CFLAGS) $(DLL_OUTPUT_OPTION)cudd.dll $(DLL_SRCS) -LD /link /libpath:$(JDK_ROOT)/lib 
+	$(JAVA) -Dbdd=cudd -Djava.library.path=. NQueens 12
+
+opt_report:
+	icl -Qopt_report -Qopt_report_phase all $(INCLUDES) $(CFLAGS) $(DLL_OUTPUT_OPTION)cudd.dll $(DLL_SRCS) -LD /link /libpath:$(JDK_ROOT)/lib 
 
 test:	$(DLL_NAME) $(EXAMPLE_CLASSFILES)
 	$(JAVA) -Dbdd=cudd -Djava.library.path=. NQueens 8
