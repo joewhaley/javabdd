@@ -59,15 +59,31 @@ public class BuDDyFactory extends BDDFactory {
     
     private BuDDyFactory() {}
 
+    static final boolean USE_FINALIZER = false;
+    
+    private static BuDDyBDD makeBDD(int id) {
+        BuDDyBDD b;
+        if (USE_FINALIZER) {
+            b = new BuDDyBDDWithFinalizer(id);
+            if (false) { // can check for specific id's here.
+                System.out.println("Created "+System.identityHashCode(b)+" id "+id);
+                new Exception().printStackTrace(System.out);
+            }
+        } else {
+            b = new BuDDyBDD(id);
+        }
+        return b;
+    }
+    
     /* (non-Javadoc)
      * @see org.sf.javabdd.BDDFactory#zero()
      */
-    public BDD zero() { return new BuDDyBDD(0); }
+    public BDD zero() { return makeBDD(0); }
 
     /* (non-Javadoc)
      * @see org.sf.javabdd.BDDFactory#one()
      */
-    public BDD one() { return new BuDDyBDD(1); }
+    public BDD one() { return makeBDD(1); }
     
     /**
      * Converts collection of BuDDyBDD's into an int array, for passing to
@@ -92,7 +108,7 @@ public class BuDDyFactory extends BDDFactory {
     public BDD buildCube(int value, List var) {
         int[] a = toBuDDyArray(var);
         int id = buildCube0(value, a);
-        return new BuDDyBDD(id);
+        return makeBDD(id);
     }
     private static native int buildCube0(int value, int[] var);
 
@@ -101,7 +117,7 @@ public class BuDDyFactory extends BDDFactory {
      */
     public BDD buildCube(int value, int[] var) {
         int id = buildCube1(value, var);
-        return new BuDDyBDD(id);
+        return makeBDD(id);
     }
     private static native int buildCube1(int value, int[] var);
 
@@ -110,7 +126,7 @@ public class BuDDyFactory extends BDDFactory {
      */
     public BDD makeSet(int[] v) {
         int id = makeSet0(v);
-        return new BuDDyBDD(id);
+        return makeBDD(id);
     }
     private static native int makeSet0(int[] var);
     
@@ -134,6 +150,10 @@ public class BuDDyFactory extends BDDFactory {
      * @see org.sf.javabdd.BDDFactory#done()
      */
     public void done() {
+        if (USE_FINALIZER) {
+            System.gc();
+            System.runFinalization();
+        }
         INSTANCE = null;
         done0();
     }
@@ -200,7 +220,7 @@ public class BuDDyFactory extends BDDFactory {
      */
     public BDD ithVar(int var) {
         int id = ithVar0(var);
-        return new BuDDyBDD(id);
+        return makeBDD(id);
     }
     private static native int ithVar0(int var);
 
@@ -209,7 +229,7 @@ public class BuDDyFactory extends BDDFactory {
      */
     public BDD nithVar(int var) {
         int id = nithVar0(var);
-        return new BuDDyBDD(id);
+        return makeBDD(id);
     }
     private static native int nithVar0(int var);
 
@@ -252,7 +272,7 @@ public class BuDDyFactory extends BDDFactory {
      */
     public BDD load(String filename) {
         int id = load0(filename);
-        return new BuDDyBDD(id);
+        return makeBDD(id);
     }
     private static native int load0(String filename);
 
@@ -459,12 +479,12 @@ public class BuDDyFactory extends BDDFactory {
     static class BuDDyBDD extends BDD {
     
         /** The value used by the BDD library. */
-        private int _id;
+        protected int _id;
         
         /** An invalid id, for use in invalidating BDDs. */
         static final int INVALID_BDD = -1;
         
-        private BuDDyBDD(int id) {
+        protected BuDDyBDD(int id) {
             _id = id;
             addRef(_id);
         }
@@ -503,7 +523,7 @@ public class BuDDyFactory extends BDDFactory {
          */
         public BDD high() {
             int b = high0(_id);
-            return new BuDDyBDD(b);
+            return makeBDD(b);
         }
         private static native int high0(int b);
         
@@ -512,7 +532,7 @@ public class BuDDyFactory extends BDDFactory {
          */
         public BDD low() {
             int b = low0(_id);
-            return new BuDDyBDD(b);
+            return makeBDD(b);
         }
         private static native int low0(int b);
         
@@ -520,7 +540,7 @@ public class BuDDyFactory extends BDDFactory {
          * @see org.sf.javabdd.BDD#id()
          */
         public BDD id() {
-            return new BuDDyBDD(_id);
+            return makeBDD(_id);
         }
         
         /* (non-Javadoc)
@@ -528,7 +548,7 @@ public class BuDDyFactory extends BDDFactory {
          */
         public BDD not() {
             int b = not0(_id);
-            return new BuDDyBDD(b);
+            return makeBDD(b);
         }
         private static native int not0(int b);
         
@@ -539,7 +559,7 @@ public class BuDDyFactory extends BDDFactory {
             BuDDyBDD c = (BuDDyBDD) thenBDD;
             BuDDyBDD d = (BuDDyBDD) elseBDD;
             int b = ite0(_id, c._id, d._id);
-            return new BuDDyBDD(b);
+            return makeBDD(b);
         }
         private static native int ite0(int b, int c, int d);
         
@@ -550,7 +570,7 @@ public class BuDDyFactory extends BDDFactory {
             BuDDyBDD c = (BuDDyBDD) that;
             BuDDyBDD d = (BuDDyBDD) var;
             int b = relprod0(_id, c._id, d._id);
-            return new BuDDyBDD(b);
+            return makeBDD(b);
         }
         private static native int relprod0(int b, int c, int d);
         
@@ -560,7 +580,7 @@ public class BuDDyFactory extends BDDFactory {
         public BDD compose(BDD that, int var) {
             BuDDyBDD c = (BuDDyBDD) that;
             int b = compose0(_id, c._id, var);
-            return new BuDDyBDD(b);
+            return makeBDD(b);
         }
         private static native int compose0(int b, int c, int var);
         
@@ -570,7 +590,7 @@ public class BuDDyFactory extends BDDFactory {
         public BDD constrain(BDD that) {
             BuDDyBDD c = (BuDDyBDD) that;
             int b = constrain0(_id, c._id);
-            return new BuDDyBDD(b);
+            return makeBDD(b);
         }
         private static native int constrain0(int b, int c);
         
@@ -580,7 +600,7 @@ public class BuDDyFactory extends BDDFactory {
         public BDD exist(BDD var) {
             BuDDyBDD c = (BuDDyBDD) var;
             int b = exist0(_id, c._id);
-            return new BuDDyBDD(b);
+            return makeBDD(b);
         }
         private static native int exist0(int b, int var);
         
@@ -590,7 +610,7 @@ public class BuDDyFactory extends BDDFactory {
         public BDD forAll(BDD var) {
             BuDDyBDD c = (BuDDyBDD) var;
             int b = forAll0(_id, c._id);
-            return new BuDDyBDD(b);
+            return makeBDD(b);
         }
         private static native int forAll0(int b, int var);
         
@@ -600,7 +620,7 @@ public class BuDDyFactory extends BDDFactory {
         public BDD unique(BDD var) {
             BuDDyBDD c = (BuDDyBDD) var;
             int b = unique0(_id, c._id);
-            return new BuDDyBDD(b);
+            return makeBDD(b);
         }
         private static native int unique0(int b, int var);
         
@@ -610,7 +630,7 @@ public class BuDDyFactory extends BDDFactory {
         public BDD restrict(BDD var) {
             BuDDyBDD c = (BuDDyBDD) var;
             int b = restrict0(_id, c._id);
-            return new BuDDyBDD(b);
+            return makeBDD(b);
         }
         private static native int restrict0(int b, int var);
         
@@ -636,7 +656,7 @@ public class BuDDyFactory extends BDDFactory {
         public BDD simplify(BDD d) {
             BuDDyBDD c = (BuDDyBDD) d;
             int b = simplify0(_id, c._id);
-            return new BuDDyBDD(b);
+            return makeBDD(b);
         }
         private static native int simplify0(int b, int d);
         
@@ -645,7 +665,7 @@ public class BuDDyFactory extends BDDFactory {
          */
         public BDD support() {
             int b = support0(_id);
-            return new BuDDyBDD(b);
+            return makeBDD(b);
         }
         private static native int support0(int b);
         
@@ -655,7 +675,7 @@ public class BuDDyFactory extends BDDFactory {
         public BDD apply(BDD that, BDDFactory.BDDOp opr) {
             BuDDyBDD c = (BuDDyBDD) that;
             int b = apply0(_id, c._id, opr.id);
-            return new BuDDyBDD(b);
+            return makeBDD(b);
         }
         private static native int apply0(int b, int c, int opr);
         
@@ -682,7 +702,7 @@ public class BuDDyFactory extends BDDFactory {
             BuDDyBDD c = (BuDDyBDD) that;
             BuDDyBDD d = (BuDDyBDD) var;
             int b = applyAll0(_id, c._id, opr.id, d._id);
-            return new BuDDyBDD(b);
+            return makeBDD(b);
         }
         private static native int applyAll0(int b, int c, int opr, int d);
         
@@ -693,7 +713,7 @@ public class BuDDyFactory extends BDDFactory {
             BuDDyBDD c = (BuDDyBDD) that;
             BuDDyBDD d = (BuDDyBDD) var;
             int b = applyEx0(_id, c._id, opr.id, d._id);
-            return new BuDDyBDD(b);
+            return makeBDD(b);
         }
         private static native int applyEx0(int b, int c, int opr, int d);
         
@@ -704,7 +724,7 @@ public class BuDDyFactory extends BDDFactory {
             BuDDyBDD c = (BuDDyBDD) that;
             BuDDyBDD d = (BuDDyBDD) var;
             int b = applyUni0(_id, c._id, opr.id, d._id);
-            return new BuDDyBDD(b);
+            return makeBDD(b);
         }
         private static native int applyUni0(int b, int c, int opr, int d);
         
@@ -713,7 +733,7 @@ public class BuDDyFactory extends BDDFactory {
          */
         public BDD satOne() {
             int b = satOne0(_id);
-            return new BuDDyBDD(b);
+            return makeBDD(b);
         }
         private static native int satOne0(int b);
         
@@ -722,7 +742,7 @@ public class BuDDyFactory extends BDDFactory {
          */
         public BDD fullSatOne() {
             int b = fullSatOne0(_id);
-            return new BuDDyBDD(b);
+            return makeBDD(b);
         }
         private static native int fullSatOne0(int b);
         
@@ -733,7 +753,7 @@ public class BuDDyFactory extends BDDFactory {
             BuDDyBDD c = (BuDDyBDD) var;
             BuDDyBDD d = (BuDDyBDD) pol;
             int b = satOne1(_id, c._id, d._id);
-            return new BuDDyBDD(b);
+            return makeBDD(b);
         }
         private static native int satOne1(int b, int c, int d);
         
@@ -823,32 +843,13 @@ public class BuDDyFactory extends BDDFactory {
         
         private static native void delRef(int b);
         
-        static final boolean USE_FINALIZER = false;
-        
-        /* Finalizer runs in different thread, and BuDDy is not thread-safe.
-         * Also, the existence of any finalize() method hurts performance
-         * considerably.
-         */
-        /* (non-Javadoc)
-         * @see java.lang.Object#finalize()
-         */
-        /*
-        protected void finalize() throws Throwable {
-            super.finalize();
-            if (USE_FINALIZER) {
-                if (false && _id >= 0) {
-                    System.out.println("BDD not freed! "+System.identityHashCode(this));
-                }
-                this.free();
-            }
-        }
-        */
-        
         /* (non-Javadoc)
          * @see org.sf.javabdd.BDD#free()
          */
         public void free() {
-            delRef(_id);
+            if (INSTANCE != null) {
+                delRef(_id);
+            }
             _id = INVALID_BDD;
         }
         
@@ -858,7 +859,7 @@ public class BuDDyFactory extends BDDFactory {
         public BDD veccompose(BDDPairing pair) {
             BuDDyBDDPairing p = (BuDDyBDDPairing) pair;
             int b = veccompose0(_id, p._ptr);
-            return new BuDDyBDD(b);
+            return makeBDD(b);
         }
         private static native int veccompose0(int b, long p);
         
@@ -868,7 +869,7 @@ public class BuDDyFactory extends BDDFactory {
         public BDD replace(BDDPairing pair) {
             BuDDyBDDPairing p = (BuDDyBDDPairing) pair;
             int b = replace0(_id, p._ptr);
-            return new BuDDyBDD(b);
+            return makeBDD(b);
         }
         private static native int replace0(int b, long p);
         
@@ -898,6 +899,31 @@ public class BuDDyFactory extends BDDFactory {
             return this._id;
         }
 
+    }
+    
+    static class BuDDyBDDWithFinalizer extends BuDDyBDD {
+        
+        protected BuDDyBDDWithFinalizer(int id) {
+            super(id);
+        }
+        
+        /* Finalizer runs in different thread, and BuDDy is not thread-safe.
+         * Also, the existence of any finalize() method hurts performance
+         * considerably.
+         */
+        /* (non-Javadoc)
+         * @see java.lang.Object#finalize()
+         */
+        protected void finalize() throws Throwable {
+            super.finalize();
+            if (_id >= 0) {
+                System.out.println("BDD not freed! "+System.identityHashCode(this)+" _id "+_id+" nodes: "+nodeCount());
+            }
+            //this.free();
+        }
+        static {
+            //System.runFinalizersOnExit(true);
+        }
     }
     
     /* (non-Javadoc)
