@@ -3225,12 +3225,12 @@ public class JFactory extends BDDFactory {
             quantvarset = null;
         }
 
-        BddCache_done(applycache);
-        BddCache_done(itecache);
-        BddCache_done(quantcache);
-        BddCache_done(appexcache);
-        BddCache_done(replacecache);
-        BddCache_done(misccache);
+        BddCache_done(applycache); applycache = null;
+        BddCache_done(itecache); itecache = null;
+        BddCache_done(quantcache); quantcache = null;
+        BddCache_done(appexcache); appexcache = null;
+        BddCache_done(replacecache); replacecache = null;
+        BddCache_done(misccache); misccache = null;
 
         if (supportSet != null) {
             free(supportSet);
