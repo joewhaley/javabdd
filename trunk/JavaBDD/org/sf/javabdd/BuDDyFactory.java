@@ -559,7 +559,12 @@ public class BuDDyFactory extends BDDFactory {
         private BuDDyBDDDomain(int id) {
             this._id = id;
         }
-            
+        
+        /**
+         * @see org.sf.javabdd.BDDDomain#getIndex()
+         */
+        public int getIndex() { return _id; }
+        
         /**
          * @see org.sf.javabdd.BDDDomain#domain()
          */
@@ -642,6 +647,19 @@ public class BuDDyFactory extends BDDFactory {
          * @see org.sf.javabdd.BDDPairing#reset()
          */
         public native void reset();
+        
+        /**
+         * @see java.lang.Object#finalize()
+         */
+        protected void finalize() throws Throwable {
+            super.finalize();
+            this.free();
+        }
+
+        /**
+         * Free the memory allocated for this pair.
+         */
+        private native void free();
         
     }
     
