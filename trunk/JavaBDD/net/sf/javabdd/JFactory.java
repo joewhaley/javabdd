@@ -768,13 +768,14 @@ public class JFactory extends BDDFactory {
     }
 
     static boolean ISCONST(int r) {
-        return r == bddfalse || r == bddtrue;
+        //return r == bddfalse || r == bddtrue;
+        return r < 2;
     }
 
     void CHECK(int r) {
         if (!bddrunning)
             bdd_error(BDD_RUNNING);
-        else if ((r) < 0 || (r) >= bddnodesize)
+        else if (r < 0 || r >= bddnodesize)
             bdd_error(BDD_ILLBDD);
         else if (r >= 2 && LOW(r) == -1)
             bdd_error(BDD_ILLBDD);
@@ -1622,6 +1623,136 @@ public class JFactory extends BDDFactory {
         return res;
     }
 
+    int appuni_rec(int l, int r, int var) {
+        BddCacheDataI entry;
+        int res;
+
+        int LEVEL_l, LEVEL_r, LEVEL_var;
+        LEVEL_l = LEVEL(l);
+        LEVEL_r = LEVEL(r);
+        LEVEL_var = LEVEL(var);
+
+        if (LEVEL_l > LEVEL_var && LEVEL_r > LEVEL_var) {
+            // Skipped a quantified node, answer is zero.
+            return BDDZERO;
+        }
+
+        if (ISCONST(l) && ISCONST(r))
+            res = oprres[appexop][(l << 1) | r];
+        else if (ISCONST(var)) {
+            int oldop = applyop;
+            applyop = appexop;
+            switch (applyop) {
+            case bddop_and: res = and_rec(l, r); break;
+            case bddop_or: res = or_rec(l, r); break;
+            default: res = apply_rec(l, r); break;
+            }
+            applyop = oldop;
+        } else {
+            entry = BddCache_lookupI(appexcache, APPEXHASH(l, r, appexop));
+            if (entry.a == l && entry.b == r && entry.c == appexid) {
+                if (CACHESTATS)
+                    cachestats.opHit++;
+                return entry.res;
+            }
+            if (CACHESTATS)
+                cachestats.opMiss++;
+
+            int lev;
+            if (LEVEL_l == LEVEL_r) {
+                if (LEVEL_l == LEVEL_var) {
+                    lev = -1;
+                    var = HIGH(var);
+                } else {
+                    lev = LEVEL_l;
+                }
+                PUSHREF(appuni_rec(LOW(l), LOW(r), var));
+                PUSHREF(appuni_rec(HIGH(l), HIGH(r), var));
+                lev = LEVEL_l;
+            } else if (LEVEL_l < LEVEL_r) {
+                if (LEVEL_l == LEVEL_var) {
+                    lev = -1;
+                    var = HIGH(var);
+                } else {
+                    lev = LEVEL_l;
+                }
+                PUSHREF(appuni_rec(LOW(l), r, var));
+                PUSHREF(appuni_rec(HIGH(l), r, var));
+            } else {
+                if (LEVEL_r == LEVEL_var) {
+                    lev = -1;
+                    var = HIGH(var);
+                } else {
+                    lev = LEVEL_r;
+                }
+                PUSHREF(appuni_rec(l, LOW(r), var));
+                PUSHREF(appuni_rec(l, HIGH(r), var));
+            }
+            if (lev == -1) {
+                int r2 = READREF(2), r1 = READREF(1);
+                switch (applyop) {
+                case bddop_and: res = and_rec(r2, r1); break;
+                case bddop_or: res = or_rec(r2, r1); break;
+                default: res = apply_rec(r2, r1); break;
+                }
+            } else {
+                res = bdd_makenode(lev, READREF(2), READREF(1));
+            }
+
+            POPREF(2);
+
+            entry.a = l;
+            entry.b = r;
+            entry.c = appexid;
+            entry.res = res;
+        }
+
+        return res;
+    }
+    
+    int unique_rec(int r, int q) {
+        BddCacheDataI entry;
+        int res;
+        int LEVEL_r, LEVEL_q;
+
+        LEVEL_r = LEVEL(r);
+        LEVEL_q = LEVEL(q);
+        if (LEVEL_r > LEVEL_q) {
+            // Skipped a quantified node, answer is zero.
+            return BDDZERO;
+        }
+        
+        if (r < 2 || q < 2)
+            return r;
+        
+        entry = BddCache_lookupI(quantcache, QUANTHASH(r));
+        if (entry.a == r && entry.c == quantid) {
+            if (CACHESTATS)
+                cachestats.opHit++;
+            return entry.res;
+        }
+        if (CACHESTATS)
+            cachestats.opMiss++;
+
+        if (LEVEL_r == LEVEL_q) {
+            PUSHREF(unique_rec(LOW(r), HIGH(q)));
+            PUSHREF(unique_rec(HIGH(r), HIGH(q)));
+            res = apply_rec(READREF(2), READREF(1));
+        } else {
+            PUSHREF(unique_rec(LOW(r), q));
+            PUSHREF(unique_rec(HIGH(r), q));
+            res = bdd_makenode(LEVEL(r), READREF(2), READREF(1));
+        }
+
+        POPREF(2);
+
+        entry.a = r;
+        entry.c = quantid;
+        entry.res = res;
+
+        return res;
+    }
+    
     int quant_rec(int r) {
         BddCacheDataI entry;
         int res;
@@ -2000,8 +2131,6 @@ public class JFactory extends BDDFactory {
         if (quantcache == null) quantcache = BddCacheI_init(cachesize);
         
         again : for (;;) {
-            if (varset2vartable(var) < 0)
-                return bddfalse;
             try {
                 INITREF();
                 quantid = (var << 3) | CACHEID_UNIQUE;
@@ -2009,7 +2138,7 @@ public class JFactory extends BDDFactory {
 
                 if (firstReorder == 0)
                     bdd_disable_reorder();
-                res = quant_rec(r);
+                res = unique_rec(r, var);
                 if (firstReorder == 0)
                     bdd_enable_reorder();
             } catch (BDDException x) {
@@ -2331,8 +2460,6 @@ public class JFactory extends BDDFactory {
         if (quantcache == null) quantcache = BddCacheI_init(cachesize);
         
         again : for (;;) {
-            if (varset2vartable(var) < 0)
-                return bddfalse;
             try {
                 INITREF();
                 applyop = bddop_xor;
@@ -2342,7 +2469,7 @@ public class JFactory extends BDDFactory {
 
                 if (firstReorder == 0)
                     bdd_disable_reorder();
-                res = appquant_rec(l, r);
+                res = appuni_rec(l, r, var);
                 if (firstReorder == 0)
                     bdd_enable_reorder();
             } catch (BDDException x) {
