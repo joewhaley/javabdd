@@ -897,7 +897,7 @@ public class TestBDDFactory extends BDDFactory {
         
     }
         
-    public class TestBDDDomain extends BDDDomain {
+    class TestBDDDomain extends BDDDomain {
 
         TestBDDDomain(int a, long b) {
             super(a, b);
@@ -912,7 +912,7 @@ public class TestBDDFactory extends BDDFactory {
         
     }
 
-    public class TestBDDBitVector extends BDDBitVector {
+    class TestBDDBitVector extends BDDBitVector {
 
         TestBDDBitVector(int a) {
             super(a);
