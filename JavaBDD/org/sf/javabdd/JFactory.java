@@ -301,7 +301,7 @@ public class JFactory extends BDDFactory {
         }
 
         /* (non-Javadoc)
-         * @see org.sf.javabdd.BDD#satOneSet(org.sf.javabdd.BDD, org.sf.javabdd.BDD)
+         * @see org.sf.javabdd.BDD#satOne(org.sf.javabdd.BDD, org.sf.javabdd.BDD)
          */
         public BDD satOne(BDD var, BDD pol) {
             int x = _index;
