@@ -1,5 +1,7 @@
 package org.sf.javabdd;
 
+import java.util.Iterator;
+
 /**
  * Represents a domain of BDD variables.  This is useful for finite state
  * machines, among other things.
@@ -292,5 +294,46 @@ public abstract class BDDDomain {
     public String toString() {
         return getName();
     }
-    
+
+    /**
+     * Convert a BDD that to a list of indices of this domain.
+     * This method assumes that the BDD passed is a disjunction
+     * of ithVar(i_1) to ithVar(i_k).  It returns an array
+     * of length 'k' with elements [i_1,...,i_k].
+     * <p>
+     * Be careful when using this method for BDDs with a large number
+     * of entries, as it allocates a long[] array of dimension k.
+     *
+     * @param bdd bdd that is the disjunction of domain indices
+     * @see #getVarIndices(BDD,int)
+     * @see #ithVar(long)
+     */
+    public long [] getVarIndices(BDD bdd) {
+        return getVarIndices(bdd, -1);
+    }
+
+    /**
+     * Convert a BDD that to a list of indices of this domain.
+     * Same as getVarIndices(BDD), except only 'max' indices
+     * are extracted.  
+     *
+     * @param bdd bdd that is the disjunction of domain indices
+     * @param max maximum number of entries to be returned
+     *
+     * @see #ithVar(long)
+     */
+    public long [] getVarIndices(BDD bdd, int max) {
+	BDD myvarset = set();	// can't use var here, must respect subclass a factory may provide
+        int n = (int)bdd.satCount(myvarset);
+        if (max != -1 && n > max)
+            n = max;
+        long []res = new long[n];
+        Iterator it = bdd.iterator(myvarset);
+        for (int i = 0; i < n; i++) {
+            BDD bi = (BDD) it.next();
+            res[i] = bi.scanVar(this);
+        }
+	myvarset.free();
+        return res;
+    }
 }
