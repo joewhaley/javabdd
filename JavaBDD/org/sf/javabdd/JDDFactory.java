@@ -14,9 +14,9 @@ import java.util.List;
 public class JDDFactory extends BDDFactory {
 
     private final jdd.bdd.BDD bdd;
-    private int[] vars;
-    private int[] level2var;
-    private int[] var2level;
+    private int[] vars; // indexed by EXTERNAL
+    private int[] level2var; // internal -> external
+    private int[] var2level; // external -> internal
     
     private JDDFactory(int nodenum, int cachesize) {
         bdd = new jdd.bdd.BDD(nodenum, cachesize);
@@ -745,6 +745,7 @@ public class JDDFactory extends BDDFactory {
         for (int i = 0; i < numberOfDomains(); ++i) {
             BDDDomain d = getDomain(i);
             d.var = makeSet(d.ivar);
+            //System.out.println("Set for domain "+d+": "+d.var.toStringWithDomains());
         }
     }
 
