@@ -863,23 +863,23 @@ public abstract class BDD {
     }
     
     /**
-     * <p>Calculates the log. number of satisfying variable assignments.</p>
+     * <p>Calculates the logarithm of the number of satisfying variable assignments.</p>
      * 
      * <p>Compare to bdd_satcount.</p>
      * 
-     * @return the log. number of satisfying variable assignments
+     * @return the logarithm of the number of satisfying variable assignments
      */
     public double logSatCount() {
         return Math.log(satCount());
     }
     
     /**
-     * <p>Calculates the log. number of satisfying variable assignments to the
+     * <p>Calculates the logarithm of the number of satisfying variable assignments to the
      * variables in the given varset.</p>
      * 
      * <p>Compare to bdd_satcountset.</p>
      * 
-     * @return the log. number of satisfying variable assignments
+     * @return the logarithm of the number of satisfying variable assignments
      */
     public double logSatCount(BDD varset) {
         return Math.log(satCount(varset));
