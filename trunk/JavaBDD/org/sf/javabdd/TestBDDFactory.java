@@ -862,7 +862,7 @@ public class TestBDDFactory extends BDDFactory {
         return new TestBDDBitVector(a);
     }
 
-    public class TestBDDPairing extends BDDPairing {
+    public static class TestBDDPairing extends BDDPairing {
         
         BDDPairing b1, b2;
         
