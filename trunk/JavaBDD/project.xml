@@ -56,6 +56,9 @@
     <connection>
       scm:cvs:pserver:anonymous@cvs.sourceforge.net:/cvsroot/javabdd:JavaBDD
     </connection>
+    <developerConnection>
+      scm:cvs:ext:joewhaley@cvs.sourceforge.net:/cvsroot/javabdd:JavaBDD
+    </developerConnection>
     <url>
       http://cvs.sourceforge.net/viewcvs.py/javabdd/
     </url>
