@@ -920,11 +920,12 @@ public class JDDFactory extends BDDFactory {
 
     }
     
-
+    public static final String REVISION = "$Revision$";
+    
     /* (non-Javadoc)
      * @see net.sf.javabdd.BDDFactory#getVersion()
      */
     public String getVersion() {
-        return "JDD r$Revision$";
+        return "JDD "+REVISION.substring(11, REVISION.length()-2);
     }
 }
