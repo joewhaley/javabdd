@@ -8,6 +8,7 @@ import java.io.PrintStream;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -118,7 +119,7 @@ public class TypedBDDFactory extends BDDFactory {
         return factory.setVarNum(num);
     }
 
-    BDDDomain whichDomain(int var) {
+    public BDDDomain whichDomain(int var) {
         for (int i = 0; i < numberOfDomains(); ++i) {
             int[] vars = getDomain(i).vars();
             for (int j = 0; j < vars.length; ++j) {
@@ -298,8 +299,12 @@ public class TypedBDDFactory extends BDDFactory {
      * @see org.sf.javabdd.BDDFactory#nodeCount(java.util.Collection)
      */
     public int nodeCount(Collection r) {
-        // TODO Auto-generated method stub
-        return 0;
+        Collection s = new LinkedList();
+        for (Iterator i = r.iterator(); i.hasNext(); ) {
+            TypedBDD bdd1 = (TypedBDD) i.next();
+            s.add(bdd1.bdd);
+        }
+        return factory.nodeCount(s);
     }
 
     /* (non-Javadoc)
@@ -419,6 +424,33 @@ public class TypedBDDFactory extends BDDFactory {
             this.dom = dom;
         }
         
+        /**
+         * Returns the set of domains that this BDD uses.
+         */
+        public Set getDomainSet() {
+            return dom;
+        }
+        
+        /**
+         * Changes this BDD domains to be the given set.
+         */
+        public void setDomainSet(Set d) {
+            dom.clear();
+            dom.addAll(d);
+        }
+        
+        /**
+         * Returns the set of domains in BDD format.
+         */
+        BDD getDomains() {
+            BDD b = factory.one();
+            for (Iterator i = dom.iterator(); i.hasNext(); ) {
+                TypedBDDDomain d = (TypedBDDDomain) i.next();
+                b.andWith(d.domain.set());
+            }
+            return b;
+        }
+        
         /* (non-Javadoc)
          * @see org.sf.javabdd.BDD#getFactory()
          */
@@ -510,24 +542,33 @@ public class TypedBDDFactory extends BDDFactory {
          * @see org.sf.javabdd.BDD#compose(org.sf.javabdd.BDD, int)
          */
         public BDD compose(BDD g, int var) {
-            // TODO Auto-generated method stub
-            return null;
+            TypedBDD bdd1 = (TypedBDD) g;
+            // TODO How does this change the domains?
+            Set newDom = makeSet();
+            newDom.addAll(dom);
+            return new TypedBDD(bdd.compose(bdd1.bdd, var), newDom);
         }
 
         /* (non-Javadoc)
          * @see org.sf.javabdd.BDD#veccompose(org.sf.javabdd.BDDPairing)
          */
         public BDD veccompose(BDDPairing pair) {
-            // TODO Auto-generated method stub
-            return null;
+            TypedBDDPairing p = (TypedBDDPairing) pair;
+            // TODO How does this change the domains?
+            Set newDom = makeSet();
+            newDom.addAll(dom);
+            return new TypedBDD(bdd.veccompose(p.pairing), newDom);
         }
 
         /* (non-Javadoc)
          * @see org.sf.javabdd.BDD#constrain(org.sf.javabdd.BDD)
          */
         public BDD constrain(BDD that) {
-            // TODO Auto-generated method stub
-            return null;
+            TypedBDD bdd1 = (TypedBDD) that;
+            // TODO How does this change the domains?
+            Set newDom = makeSet();
+            newDom.addAll(dom);
+            return new TypedBDD(bdd.constrain(bdd1.bdd), newDom);
         }
 
         /* (non-Javadoc)
@@ -599,15 +640,6 @@ public class TypedBDDFactory extends BDDFactory {
             return new TypedBDD(bdd.restrict(bdd1.bdd), newDom);
         }
 
-        BDD getDomains() {
-            BDD b = factory.one();
-            for (Iterator i = dom.iterator(); i.hasNext(); ) {
-                TypedBDDDomain d = (TypedBDDDomain) i.next();
-                b.andWith(d.domain.set());
-            }
-            return b;
-        }
-        
         /* (non-Javadoc)
          * @see org.sf.javabdd.BDD#restrictWith(org.sf.javabdd.BDD)
          */
@@ -632,16 +664,21 @@ public class TypedBDDFactory extends BDDFactory {
          * @see org.sf.javabdd.BDD#simplify(org.sf.javabdd.BDD)
          */
         public BDD simplify(BDD d) {
-            // TODO Auto-generated method stub
-            return null;
+            TypedBDD bdd1 = (TypedBDD) d;
+            // TODO How does this change the domains?
+            Set newDom = makeSet();
+            newDom.addAll(dom);
+            return new TypedBDD(bdd.simplify(bdd1.bdd), newDom);
         }
 
         /* (non-Javadoc)
          * @see org.sf.javabdd.BDD#support()
          */
         public BDD support() {
-            // TODO Auto-generated method stub
-            return null;
+            // TODO How does this change the domains?
+            Set newDom = makeSet();
+            newDom.addAll(dom);
+            return new TypedBDD(bdd.support(), newDom);
         }
 
         void applyHelper(Set newDom, TypedBDD bdd0, TypedBDD bdd1, BDDOp opr) {
@@ -782,8 +819,7 @@ public class TypedBDDFactory extends BDDFactory {
          * @see org.sf.javabdd.BDD#allsat()
          */
         public List allsat() {
-            // TODO Auto-generated method stub
-            return null;
+            return bdd.allsat();
         }
 
         /* (non-Javadoc)
