@@ -617,6 +617,7 @@ public class CUDDFactory extends BDDFactory {
         /* (non-Javadoc)
          * @see java.lang.Object#finalize()
          */
+         /*
         protected void finalize() throws Throwable {
             super.finalize();
             if (USE_FINALIZER) {
@@ -626,6 +627,7 @@ public class CUDDFactory extends BDDFactory {
                 this.free();
             }
         }
+        */
         
         /* (non-Javadoc)
          * @see org.sf.javabdd.BDD#free()

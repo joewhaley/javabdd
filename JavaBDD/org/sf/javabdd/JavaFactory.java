@@ -397,6 +397,7 @@ public class JavaFactory extends BDDFactory {
         /**
          * @see java.lang.Object#finalize()
          */
+        /*
         protected void finalize() throws Throwable {
             super.finalize();
             if (USE_FINALIZER) {
@@ -406,6 +407,7 @@ public class JavaFactory extends BDDFactory {
                 this.free();
             }
         }
+        */
         
         /**
          * @see org.sf.javabdd.BDD#free()
