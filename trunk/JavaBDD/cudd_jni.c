@@ -56,7 +56,7 @@ static DdNode *BDD_JavaToC(JNIEnv *env, jobject var)
 
 static jobject BDD_CToJava(JNIEnv *env, DdNode *var)
 {
-  jobject result = (*env)->NewObject(env, bdd_cls, bdd_mid, (int)var);
+  jobject result = (*env)->NewObject(env, bdd_cls, bdd_mid, (jlong) (intptr_cast_type) var);
   return result;
 }
 
