@@ -1,7 +1,6 @@
 // NQueensTest.java, created Jul 28, 2004 1:44:28 AM by joewhaley
 // Copyright (C) 2004 John Whaley <jwhaley@alum.mit.edu>
 // Licensed under the terms of the GNU LGPL; see COPYING for details.
-import org.sf.javabdd.BDDFactory;
 import junit.framework.Assert;
 import junit.framework.TestCase;
 
