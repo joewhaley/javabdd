@@ -46,7 +46,7 @@ public class JFactory extends BDDFactory {
     }
 
     static final boolean USE_FINALIZER = false;
-    public static boolean FLUSH_CACHE_ON_GC = false;
+    public static boolean FLUSH_CACHE_ON_GC = true;
     
     /**
      * Private helper function to create BDD objects.
@@ -6347,13 +6347,19 @@ public class JFactory extends BDDFactory {
 
     public JFactory cloneFactory() {
         JFactory INSTANCE = new JFactory();
-        INSTANCE.applycache = this.applycache.copy();
-        INSTANCE.itecache = this.itecache.copy();
-        INSTANCE.quantcache = this.quantcache.copy();
+        if (applycache != null)
+            INSTANCE.applycache = this.applycache.copy();
+        if (itecache != null)
+            INSTANCE.itecache = this.itecache.copy();
+        if (quantcache != null)
+            INSTANCE.quantcache = this.quantcache.copy();
         INSTANCE.appexcache = this.appexcache.copy();
-        INSTANCE.replacecache = this.replacecache.copy();
-        INSTANCE.misccache = this.misccache.copy();
-        INSTANCE.countcache = this.countcache.copy();
+        if (replacecache != null)
+            INSTANCE.replacecache = this.replacecache.copy();
+        if (misccache != null)
+            INSTANCE.misccache = this.misccache.copy();
+        if (countcache != null)
+            INSTANCE.countcache = this.countcache.copy();
         // TODO: potential difference here (!)
         INSTANCE.rng = new Random();
         INSTANCE.verbose = this.verbose;
