@@ -11,8 +11,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 import java.util.StringTokenizer;
-import java.io.DataInput;
-import java.io.DataOutput;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.PrintStream;
 
@@ -622,7 +622,7 @@ public class JFactory extends BDDFactory {
     int bddrefstacktop; /* Internal node reference stack top */
     int[] bddvar2level; /* Variable -> level table */
     int[] bddlevel2var; /* Level -> variable table */
-    int bddresized; /* Flag indicating a resize of the nodetable */
+    boolean bddresized; /* Flag indicating a resize of the nodetable */
 
     int minfreenodes = 20;
 
@@ -807,9 +807,9 @@ public class JFactory extends BDDFactory {
     }
 
     void checkresize() {
-        if (bddresized != 0)
+        if (bddresized)
             bdd_operator_noderesize();
-        bddresized = 0;
+        bddresized = false;
     }
 
     static final int NOTHASH(int r) {
@@ -1267,6 +1267,70 @@ public class JFactory extends BDDFactory {
         return res;
     }
 
+    int relprod_rec(int l, int r) {
+        BddCacheDataI entry;
+        int res;
+
+        if (l == 0 || r == 0)
+            return 0;
+        if (l == r)
+            return quant_rec(l);
+        if (l == 1)
+            return quant_rec(r);
+        if (r == 1)
+            return quant_rec(l);
+        
+        int LEVEL_l = LEVEL(l);
+        int LEVEL_r = LEVEL(r);
+        if (LEVEL_l > quantlast && LEVEL_r > quantlast) {
+            int oldop = applyop;
+            applyop = appexop;
+            res = apply_rec(l, r);
+            applyop = oldop;
+        } else {
+            entry = BddCache_lookupI(appexcache, APPEXHASH(l, r, appexop));
+            if (entry.a == l && entry.b == r && entry.c == appexid) {
+                if (CACHESTATS)
+                    bddcachestats.opHit++;
+                return entry.res;
+            }
+            if (CACHESTATS)
+                bddcachestats.opMiss++;
+
+            if (LEVEL_l == LEVEL_r) {
+                PUSHREF(relprod_rec(LOW(l), LOW(r)));
+                PUSHREF(relprod_rec(HIGH(l), HIGH(r)));
+                if (INVARSET(LEVEL_l))
+                    res = apply_rec(READREF(2), READREF(1));
+                else
+                    res = bdd_makenode(LEVEL_l, READREF(2), READREF(1));
+            } else if (LEVEL_l < LEVEL_r) {
+                PUSHREF(relprod_rec(LOW(l), r));
+                PUSHREF(relprod_rec(HIGH(l), r));
+                if (INVARSET(LEVEL_l))
+                    res = apply_rec(READREF(2), READREF(1));
+                else
+                    res = bdd_makenode(LEVEL_l, READREF(2), READREF(1));
+            } else {
+                PUSHREF(relprod_rec(l, LOW(r)));
+                PUSHREF(relprod_rec(l, HIGH(r)));
+                if (INVARSET(LEVEL_r))
+                    res = apply_rec(READREF(2), READREF(1));
+                else
+                    res = bdd_makenode(LEVEL_r, READREF(2), READREF(1));
+            }
+
+            POPREF(2);
+
+            entry.a = l;
+            entry.b = r;
+            entry.c = appexid;
+            entry.res = res;
+        }
+
+        return res;
+    }
+    
     int bdd_relprod(int a, int b, int var) {
         return bdd_appex(a, b, bddop_and, var);
     }
@@ -1300,7 +1364,7 @@ public class JFactory extends BDDFactory {
 
                 if (firstReorder == 0)
                     bdd_disable_reorder();
-                res = appquant_rec(l, r);
+                res = opr == -1 ? relprod_rec(l, r) : appquant_rec(l, r);
                 if (firstReorder == 0)
                     bdd_enable_reorder();
             } catch (BDDException x) {
@@ -2871,7 +2935,7 @@ public class JFactory extends BDDFactory {
         if (doRehash)
             bdd_gbc_rehash();
 
-        bddresized = 1;
+        bddresized = true;
 
         return 0;
     }
@@ -2889,7 +2953,7 @@ public class JFactory extends BDDFactory {
 
         bddnodes = new int[bddnodesize*__node_size];
 
-        bddresized = 0;
+        bddresized = false;
 
         for (n = 0; n < bddnodesize; n++) {
             SETLOW(n, -1);
@@ -4290,17 +4354,17 @@ public class JFactory extends BDDFactory {
     }
 
     /* (non-Javadoc)
-     * @see org.sf.javabdd.BDDFactory#load(java.io.DataInput)
+     * @see org.sf.javabdd.BDDFactory#load(java.io.BufferedReader)
      */
-    public BDD load(DataInput in) throws IOException {
+    public BDD load(BufferedReader in) throws IOException {
         int result = bdd_load(in);
         return new bdd(result);
     }
 
     /* (non-Javadoc)
-     * @see org.sf.javabdd.BDDFactory#save(java.io.DataOutput, org.sf.javabdd.BDD)
+     * @see org.sf.javabdd.BDDFactory#save(java.io.BufferedWriter, org.sf.javabdd.BDD)
      */
-    public void save(DataOutput out, BDD b) throws IOException {
+    public void save(BufferedWriter out, BDD b) throws IOException {
         int x = ((bdd) b)._index;
         bdd_save(out, x);
     }
@@ -5384,7 +5448,7 @@ public class JFactory extends BDDFactory {
 
     StringTokenizer tokenizer;
 
-    String readNext(DataInput ifile) throws IOException {
+    String readNext(BufferedReader ifile) throws IOException {
         while (tokenizer == null || !tokenizer.hasMoreTokens()) {
             String s = ifile.readLine();
             if (s == null)
@@ -5394,7 +5458,7 @@ public class JFactory extends BDDFactory {
         return tokenizer.nextToken();
     }
 
-    int bdd_load(DataInput ifile) throws IOException {
+    int bdd_load(BufferedReader ifile) throws IOException {
         int n, vnum, tmproot;
         int root;
 
@@ -5447,7 +5511,7 @@ public class JFactory extends BDDFactory {
         int next;
     }
 
-    int bdd_loaddata(DataInput ifile) throws IOException {
+    int bdd_loaddata(BufferedReader ifile) throws IOException {
         int key, var, low, high, root = 0, n;
 
         for (n = 0; n < lh_nodenum; n++) {
@@ -5495,21 +5559,21 @@ public class JFactory extends BDDFactory {
         return lh_table[hash].data;
     }
 
-    void bdd_save(DataOutput out, int r) throws IOException {
+    void bdd_save(BufferedWriter out, int r) throws IOException {
         int[] n = new int[1];
 
         if (r < 2) {
-            out.writeBytes("0 0 " + r + "\n");
+            out.write("0 0 " + r + "\n");
             return;
         }
 
         bdd_markcount(r, n);
         bdd_unmark(r);
-        out.writeBytes(n[0] + " " + bddvarnum + "\n");
+        out.write(n[0] + " " + bddvarnum + "\n");
 
         for (int x = 0; x < bddvarnum; x++)
-            out.writeBytes(bddvar2level[x] + " ");
-        out.writeBytes("\n");
+            out.write(bddvar2level[x] + " ");
+        out.write("\n");
 
         bdd_save_rec(out, r);
         bdd_unmark(r);
@@ -5517,7 +5581,7 @@ public class JFactory extends BDDFactory {
         return;
     }
 
-    void bdd_save_rec(DataOutput out, int root) throws IOException {
+    void bdd_save_rec(BufferedWriter out, int root) throws IOException {
 
         if (root < 2)
             return;
@@ -5529,10 +5593,10 @@ public class JFactory extends BDDFactory {
         bdd_save_rec(out, LOW(root));
         bdd_save_rec(out, HIGH(root));
 
-        out.writeBytes(root + " ");
-        out.writeBytes(bddlevel2var[LEVEL(root)] + " ");
-        out.writeBytes(LOW(root) + " ");
-        out.writeBytes(HIGH(root) + "\n");
+        out.write(root + " ");
+        out.write(bddlevel2var[LEVEL(root)] + " ");
+        out.write(LOW(root) + " ");
+        out.write(HIGH(root) + "\n");
 
         return;
     }

@@ -7,12 +7,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
-import java.io.DataInput;
-import java.io.DataInputStream;
-import java.io.DataOutput;
-import java.io.DataOutputStream;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -363,18 +361,18 @@ public abstract class BDDFactory {
      * Compare to bdd_load.
      */
     public BDD load(String filename) throws IOException {
-        DataInputStream is = null;
+        BufferedReader r = null;
         try {
-            is = new DataInputStream(new FileInputStream(filename));
-            BDD result = load(is);
+            r = new BufferedReader(new FileReader(filename));
+            BDD result = load(r);
             return result;
         } finally {
-            if (is != null) try { is.close(); } catch (IOException _) { }
+            if (r != null) try { r.close(); } catch (IOException _) { }
         }
     }
     // TODO: error code from bdd_load (?)
     
-    public BDD load(DataInput ifile) throws IOException {
+    public BDD load(BufferedReader ifile) throws IOException {
 
         tokenizer = null;
         
@@ -447,7 +445,7 @@ public abstract class BDDFactory {
     
     StringTokenizer tokenizer;
     
-    String readNext(DataInput ifile) throws IOException {
+    String readNext(BufferedReader ifile) throws IOException {
         while (tokenizer == null || !tokenizer.hasMoreTokens()) {
             String s = ifile.readLine();
             if (s == null)
@@ -485,9 +483,9 @@ public abstract class BDDFactory {
      * Compare to bdd_save.
      */
     public void save(String filename, BDD var) throws IOException {
-        DataOutputStream is = null;
+        BufferedWriter is = null;
         try {
-            is = new DataOutputStream(new FileOutputStream(filename));
+            is = new BufferedWriter(new FileWriter(filename));
             save(is, var);
         } finally {
             if (is != null) try { is.close(); } catch (IOException _) { }
@@ -495,17 +493,17 @@ public abstract class BDDFactory {
     }
     // TODO: error code from bdd_save (?)
     
-    public void save(DataOutput out, BDD r) throws IOException {
+    public void save(BufferedWriter out, BDD r) throws IOException {
         if (r.isOne() || r.isZero()) {
-            out.writeBytes("0 0 " + (r.isOne()?1:0) + "\n");
+            out.write("0 0 " + (r.isOne()?1:0) + "\n");
             return;
         }
 
-        out.writeBytes(r.nodeCount() + " " + varNum() + "\n");
+        out.write(r.nodeCount() + " " + varNum() + "\n");
 
         for (int x = 0; x < varNum(); x++)
-            out.writeBytes(var2Level(x) + " ");
-        out.writeBytes("\n");
+            out.write(var2Level(x) + " ");
+        out.write("\n");
 
         Map visited = new HashMap();
         save_rec(out, visited, r);
@@ -516,7 +514,7 @@ public abstract class BDDFactory {
         }
     }
 
-    protected int save_rec(DataOutput out, Map visited, BDD root) throws IOException {
+    protected int save_rec(BufferedWriter out, Map visited, BDD root) throws IOException {
         if (root.isZero()) {
             root.free();
             return 0;
@@ -539,10 +537,10 @@ public abstract class BDDFactory {
         BDD h = root.high();
         int hi = save_rec(out, visited, h);
 
-        out.writeBytes(v + " ");
-        out.writeBytes(root.var() + " ");
-        out.writeBytes(lo + " ");
-        out.writeBytes(hi + "\n");
+        out.write(v + " ");
+        out.write(root.var() + " ");
+        out.write(lo + " ");
+        out.write(hi + "\n");
         
         return v;
     }

@@ -4,12 +4,11 @@
 package org.sf.javabdd;
 
 import java.util.StringTokenizer;
-
 import java.io.BufferedReader;
-import java.io.DataOutputStream;
+import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.math.BigInteger;
 
@@ -90,12 +89,12 @@ public class FindBestOrder {
     }
     
     public void writeBDDConfig(BDDFactory bdd, String fileName) throws IOException {
-        DataOutputStream dos = null;
+        BufferedWriter dos = null;
         try {
-            dos = new DataOutputStream(new FileOutputStream(fileName));
+            dos = new BufferedWriter(new FileWriter(fileName));
             for (int i = 0; i < bdd.numberOfDomains(); ++i) {
                 BDDDomain d = bdd.getDomain(i);
-                dos.writeBytes(d.getName()+" "+d.size()+"\n");
+                dos.write(d.getName()+" "+d.size()+"\n");
             }
         } finally {
             if (dos != null) dos.close();
