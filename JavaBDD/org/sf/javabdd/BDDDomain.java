@@ -202,7 +202,7 @@ public abstract class BDDDomain {
     }
     public BDD ithVar(long val) {
         if (val < 0L || val >= this.size()) {
-            throw new BDDException();
+            throw new BDDException(val+" is out of range");
         }
 
         BDDFactory factory = getFactory();
