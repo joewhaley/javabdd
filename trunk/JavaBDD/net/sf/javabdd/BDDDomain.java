@@ -178,7 +178,7 @@ public abstract class BDDDomain {
      */
     public BDD buildEquals(BDDDomain that) {
         if (!this.size().equals(that.size())) {
-            throw new BDDException();
+            throw new BDDException("Size of "+this+" != size of that "+that+"( "+this.size()+" vs "+that.size()+")");
         }
 
         BDDFactory factory = getFactory();
