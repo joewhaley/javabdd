@@ -17,6 +17,20 @@ import java.util.List;
 public abstract class BDD {
 
     /**
+     * Returns true if this BDD is the zero (false) BDD.
+     * 
+     * @return true if this BDD is the zero (false) BDD
+     */
+    public abstract boolean isZero();
+    
+    /**
+     * Returns true if this BDD is the one (true) BDD.
+     * 
+     * @return true if this BDD is the one (true) BDD
+     */
+    public abstract boolean isOne();
+    
+    /**
      * Gets the variable labeling the BDD.
      * 
      * Compare to bdd_var.
@@ -405,7 +419,7 @@ public abstract class BDD {
 
     /**
      * Scans this BDD and copies the stored variables into an integer array of
-     * variable numbes.  The numbers returned are guaranteed to be in
+     * variable numbers.  The numbers returned are guaranteed to be in
      * ascending order.
      * 
      * Compare to fdd_scanset.
@@ -448,6 +462,7 @@ public abstract class BDD {
      * @return BDD
      */
     public abstract BDD replace(BDDPairing pair);
+    public abstract void replaceWith(BDDPairing pair);
 
     /**
      * Prints the set of truth assignments specified by this BDD.
@@ -544,6 +559,113 @@ public abstract class BDD {
     }
     
     public abstract int hashCode();
+    
+    public String toStringWithDomains(BDDFactory bdd) {
+        return toStringWithDomains(bdd, BDDToString.INSTANCE);
+    }
+    
+    public String toStringWithDomains(BDDFactory bdd, BDDToString ts) {
+        if (this.isZero()) return "F";
+        if (this.isOne()) return "T";
+        
+        StringBuffer sb = new StringBuffer();
+        int[] set = new int[bdd.varNum()];
+        fdd_printset_rec(bdd, sb, ts, this, set);
+        return sb.toString();
+    }
+    
+    static void fdd_printset_rec(BDDFactory bdd, StringBuffer sb, BDDToString ts, BDD r, int[] set) {
+        int fdvarnum = bdd.numberOfDomains();
+        
+        int n, m, i;
+        boolean used = false;
+        int[] var;
+        boolean[] binval;
+        boolean ok, first;
+        
+        if (r.isZero())
+            return;
+        else if (r.isOne()) {
+            sb.append('<');
+            first = true;
+            
+            for (n=0 ; n<fdvarnum ; n++) {
+                boolean firstval = true;
+                used = false;
+                
+                BDDDomain domain_n = bdd.getDomain(n);
+                
+                int[] domain_n_ivar = domain_n.vars();
+                int domain_n_varnum = domain_n.varNum();
+                for (m=0 ; m<domain_n_varnum ; m++)
+                    if (set[domain_n_ivar[m]] != 0)
+                        used = true;
+                
+                if (used) {
+                    if (!first)
+                        sb.append(", ");
+                    first = false;
+                    sb.append(ts.domainName(n));
+                    sb.append(':');
+                    
+                    var = domain_n_ivar;
+                    
+                    for (m=0 ; m<(1<<domain_n_varnum) ; m++) {
+                        binval = fdddec2bin(bdd, n, m);
+                        ok = true;
+                        
+                        for (i=0 ; i<domain_n_varnum && ok ; i++)
+                            if (set[var[i]] == 1  &&  binval[i] != false)
+                                ok = false;
+                            else if (set[var[i]] == 2  &&  binval[i] != true)
+                                ok = false;
+                        
+                        if (ok) {
+                            if (!firstval)
+                                sb.append('/');
+                            sb.append(ts.elementName(n, m));
+                            firstval = false;
+                        }
+                        
+                        //free(binval);
+                    }
+                }
+            }
+            
+            sb.append('>');
+        } else {
+            set[r.var()] = 1;
+            fdd_printset_rec(bdd, sb, ts, r.low(), set);
+            
+            set[r.var()] = 2;
+            fdd_printset_rec(bdd, sb, ts, r.high(), set);
+            
+            set[r.var()] = 0;
+        }
+    }
+    
+    static boolean[] fdddec2bin(BDDFactory bdd, int var, int val) {
+        boolean[] res;
+        int n = 0;
+        
+        res = new boolean[bdd.getDomain(var).varNum()];
+        
+        while (val > 0) {
+            if ((val & 0x1) != 0)
+                res[n] = true;
+            val >>= 1;
+            n++;
+        }
+        
+        return res;
+    }
+    
+    public static class BDDToString {
+        public static final BDDToString INSTANCE = new BDDToString();
+        protected BDDToString() { }
+        public String domainName(int i) { return Integer.toString(i); }
+        public String elementName(int i, int j) { return Integer.toString(j); }
+    }
     
     /**
      * Increases the reference count on a node.  Reference counting is done on
