@@ -41,8 +41,6 @@ public abstract class BDDDomain {
      * @param index  index of this domain
      * @param range  size of this domain
      */
-    protected BDDDomain(int index, long range) {
-    }
     protected BDDDomain(int index, BigInteger range) {
         BigInteger calcsize = BigInteger.valueOf(2L);
         if (range.signum() <= 0)

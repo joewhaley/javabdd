@@ -105,12 +105,33 @@ public class TypedBDDFactory extends BDDFactory {
     }
 
     /* (non-Javadoc)
+     * @see net.sf.javabdd.BDDFactory#setNodeTableSize(int)
+     */
+    public int setNodeTableSize(int size) {
+        return factory.setNodeTableSize(size);
+    }
+    
+    /* (non-Javadoc)
+     * @see net.sf.javabdd.BDDFactory#setCacheSize(int)
+     */
+    public int setCacheSize(int size) {
+        return factory.setCacheSize(size);
+    }
+    
+    /* (non-Javadoc)
      * @see net.sf.javabdd.BDDFactory#setMinFreeNodes(int)
      */
-    public void setMinFreeNodes(int x) {
-        factory.setMinFreeNodes(x);
+    public double setMinFreeNodes(double x) {
+        return factory.setMinFreeNodes(x);
     }
 
+    /* (non-Javadoc)
+     * @see net.sf.javabdd.BDDFactory#setIncreaseFactor(double)
+     */
+    public double setIncreaseFactor(double x) {
+        return factory.setIncreaseFactor(x);
+    }
+    
     /* (non-Javadoc)
      * @see net.sf.javabdd.BDDFactory#setMaxIncrease(int)
      */
@@ -119,9 +140,9 @@ public class TypedBDDFactory extends BDDFactory {
     }
 
     /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#setCacheRatio(int)
+     * @see net.sf.javabdd.BDDFactory#setCacheRatio(double)
      */
-    public int setCacheRatio(int x) {
+    public double setCacheRatio(double x) {
         return factory.setCacheRatio(x);
     }
 
@@ -330,8 +351,8 @@ public class TypedBDDFactory extends BDDFactory {
     /* (non-Javadoc)
      * @see net.sf.javabdd.BDDFactory#getAllocNum()
      */
-    public int getAllocNum() {
-        return factory.getAllocNum();
+    public int getNodeTableSize() {
+        return factory.getNodeTableSize();
     }
 
     /* (non-Javadoc)
@@ -370,9 +391,9 @@ public class TypedBDDFactory extends BDDFactory {
     }
 
     /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#createDomain(int, long)
+     * @see net.sf.javabdd.BDDFactory#createDomain(int, BigInteger)
      */
-    protected BDDDomain createDomain(int a, long b) {
+    protected BDDDomain createDomain(int a, BigInteger b) {
         return new TypedBDDDomain(factory.getDomain(a), a, b);
     }
 
@@ -1028,7 +1049,7 @@ public class TypedBDDFactory extends BDDFactory {
          * @param index
          * @param range
          */
-        protected TypedBDDDomain(BDDDomain domain, int index, long range) {
+        protected TypedBDDDomain(BDDDomain domain, int index, BigInteger range) {
             super(index, range);
             this.domain = domain;
         }
@@ -1141,5 +1162,13 @@ public class TypedBDDFactory extends BDDFactory {
             pairing.reset();
         }
         
+    }
+    
+
+    /* (non-Javadoc)
+     * @see net.sf.javabdd.BDDFactory#getVersion()
+     */
+    public String getVersion() {
+        return "TypedBDD $Revision$ with "+factory.getVersion();
     }
 }

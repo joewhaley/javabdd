@@ -5,6 +5,7 @@ package net.sf.javabdd;
 
 import java.util.Collection;
 import java.util.List;
+import java.math.BigInteger;
 
 /**
  * JDDFactory
@@ -561,10 +562,20 @@ public class JDDFactory extends BDDFactory {
     }
 
     /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#setMinFreeNodes(int)
+     * @see net.sf.javabdd.BDDFactory#setMinFreeNodes(double)
      */
-    public void setMinFreeNodes(int x) {
-        jdd.util.Configuration.minFreeNodesProcent = x;
+    public double setMinFreeNodes(double x) {
+        int old = jdd.util.Configuration.minFreeNodesProcent;
+        jdd.util.Configuration.minFreeNodesProcent = (int)(x * 100);
+        return (double) old / 100.;
+    }
+
+    /* (non-Javadoc)
+     * @see net.sf.javabdd.BDDFactory#setIncreaseFactor(double)
+     */
+    public double setIncreaseFactor(double x) {
+        // TODO.
+        return 0.;
     }
 
     /* (non-Javadoc)
@@ -577,9 +588,25 @@ public class JDDFactory extends BDDFactory {
     }
 
     /* (non-Javadoc)
+     * @see net.sf.javabdd.BDDFactory#setNodeTableSize(int)
+     */
+    public int setNodeTableSize(int x) {
+        // TODO.
+        return getNodeTableSize();
+    }
+    
+    /* (non-Javadoc)
+     * @see net.sf.javabdd.BDDFactory#setCacheSize(int)
+     */
+    public int setCacheSize(int x) {
+        // TODO.
+        return 0;
+    }
+    
+    /* (non-Javadoc)
      * @see net.sf.javabdd.BDDFactory#setCacheRatio(int)
      */
-    public int setCacheRatio(int x) {
+    public double setCacheRatio(double x) {
         // TODO Auto-generated method stub
         return 0;
     }
@@ -810,9 +837,9 @@ public class JDDFactory extends BDDFactory {
     }
 
     /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#getAllocNum()
+     * @see net.sf.javabdd.BDDFactory#getNodeTableSize()
      */
-    public int getAllocNum() {
+    public int getNodeTableSize() {
         // todo.
         return bdd.countRootNodes();
     }
@@ -854,9 +881,9 @@ public class JDDFactory extends BDDFactory {
     }
 
     /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#createDomain(int, long)
+     * @see net.sf.javabdd.BDDFactory#createDomain(int, BigInteger)
      */
-    protected BDDDomain createDomain(int a, long b) {
+    protected BDDDomain createDomain(int a, BigInteger b) {
         return new bddDomain(a, b);
     }
 
@@ -869,7 +896,7 @@ public class JDDFactory extends BDDFactory {
     
     private class bddDomain extends BDDDomain {
 
-        private bddDomain(int a, long b) {
+        private bddDomain(int a, BigInteger b) {
             super(a, b);
         }
 
@@ -893,4 +920,11 @@ public class JDDFactory extends BDDFactory {
 
     }
     
+
+    /* (non-Javadoc)
+     * @see net.sf.javabdd.BDDFactory#getVersion()
+     */
+    public String getVersion() {
+        return "JDD r$Revision$";
+    }
 }

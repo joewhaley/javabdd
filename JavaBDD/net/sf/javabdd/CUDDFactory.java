@@ -5,6 +5,7 @@ package net.sf.javabdd;
 
 import java.util.Collection;
 import java.util.List;
+import java.math.BigInteger;
 
 /**
  * <p>An implementation of BDDFactory that relies on the CUDD library through a
@@ -131,11 +132,30 @@ public class CUDDFactory extends BDDFactory {
     }
 
     /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#setMinFreeNodes(int)
+     * @see net.sf.javabdd.BDDFactory#setNodeTableSize(int)
      */
-    public void setMinFreeNodes(int x) {
+    public int setNodeTableSize(int size) {
+        // TODO Implement this.
+        System.err.println("Warning: setNodeTableSize() not yet implemented");
+        return getNodeTableSize();
+    }
+    
+    /* (non-Javadoc)
+     * @see net.sf.javabdd.BDDFactory#setCacheSize(int)
+     */
+    public int setCacheSize(int size) {
+        // TODO Implement this.
+        System.err.println("Warning: setCacheSize() not yet implemented");
+        return 0;
+    }
+    
+    /* (non-Javadoc)
+     * @see net.sf.javabdd.BDDFactory#setMinFreeNodes(double)
+     */
+    public double setMinFreeNodes(double x) {
         // TODO Implement this.
         System.err.println("Warning: setMinFreeNodes() not yet implemented");
+        return 0;
     }
 
     /* (non-Javadoc)
@@ -148,14 +168,23 @@ public class CUDDFactory extends BDDFactory {
     }
 
     /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#setCacheRatio(int)
+     * @see net.sf.javabdd.BDDFactory#setCacheRatio(double)
      */
-    public int setCacheRatio(int x) {
+    public double setCacheRatio(double x) {
         // TODO Implement this.
         System.err.println("Warning: setCacheRatio() not yet implemented");
         return 0;
     }
 
+    /* (non-Javadoc)
+     * @see net.sf.javabdd.BDDFactory#setIncreaseFactor(double)
+     */
+    public double setIncreaseFactor(double x) {
+        // TODO Implement this.
+        System.err.println("Warning: setIncreaseFactor() not yet implemented");
+        return 0;
+    }
+    
     /* (non-Javadoc)
      * @see net.sf.javabdd.BDDFactory#varNum()
      */
@@ -358,9 +387,9 @@ public class CUDDFactory extends BDDFactory {
     }
 
     /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#getAllocNum()
+     * @see net.sf.javabdd.BDDFactory#getNodeTableSize()
      */
-    public int getAllocNum() {
+    public int getNodeTableSize() {
         return getAllocNum0();
     }
     private static native int getAllocNum0();
@@ -390,9 +419,9 @@ public class CUDDFactory extends BDDFactory {
     }
 
     /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#createDomain(int, long)
+     * @see net.sf.javabdd.BDDFactory#createDomain(int, BigInteger)
      */
-    protected BDDDomain createDomain(int a, long b) {
+    protected BDDDomain createDomain(int a, BigInteger b) {
         return new CUDDBDDDomain(a, b);
     }
 
@@ -787,7 +816,7 @@ public class CUDDFactory extends BDDFactory {
      */
     private static class CUDDBDDDomain extends BDDDomain {
 
-        private CUDDBDDDomain(int index, long range) {
+        private CUDDBDDDomain(int index, BigInteger range) {
             super(index, range);
         }
 
@@ -900,4 +929,11 @@ public class CUDDFactory extends BDDFactory {
         c.printDot();
     }
 
+    /* (non-Javadoc)
+     * @see net.sf.javabdd.BDDFactory#getVersion()
+     */
+    public String getVersion() {
+        return "CUDD r$Revision$";
+    }
+    
 }

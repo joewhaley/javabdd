@@ -3,11 +3,12 @@
 // Licensed under the terms of the GNU LGPL; see COPYING for details.
 package net.sf.javabdd;
 
-import java.io.IOException;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.io.IOException;
+import java.math.BigInteger;
 
 /**
  * <p>This BDD factory is used to test other BDD factories.  It is a wrapper around
@@ -556,13 +557,25 @@ public class TestBDDFactory extends BDDFactory {
     }
 
     /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#setMinFreeNodes(int)
+     * @see net.sf.javabdd.BDDFactory#setMinFreeNodes(double)
      */
-    public void setMinFreeNodes(int x) {
-        f1.setMinFreeNodes(x);
-        f2.setMinFreeNodes(x);
+    public double setMinFreeNodes(double x) {
+        double r1 = f1.setMinFreeNodes(x);
+        double r2 = f2.setMinFreeNodes(x);
+        assertSame(r1 == r2, "setMinFreeNodes");
+        return r1;
     }
 
+    /* (non-Javadoc)
+     * @see net.sf.javabdd.BDDFactory#setIncreaseFactor(double)
+     */
+    public double setIncreaseFactor(double x) {
+        double r1 = f1.setIncreaseFactor(x);
+        double r2 = f2.setIncreaseFactor(x);
+        assertSame(r1 == r2, "setIncreaseFactor");
+        return r1;
+    }
+    
     /* (non-Javadoc)
      * @see net.sf.javabdd.BDDFactory#setMaxIncrease(int)
      */
@@ -574,15 +587,35 @@ public class TestBDDFactory extends BDDFactory {
     }
 
     /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#setCacheRatio(int)
+     * @see net.sf.javabdd.BDDFactory#setCacheRatio(double)
      */
-    public int setCacheRatio(int x) {
-        int r1 = f1.setCacheRatio(x);
-        int r2 = f2.setCacheRatio(x);
+    public double setCacheRatio(double x) {
+        double r1 = f1.setCacheRatio(x);
+        double r2 = f2.setCacheRatio(x);
         assertSame(r1 == r2, "setCacheRatio");
         return r1;
     }
 
+    /* (non-Javadoc)
+     * @see net.sf.javabdd.BDDFactory#setNodeTableSize(int)
+     */
+    public int setNodeTableSize(int size) {
+        int r1 = f1.setNodeTableSize(size);
+        int r2 = f2.setNodeTableSize(size);
+        assertSame(r1 == r2, "setNodeTableSize");
+        return r1;
+    }
+    
+    /* (non-Javadoc)
+     * @see net.sf.javabdd.BDDFactory#setCacheSize(int)
+     */
+    public int setCacheSize(int size) {
+        int r1 = f1.setCacheSize(size);
+        int r2 = f2.setCacheSize(size);
+        assertSame(r1 == r2, "setCacheSize");
+        return r1;
+    }
+    
     /* (non-Javadoc)
      * @see net.sf.javabdd.BDDFactory#varNum()
      */
@@ -808,12 +841,12 @@ public class TestBDDFactory extends BDDFactory {
     }
 
     /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#getAllocNum()
+     * @see net.sf.javabdd.BDDFactory#getNodeTableSize()
      */
-    public int getAllocNum() {
-        int r1 = f1.getAllocNum();
-        int r2 = f2.getAllocNum();
-        assertSame(r1 == r2, "getAllocNum");
+    public int getNodeTableSize() {
+        int r1 = f1.getNodeTableSize();
+        int r2 = f2.getNodeTableSize();
+        assertSame(r1 == r2, "getNodeTableSize");
         return r1;
     }
 
@@ -863,9 +896,9 @@ public class TestBDDFactory extends BDDFactory {
     }
 
     /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#createDomain(int, long)
+     * @see net.sf.javabdd.BDDFactory#createDomain(int, BigInteger)
      */
-    protected BDDDomain createDomain(int a, long b) {
+    protected BDDDomain createDomain(int a, BigInteger b) {
         return new TestBDDDomain(a, b);
     }
 
@@ -913,7 +946,7 @@ public class TestBDDFactory extends BDDFactory {
         
     private class TestBDDDomain extends BDDDomain {
 
-        TestBDDDomain(int a, long b) {
+        private TestBDDDomain(int a, BigInteger b) {
             super(a, b);
         }
 
@@ -941,4 +974,11 @@ public class TestBDDFactory extends BDDFactory {
         
     }
     
+
+    /* (non-Javadoc)
+     * @see net.sf.javabdd.BDDFactory#getVersion()
+     */
+    public String getVersion() {
+        return "TestBDD $Revision$ of ("+f1.getVersion()+","+f1.getVersion()+")";
+    }
 }
