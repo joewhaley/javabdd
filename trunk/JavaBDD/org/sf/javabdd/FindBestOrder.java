@@ -42,6 +42,7 @@ public class FindBestOrder {
         throws IOException {
         this.op = op;
         this.bestCalcTime = bestTime;
+        this.bestTotalTime = Long.MAX_VALUE;
         this.nodeTableSize = b1.getFactory().getAllocNum();
         this.cacheSize = cacheSize;
         this.maxIncrease = maxIncrease;
@@ -88,7 +89,8 @@ public class FindBestOrder {
         if (t.time < bestCalcTime) {
             bestOrder = varOrder;
             bestCalcTime = t.time;
-            bestTotalTime = t.totalTime;
+            if (t.totalTime < bestTotalTime)
+                bestTotalTime = t.totalTime;
         }
         return t.time;
     }
