@@ -88,7 +88,7 @@ public class TryVarOrder {
         Class c = bdd.getClass();
         try {
             Method m = c.getMethod("setError", new Class[] { int.class });
-            m.invoke(bdd, new Object[] { Integer.valueOf(code) });
+            m.invoke(bdd, new Object[] { new Integer(code) });
         } catch (Exception x) {
             System.err.println("Exception occurred while setting error for BDD factory: "+x.getLocalizedMessage());
             x.printStackTrace();
