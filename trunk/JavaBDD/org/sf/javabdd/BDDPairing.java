@@ -22,7 +22,13 @@ public abstract class BDDPairing {
      * 
      * Compare to bdd_setpairs.
      */
-    public abstract void set(int[] oldvar, int[] newvar);
+    public void set(int[] oldvar, int[] newvar) {
+        if (oldvar.length != newvar.length)
+            throw new BDDException();
+
+        for (int n = 0; n < oldvar.length; n++)
+            this.set(oldvar[n], newvar[n]);
+    }
     
     /**
      * Adds the pair (oldvar, newvar) to this table of pairs. This results in
@@ -33,14 +39,20 @@ public abstract class BDDPairing {
      * 
      * Compare to bdd_setbddpair.
      */
-    public abstract void set(BDD oldvar, BDD newvar);
+    public abstract void set(int oldvar, BDD newvar);
 
     /**
      * Like set(), but with a whole list of pairs.
      * 
      * Compare to bdd_setbddpairs.
      */
-    public abstract void set(BDD[] oldvar, BDD[] newvar);
+    public void set(int[] oldvar, BDD[] newvar) {
+        if (oldvar.length != newvar.length)
+            throw new BDDException();
+
+        for (int n = 0; n < newvar.length; n++)
+            this.set(oldvar[n], newvar[n]);
+    }
     
     /**
      * Defines each variable in the finite domain block p1 to be paired with the
@@ -48,14 +60,34 @@ public abstract class BDDPairing {
      * 
      * Compare to fdd_setpair.
      */
-    public abstract void set(BDDDomain p1, BDDDomain p2);
+    public void set(BDDDomain p1, BDDDomain p2) {
+        if (p1.varNum() != p2.varNum())
+            throw new BDDException();
+
+        int[] ivar1 = p1.vars();
+        int[] ivar2 = p2.vars();
+        for (int n = 0; n < ivar1.length; n++) {
+            this.set(ivar1[n], ivar2[n]);
+        }
+    }
 
     /**
      * Like set(), but with a whole list of pairs.
      * 
      * Compare to fdd_setpairs.
      */
-    public abstract void set(BDDDomain[] p1, BDDDomain[] p2);
+    public void set(BDDDomain[] p1, BDDDomain[] p2) {
+        if (p1.length != p2.length)
+            throw new BDDException();
+
+        for (int n = 0; n < p1.length; n++)
+            if (p1[n].varNum() != p2[n].varNum())
+                throw new BDDException();
+
+        for (int n = 0; n < p1.length; n++) {
+            this.set(p1[n], p2[n]);
+        }
+    }
 
     /**
      * Resets this table of pairs by setting all substitutions to their default

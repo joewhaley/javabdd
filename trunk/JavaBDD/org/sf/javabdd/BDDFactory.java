@@ -1,6 +1,7 @@
 package org.sf.javabdd;
 
 import java.util.Collection;
+import java.util.Iterator;
 
 /**
  * Interface for the creation and manipulation of BDDs.
@@ -82,19 +83,47 @@ public abstract class BDDFactory {
      */
     public abstract BDD one();
     
+    protected abstract BDD makeNode(int level, BDD low, BDD high);
+    
     /**
      * Build a cube from an array of variables.
      * 
      * Compare to bdd_buildcube.
      */
-    public abstract BDD buildCube(int value, int width, Collection/*BDD*/ var);
+    public BDD buildCube(int value, Collection/*BDD*/ variables) {
+        BDD result = one();
+        Iterator i = variables.iterator();
+        int z=0;
+        while (i.hasNext()) {
+            BDD var = (BDD) i.next();
+            if ((value & 0x1) != 0)
+                var = var.id();
+            else
+                var = var.not();
+            result.andWith(var);
+            ++z;
+            value >>= 1;
+        }
+        return result;
+    }
     
     /**
      * Build a cube from an array of variables.
      * 
      * Compare to bdd_ibuildcube.
      */
-    public abstract BDD buildCube(int value, int width, int[] var);
+    public BDD buildCube(int value, int[] variables) {
+        BDD result = one();
+        for (int z = 0; z < variables.length; z++, value >>= 1) {
+            BDD v;
+            if ((value & 0x1) != 0)
+                v = ithVar(variables[variables.length - z - 1]);
+            else
+                v = nithVar(variables[variables.length - z - 1]);
+            result.andWith(v);
+        }
+        return result;
+    }
     
     /**
      * Builds a BDD variable set from an integer array.  The integer array v
@@ -103,7 +132,14 @@ public abstract class BDDFactory {
      * 
      * Compare to bdd_makeset.
      */
-    public abstract BDD makeSet(int[] v);
+    public BDD makeSet(int[] varset) {
+        BDD res = one();
+        int varnum = varset.length;
+        for (int v = varnum-1 ; v>=0 ; v--) {
+            res.andWith(ithVar(varset[v]));
+        }
+        return res;
+    }
     
 
     
@@ -198,8 +234,13 @@ public abstract class BDDFactory {
      * 
      * @param num
      */
-    public abstract int extVarNum(int num);
-    // TODO: handle error code for extvarnum (?)
+    public int extVarNum(int num) {
+        int start = varNum();
+        if (num < 0 || num > 0x3FFFFFFF)
+           throw new BDDException();
+        setVarNum(start+num);
+        return start;
+    }
     
     /**
      * Returns a BDD representing the I'th variable.  (One node with the
@@ -383,7 +424,8 @@ public abstract class BDDFactory {
      */
     public abstract void addVarBlock(int first, int last, boolean fixed);
     // TODO: handle error code for addVarBlock.
-
+    // TODO: fdd_intaddvarblock (?)
+    
     /**
      * Add a variable block for all variables.
      * 
@@ -470,7 +512,7 @@ public abstract class BDDFactory {
         return p;
     }
 
-    public BDDPairing makePair(BDD oldvar, BDD newvar) {
+    public BDDPairing makePair(int oldvar, BDD newvar) {
         BDDPairing p = makePair();
         p.set(oldvar, newvar);
         return p;
@@ -526,7 +568,16 @@ public abstract class BDDFactory {
      * 
      * Compare to fdd_makeset.
      */
-    public abstract BDD makeSet(BDDDomain[] v);
+    public BDD makeSet(BDDDomain[] v) {
+        BDD res = one();
+        int n;
+
+        for (n = 0; n < v.length; n++) {
+            res.andWith(v[n].set());
+        }
+
+        return res;
+    }
     
     /**
      * Clear all allocated finite domain blocks that were defined by extDomain()

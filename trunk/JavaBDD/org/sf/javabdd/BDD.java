@@ -47,6 +47,15 @@ public abstract class BDD {
     public abstract int var();
 
     /**
+     * Gets the level of this BDD.
+     * 
+     * Compare to LEVEL() macro.
+     */
+    public int level() {
+        return getFactory().var2Level(var());
+    }
+
+    /**
      * Gets the true branch of this BDD.
      * 
      * Compare to bdd_high.
@@ -422,7 +431,23 @@ public abstract class BDD {
      * 
      * @return int[]
      */
-    public abstract int[] scanSet();
+    public int[] scanSet() {
+        if (isOne() || isZero()) {
+            return null;
+        }
+        
+        int num = 0;
+        for (BDD n = this; !n.isZero() && !n.isOne() ; n = n.high())
+            num++;
+
+        int[] varset = new int[num];
+   
+        num = 0;
+        for (BDD n = this; !n.isZero() && !n.isOne() ; n = n.high())
+            varset[num++] = n.var();
+        
+        return varset;
+    }
 
     /**
      * Scans this BDD and copies the stored variables into an integer array of
@@ -433,7 +458,51 @@ public abstract class BDD {
      * 
      * @return int[]
      */
-    public abstract int[] scanSetDomains();
+    public int[] scanSetDomains() {
+        int[] fv;
+        int[] varset;
+        int fn;
+        int num, n, m, i;
+
+        fv = this.scanSet();
+        if (fv == null)
+            return null;
+        fn = fv.length;
+
+        BDDFactory factory = getFactory();
+
+        for (n = 0, num = 0; n < factory.numberOfDomains(); n++) {
+            BDDDomain dom = factory.getDomain(n);
+            int[] ivar = dom.vars();
+            boolean found = false;
+            for (m = 0; m < dom.varNum() && !found; m++) {
+                for (i = 0; i < fn && !found; i++) {
+                    if (ivar[m] == fv[i]) {
+                        num++;
+                        found = true;
+                    }
+                }
+            }
+        }
+
+        varset = new int[num];
+
+        for (n = 0, num = 0; n < factory.numberOfDomains(); n++) {
+            BDDDomain dom = factory.getDomain(n);
+            int[] ivar = dom.vars();
+            boolean found = false;
+            for (m = 0; m < dom.varNum() && !found; m++) {
+                for (i = 0; i < fn && !found; i++) {
+                    if (ivar[m] == fv[i]) {
+                        varset[num++] = n;
+                        found = true;
+                    }
+                }
+            }
+        }
+
+        return varset;
+    }
     
     /**
      * Finds one satisfying assignment of the domain d in this BDD and returns
@@ -444,7 +513,13 @@ public abstract class BDD {
      * @param d
      * @return int
      */
-    public abstract int scanVar(BDDDomain d);
+    public int scanVar(BDDDomain d) {
+        if (this.isZero())
+           return -1;
+        int[] allvar = this.scanAllVar();
+        int res = allvar[d.getIndex()];
+        return res;
+    }
     
     /**
      * Finds one satisfying assignment in this BDD of all the defined FDD
@@ -455,7 +530,49 @@ public abstract class BDD {
      * 
      * @return int[]
      */
-    public abstract int[] scanAllVar();
+    public int[] scanAllVar() {
+        int n;
+        boolean[] store;
+        int[] res;
+        BDD p = this;
+
+        if (this.isZero())
+            return null;
+
+        BDDFactory factory = getFactory();
+
+        int bddvarnum = factory.varNum();
+        store = new boolean[bddvarnum];
+
+        while (!p.isOne() && !p.isZero()) {
+            if (!p.low().isZero()) {
+                store[p.var()] = false;
+                p = p.low();
+            } else {
+                store[p.var()] = true;
+                p = p.high();
+            }
+        }
+
+        int fdvarnum = factory.numberOfDomains();
+        res = new int[fdvarnum];
+
+        for (n = 0; n < fdvarnum; n++) {
+            BDDDomain dom = factory.getDomain(n);
+            int[] ivar = dom.vars();
+
+            int val = 0;
+            for (int m = dom.varNum() - 1; m >= 0; m--)
+                if (store[ivar[m]])
+                    val = val * 2 + 1;
+                else
+                    val = val * 2;
+
+            res[n] = val;
+        }
+
+        return res;
+    }
 
     /**
      * Replaces all variables in this BDD with the variables defined by pair.
@@ -476,15 +593,19 @@ public abstract class BDD {
      * 
      * Compare to bdd_printset.
      */
-    public abstract void printSet();
-    
+    public void printSet() {
+        System.out.println(this.toString());
+    }
+
     /**
      * Prints this BDD using a set notation as in printSet() but with the index
      * of the finite domain blocks included instead of the BDD variables.
      * 
      * Compare to fdd_printset.
      */
-    public abstract void printSetWithDomains();
+    public void printSetWithDomains() {
+        System.out.println(toStringWithDomains());
+    }
     
     /**
      * Compare to bdd_printdot.
@@ -527,7 +648,20 @@ public abstract class BDD {
      * 
      * @return the number of satisfying variable assignments
      */
-    public abstract double satCount(BDD varset);
+    public double satCount(BDD varset) {
+        BDDFactory factory = getFactory();
+        double unused = factory.varNum();
+
+        if (varset.isZero() || varset.isOne() || isZero()) /* empty set */
+            return 0.;
+
+        for (BDD n = varset; !n.isOne() && !n.isZero(); n = n.high())
+            unused--;
+
+        unused = satCount() / Math.pow(2.0, unused);
+
+        return unused >= 1.0 ? unused : 1.0;
+    }
     
     /**
      * Calculates the log. number of satisfying variable assignments.
@@ -536,7 +670,9 @@ public abstract class BDD {
      * 
      * @return the log. number of satisfying variable assignments
      */
-    public abstract double logSatCount();
+    public double logSatCount() {
+        return Math.log(satCount());
+    }
     
     /**
      * Calculates the log. number of satisfying variable assignments to the
@@ -546,7 +682,9 @@ public abstract class BDD {
      * 
      * @return the log. number of satisfying variable assignments
      */
-    public abstract double logSatCount(BDD varset);
+    public double logSatCount(BDD varset) {
+        return Math.log(satCount(varset));
+    }
     
     /**
      * Counts the number of times each variable occurs in this BDD.  The
@@ -567,14 +705,59 @@ public abstract class BDD {
     
     public abstract int hashCode();
     
-    public String toStringWithDomains(BDDFactory bdd) {
-        return toStringWithDomains(bdd, BDDToString.INSTANCE);
+    public String toString() {
+        BDDFactory f = this.getFactory();
+        int[] set = new int[f.varNum()];
+        StringBuffer sb = new StringBuffer();
+        bdd_printset_rec(f, sb, this, set);
+        return sb.toString();
     }
     
-    public String toStringWithDomains(BDDFactory bdd, BDDToString ts) {
+    private static void bdd_printset_rec(BDDFactory f, StringBuffer sb, BDD r, int[] set) {
+        int n;
+        boolean first;
+
+        if (r.isZero())
+            return;
+        else if (r.isOne()) {
+            sb.append('<');
+            first = true;
+
+            for (n = 0; n < set.length; n++) {
+                if (set[n] > 0) {
+                    if (!first)
+                        sb.append(", ");
+                    first = false;
+                    sb.append(f.level2Var(n));
+                    sb.append(':');
+                    sb.append((set[n] == 2 ? 1 : 0));
+                }
+            }
+            sb.append('>');
+        } else {
+            set[f.var2Level(r.var())] = 1;
+            BDD rl = r.low();
+            bdd_printset_rec(f, sb, rl, set);
+            rl.free();
+
+            set[f.var2Level(r.var())] = 2;
+            BDD rh = r.high();
+            bdd_printset_rec(f, sb, rh, set);
+            rh.free();
+
+            set[f.var2Level(r.var())] = 0;
+        }
+    }
+    
+    public String toStringWithDomains() {
+        return toStringWithDomains(BDDToString.INSTANCE);
+    }
+    
+    public String toStringWithDomains(BDDToString ts) {
         if (this.isZero()) return "F";
         if (this.isOne()) return "T";
         
+        BDDFactory bdd = getFactory();
         StringBuffer sb = new StringBuffer();
         int[] set = new int[bdd.varNum()];
         fdd_printset_rec(bdd, sb, ts, this, set);
@@ -603,7 +786,7 @@ public abstract class BDD {
                 BDDDomain domain_n = bdd.getDomain(n);
                 
                 int[] domain_n_ivar = domain_n.vars();
-                int domain_n_varnum = domain_n.varNum();
+                int domain_n_varnum = domain_n_ivar.length;
                 for (m=0 ; m<domain_n_varnum ; m++)
                     if (set[domain_n_ivar[m]] != 0)
                         used = true;

@@ -6,7 +6,7 @@ package org.sf.javabdd;
  * @author John Whaley
  * @version $Id$
  */
-public class BDDException extends Exception {
+public class BDDException extends RuntimeException {
     public BDDException() {
         super();
     }
