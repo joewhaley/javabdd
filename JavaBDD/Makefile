@@ -67,9 +67,9 @@ else
   CUDD_DLL_NAME = libcudd.so
   CAL_DLL_NAME = libcal.so
   ifeq (${CC},icc)    # Intel Linux compiler
-    CFLAGS = -O2 -Ob2 -ip $(EXTRA_CFLAGS)
+    CFLAGS = -DSPECIALIZE_RELPROD -DSPECIALIZE_AND -DSPECIALIZE_OR -O2 -Ob2 -ip $(EXTRA_CFLAGS)
     LINK = icc
-    LINKFLAGS = -shared -static $(EXTRA_CFLAGS)
+    LINKFLAGS = -static -shared $(CFLAGS)
   endif
 endif
 
