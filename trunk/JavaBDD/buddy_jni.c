@@ -31,7 +31,7 @@
 
 #define INVALID_BDD -1
 
-//#define TRACE_BUDDYLIB
+#undef TRACE_BUDDYLIB
 
 static int bdd_error;
 
@@ -689,7 +689,7 @@ JNIEXPORT void JNICALL Java_org_sf_javabdd_BuDDyFactory_addVarBlock0
   (JNIEnv *env, jclass cl, jint var, jboolean fixed)
 {
 #if defined(TRACE_BUDDYLIB)
-  printf("bdd_addvarblock(%d, %d)\n", b, fixed);
+  printf("bdd_addvarblock(%d, %d)\n", var , fixed);
 #endif
   bdd_addvarblock(var, fixed);
   check_error(env);
