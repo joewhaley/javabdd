@@ -3,7 +3,7 @@
     <stringAttribute
         key="org.eclipse.ui.externaltools.ATTR_TOOL_ARGUMENTS" value="-f Makefile.mingw buddy.dll jar"/>
     <stringAttribute
-        key="org.eclipse.ui.externaltools.ATTR_REFRESH_SCOPE" value="${working_set}"/>
+        key="org.eclipse.ui.externaltools.ATTR_REFRESH_SCOPE" value="${project}"/>
     <stringAttribute
         key="org.eclipse.ui.externaltools.ATTR_WORKING_DIRECTORY" value="${resource_loc:/JavaBDD}"/>
     <stringAttribute key="org.eclipse.ui.externaltools.ATTR_LOCATION" value="C:\cygwin\bin\make.exe"/>
