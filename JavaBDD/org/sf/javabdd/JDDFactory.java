@@ -34,7 +34,7 @@ public class JDDFactory extends BDDFactory {
     /**
      * Wrapper for the BDD index number used internally in the representation.
      */
-    class bdd extends BDD {
+    private class bdd extends BDD {
         int _index;
 
         static final int INVALID_BDD = -1;

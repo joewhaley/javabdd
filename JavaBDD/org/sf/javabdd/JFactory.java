@@ -43,7 +43,7 @@ public class JFactory extends BDDFactory {
     /**
      * Wrapper for the BDD index number used internally in the representation.
      */
-    class bdd extends BDD {
+    private class bdd extends BDD {
         int _index;
 
         static final int INVALID_BDD = -1;
@@ -530,12 +530,12 @@ public class JFactory extends BDDFactory {
             throw new InternalError();
     }
 
-    abstract static class BddCacheData {
+    private abstract static class BddCacheData {
         int a, b, c;
         abstract BddCacheData copy();
     }
 
-    static class BddCacheDataI extends BddCacheData {
+    private static class BddCacheDataI extends BddCacheData {
         int res;
         BddCacheData copy() {
             BddCacheDataI that = new BddCacheDataI();
@@ -547,7 +547,7 @@ public class JFactory extends BDDFactory {
         }
     }
 
-    static class BddCacheDataD extends BddCacheData {
+    private static class BddCacheDataD extends BddCacheData {
         double dres;
         BddCacheData copy() {
             BddCacheDataD that = new BddCacheDataD();
@@ -559,7 +559,7 @@ public class JFactory extends BDDFactory {
         }
     }
 
-    static class BddCache {
+    private static class BddCache {
         BddCacheData table[];
         int tablesize;
         
@@ -574,7 +574,7 @@ public class JFactory extends BDDFactory {
         }
     }
 
-    static class bddCacheStat {
+    public static class bddCacheStat {
         int uniqueAccess;
         int uniqueChain;
         int uniqueHit;
@@ -596,7 +596,7 @@ public class JFactory extends BDDFactory {
         }
     }
 
-    static class JavaBDDException extends BDDException {
+    private static class JavaBDDException extends BDDException {
         public JavaBDDException(int x) {
             super(errorstrings[-x]);
         }
@@ -2379,7 +2379,7 @@ public class JFactory extends BDDFactory {
         }
     }
 
-    static class bddGbcStat {
+    public static class bddGbcStat {
         int nodes;
         int freenodes;
         long time;

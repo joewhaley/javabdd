@@ -476,7 +476,7 @@ public class BuDDyFactory extends BDDFactory {
     /* (non-Javadoc)
      * An implementation of a BDD class, used by the BuDDy interface.
      */
-    static class BuDDyBDD extends BDD {
+    private static class BuDDyBDD extends BDD {
     
         /** The value used by the BDD library. */
         protected int _id;
@@ -901,7 +901,7 @@ public class BuDDyFactory extends BDDFactory {
 
     }
     
-    static class BuDDyBDDWithFinalizer extends BuDDyBDD {
+    private static class BuDDyBDDWithFinalizer extends BuDDyBDD {
         
         protected BuDDyBDDWithFinalizer(int id) {
             super(id);
@@ -929,7 +929,7 @@ public class BuDDyFactory extends BDDFactory {
     /* (non-Javadoc)
      * An implementation of a BDDDomain, used by the BuDDy interface.
      */
-    static class BuDDyBDDDomain extends BDDDomain {
+    private static class BuDDyBDDDomain extends BDDDomain {
 
         private BuDDyBDDDomain(int a, long b) {
             super(a, b);
@@ -945,7 +945,7 @@ public class BuDDyFactory extends BDDFactory {
     /* (non-Javadoc)
      * An implementation of a BDDPairing, used by the BuDDy interface.
      */
-    static class BuDDyBDDPairing extends BDDPairing {
+    private static class BuDDyBDDPairing extends BDDPairing {
         
         private long _ptr;
         
@@ -1022,7 +1022,7 @@ public class BuDDyFactory extends BDDFactory {
     /* (non-Javadoc)
      * An implementation of a BDDBitVector, used by the BuDDy interface.
      */
-    static class BuDDyBDDBitVector extends BDDBitVector {
+    private static class BuDDyBDDBitVector extends BDDBitVector {
 
         private BuDDyBDDBitVector(int a) {
             super(a);
@@ -1035,36 +1035,4 @@ public class BuDDyFactory extends BDDFactory {
 
     }
     
-    public static void main(String[] args) {
-        BDDFactory bdd = init(1000000, 100000);
-        
-        BDDDomain[] doms = bdd.extDomain(new int[] {50, 10, 15, 20, 15});
-        
-        BDD b = bdd.one();
-        for (int i=0; i<doms.length-1; ++i) {
-            b.andWith(doms[i].ithVar(i));
-        }
-        
-        for (int i=0; i<bdd.numberOfDomains(); ++i) {
-            BDDDomain d = bdd.getDomain(i);
-            int[] ivar = d.vars();
-            System.out.print("Domain #"+i+":");
-            for (int j=0; j<ivar.length; ++j) {
-                System.out.print(' ');
-                System.out.print(j);
-                System.out.print(':');
-                System.out.print(ivar[j]);
-            }
-            System.out.println();
-        }
-        
-        BDDPairing p = bdd.makePair(doms[2], doms[doms.length-1]);
-        System.out.println("Pairing: "+p);
-        
-        System.out.println("Before replace(): "+b);
-        BDD c = b.replace(p);
-        System.out.println("After replace(): "+c);
-        
-        bdd.printTable(c);
-    }
 }
