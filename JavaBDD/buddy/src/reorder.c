@@ -58,8 +58,8 @@
 #define VARp(p) (((p)->low_llev >> LEV_LPOS) | \
                 (((p)->high_hlev & LEV_HMASK) >> (LEV_HPOS-LEV_LBITS)))
 #define SETVARp(p,v) { \
-	(p)->low_llev = ((v) << LEV_LPOS) | ((p)->low_llev & ~NODE_MASK); \
-	(p)->high_hlev = (((v) << (LEV_HPOS-LEV_LBITS)) & LEV_HMASK) | ((p)->high_hlev & ~NODE_MASK); \
+	(p)->low_llev = ((v) << LEV_LPOS) | ((p)->low_llev & NODE_MASK); \
+	(p)->high_hlev = (((v) << (LEV_HPOS-LEV_LBITS)) & LEV_HMASK) | ((p)->high_hlev & NODE_MASK); \
 	}
 #else
 #if defined(USE_BITFIELDS)
@@ -893,7 +893,7 @@ static int mark_roots(void)
 	  int v = bddlevel2var[VAR(n)];
       SETVARp(&bddnodes[n], v);
       
-      if (REF(n) > 0)
+      if (HASREF(n))
       {
 	 SETMARK(n);
 	 extrootsize++;
@@ -1116,7 +1116,7 @@ static int reorder_makenode(int var, int low, int high)
    SETVARp(node, var);
    SETLOWp(node, low);
    SETHIGHp(node, high);
-
+	 
       /* Insert node in hash chain */
    SETNEXTp(node, HASH(hash));
    SETHASH(hash, res);
