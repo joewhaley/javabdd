@@ -111,6 +111,20 @@ public class CALFactory extends BDDFactory {
     private static native void done0();
 
     /* (non-Javadoc)
+     * @see org.sf.javabdd.BDDFactory#setError(int)
+     */
+    public void setError(int code) {
+        // TODO Implement this.
+    }
+    
+    /* (non-Javadoc)
+     * @see org.sf.javabdd.BDDFactory#clearError()
+     */
+    public void clearError() {
+        // TODO Implement this.
+    }
+    
+    /* (non-Javadoc)
      * @see org.sf.javabdd.BDDFactory#setMaxNodeNum(int)
      */
     public int setMaxNodeNum(int size) {

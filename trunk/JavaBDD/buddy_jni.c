@@ -231,6 +231,36 @@ JNIEXPORT void JNICALL Java_org_sf_javabdd_BuDDyFactory_done0
   check_error(env);
 }
 
+extern int bdderrorcond;
+
+/*
+ * Class:     org_sf_javabdd_BuDDyFactory
+ * Method:    setError0
+ * Signature: (I)V
+ */
+JNIEXPORT void JNICALL Java_org_sf_javabdd_BuDDyFactory_setError0
+  (JNIEnv *env, jclass cl, jint code)
+{
+#if defined(TRACE_BUDDYLIB)
+  printf("bdd_setError(%d)\n", code);
+#endif
+  bdderrorcond = code;
+}
+
+/*
+ * Class:     org_sf_javabdd_BuDDyFactory
+ * Method:    clearError0
+ * Signature: ()V
+ */
+JNIEXPORT void JNICALL Java_org_sf_javabdd_BuDDyFactory_clearError0
+  (JNIEnv *env, jclass cl)
+{
+#if defined(TRACE_BUDDYLIB)
+  printf("bdd_clearError()\n");
+#endif
+  bdderrorcond = 0;
+}
+
 /*
  * Class:     org_sf_javabdd_BuDDyFactory
  * Method:    setMaxNodeNum0

@@ -160,6 +160,22 @@ public class BuDDyFactory extends BDDFactory {
     private static native void done0();
 
     /* (non-Javadoc)
+     * @see org.sf.javabdd.BDDFactory#setError(int)
+     */
+    public void setError(int code) {
+        setError0(code);
+    }
+    private static native void setError0(int code);
+    
+    /* (non-Javadoc)
+     * @see org.sf.javabdd.BDDFactory#clearError()
+     */
+    public void clearError() {
+        clearError0();
+    }
+    private static native void clearError0();
+    
+    /* (non-Javadoc)
      * @see org.sf.javabdd.BDDFactory#setMaxNodeNum(int)
      */
     public int setMaxNodeNum(int size) {
