@@ -503,12 +503,12 @@ public abstract class BDD {
     public abstract List allsat();
 
     /**
-     * <p>Scans this BDD to find all occurrences of FDD variables and returns an
-     * array that contains the indices of the possible found FDD variables.</p>
+     * <p>Scans this BDD to find all occurrences of BDD variables and returns an
+     * array that contains the indices of the possible found BDD variables.</p>
      * 
      * <p>Compare to bdd_scanset.</p>
      * 
-     * @return int[] containing indices of the possible found FDD variables
+     * @return int[] containing indices of the possible found BDD variables
      */
     public int[] scanSet() {
         if (isOne() || isZero()) {
