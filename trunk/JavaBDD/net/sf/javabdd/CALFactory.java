@@ -5,6 +5,7 @@ package net.sf.javabdd;
 
 import java.util.Collection;
 import java.util.List;
+import java.math.BigInteger;
 
 /**
  * <p>An implementation of BDDFactory that relies on the CAL library through a
@@ -131,11 +132,12 @@ public class CALFactory extends BDDFactory {
     }
 
     /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#setMinFreeNodes(int)
+     * @see net.sf.javabdd.BDDFactory#setMinFreeNodes(double)
      */
-    public void setMinFreeNodes(int x) {
+    public double setMinFreeNodes(double x) {
         // TODO Implement this.
         System.err.println("Warning: setMinFreeNodes() not yet implemented");
+        return 0.;
     }
 
     /* (non-Javadoc)
@@ -148,9 +150,9 @@ public class CALFactory extends BDDFactory {
     }
 
     /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#setCacheRatio(int)
+     * @see net.sf.javabdd.BDDFactory#setCacheRatio(double)
      */
-    public int setCacheRatio(int x) {
+    public double setCacheRatio(double x) {
         // TODO Implement this.
         System.err.println("Warning: setCacheRatio() not yet implemented");
         return 0;
@@ -358,9 +360,9 @@ public class CALFactory extends BDDFactory {
     }
 
     /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#getAllocNum()
+     * @see net.sf.javabdd.BDDFactory#getNodeTableSize()
      */
-    public int getAllocNum() {
+    public int getNodeTableSize() {
         // TODO Implement this.
         throw new UnsupportedOperationException();
     }
@@ -390,9 +392,9 @@ public class CALFactory extends BDDFactory {
     }
 
     /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#createDomain(int, long)
+     * @see net.sf.javabdd.BDDFactory#createDomain(int, BigInteger)
      */
-    protected BDDDomain createDomain(int a, long b) {
+    protected BDDDomain createDomain(int a, BigInteger b) {
         return new CALBDDDomain(a, b);
     }
 
@@ -784,7 +786,7 @@ public class CALFactory extends BDDFactory {
      */
     private static class CALBDDDomain extends BDDDomain {
 
-        private CALBDDDomain(int index, long range) {
+        private CALBDDDomain(int index, BigInteger range) {
             super(index, range);
         }
 
@@ -859,6 +861,37 @@ public class CALFactory extends BDDFactory {
 
         public BDDFactory getFactory() { return INSTANCE; }
 
+    }
+
+    /* (non-Javadoc)
+     * @see net.sf.javabdd.BDDFactory#setIncreaseFactor(double)
+     */
+    public double setIncreaseFactor(double x) {
+        System.err.println("Warning: setIncreaseFactor() not yet implemented");
+        return 0;
+    }
+
+    /* (non-Javadoc)
+     * @see net.sf.javabdd.BDDFactory#setNodeTableSize(int)
+     */
+    public int setNodeTableSize(int n) {
+        System.err.println("Warning: setNodeTableSize() not yet implemented");
+        return 0;
+    }
+
+    /* (non-Javadoc)
+     * @see net.sf.javabdd.BDDFactory#setCacheSize(int)
+     */
+    public int setCacheSize(int n) {
+        System.err.println("Warning: setCacheSize() not yet implemented");
+        return 0;
+    }
+
+    /* (non-Javadoc)
+     * @see net.sf.javabdd.BDDFactory#getVersion()
+     */
+    public String getVersion() {
+        return "CAL r$Revision$";
     }
     
 }

@@ -3,6 +3,8 @@
 // Licensed under the terms of the GNU LGPL; see COPYING for details.
 package net.sf.javabdd;
 
+import java.math.BigInteger;
+
 /**
  * <p>Bit vector implementation for BDDs.</p>
  * 
@@ -48,6 +50,17 @@ public abstract class BDDBitVector {
         }
     }
 
+    protected void initialize(BigInteger val) {
+        BDDFactory bdd = getFactory();
+        for (int n = 0; n < bitvec.length; n++) {
+            if (val.testBit(0))
+                bitvec[n] = bdd.one();
+            else
+                bitvec[n] = bdd.zero();
+            val = val.shiftRight(1);
+        }
+    }
+    
     protected void initialize(int offset, int step) {
         BDDFactory bdd = getFactory();
         for (int n=0 ; n<bitvec.length ; n++)

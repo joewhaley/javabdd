@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.math.BigInteger;
 
 /**
  * <p>An implementation of BDDFactory that relies on the BuDDy library through a
@@ -189,10 +190,10 @@ public class BuDDyFactory extends BDDFactory {
     /* (non-Javadoc)
      * @see net.sf.javabdd.BDDFactory#setMinFreeNodes(int)
      */
-    public void setMinFreeNodes(int x) {
-        setMinFreeNodes0(x);
+    public double setMinFreeNodes(double x) {
+        return setMinFreeNodes0((int)(x * 100.)) / 100.;
     }
-    private static native void setMinFreeNodes0(int x);
+    private static native int setMinFreeNodes0(int x);
     
     /* (non-Javadoc)
      * @see net.sf.javabdd.BDDFactory#setMaxIncrease(int)
@@ -203,12 +204,36 @@ public class BuDDyFactory extends BDDFactory {
     private static native int setMaxIncrease0(int x);
     
     /* (non-Javadoc)
+     * @see net.sf.javabdd.BDDFactory#setIncreaseFactor(double)
+     */
+    public double setIncreaseFactor(double x) {
+        return setIncreaseFactor0(x);
+    }
+    private static native double setIncreaseFactor0(double x);
+    
+    /* (non-Javadoc)
      * @see net.sf.javabdd.BDDFactory#setCacheRatio(int)
      */
-    public int setCacheRatio(int x) {
-        return setCacheRatio0(x);
+    public double setCacheRatio(double x) {
+        return setCacheRatio0((int)(x * 100.)) / 100.;
     }
     private static native int setCacheRatio0(int x);
+    
+    /* (non-Javadoc)
+     * @see net.sf.javabdd.BDDFactory#setNodeTableSize(int)
+     */
+    public int setNodeTableSize(int x) {
+        return setNodeTableSize0(x);
+    }
+    private static native int setNodeTableSize0(int x);
+    
+    /* (non-Javadoc)
+     * @see net.sf.javabdd.BDDFactory#setCacheSize(int)
+     */
+    public int setCacheSize(int x) {
+        return setCacheSize0(x);
+    }
+    private static native int setCacheSize0(int x);
     
     /* (non-Javadoc)
      * @see net.sf.javabdd.BDDFactory#varNum()
@@ -445,6 +470,14 @@ public class BuDDyFactory extends BDDFactory {
     private static native void printOrder0();
 
     /* (non-Javadoc)
+     * @see net.sf.javabdd.BDDFactory#getVersion()
+     */
+    public String getVersion() {
+        return getVersion0();
+    }
+    private static native String getVersion0();
+    
+    /* (non-Javadoc)
      * @see net.sf.javabdd.BDDFactory#nodeCount(java.util.Collection)
      */
     public int nodeCount(Collection r) {
@@ -454,9 +487,9 @@ public class BuDDyFactory extends BDDFactory {
     private static native int nodeCount0(int[] a);
 
     /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#getAllocNum()
+     * @see net.sf.javabdd.BDDFactory#getNodeTableSize()
      */
-    public int getAllocNum() {
+    public int getNodeTableSize() {
         return getAllocNum0();
     }
     private static native int getAllocNum0();
@@ -486,9 +519,9 @@ public class BuDDyFactory extends BDDFactory {
     private static native void printStat0();
 
     /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#createDomain(int, long)
+     * @see net.sf.javabdd.BDDFactory#createDomain(int, java.math.BigInteger)
      */
-    protected BDDDomain createDomain(int a, long b) {
+    protected BDDDomain createDomain(int a, BigInteger b) {
         return new BuDDyBDDDomain(a, b);
     }
 
@@ -949,7 +982,7 @@ public class BuDDyFactory extends BDDFactory {
      */
     private static class BuDDyBDDDomain extends BDDDomain {
 
-        private BuDDyBDDDomain(int a, long b) {
+        private BuDDyBDDDomain(int a, BigInteger b) {
             super(a, b);
         }
 
@@ -1016,12 +1049,11 @@ public class BuDDyFactory extends BDDFactory {
         /* (non-Javadoc)
          * @see java.lang.Object#finalize()
          */
-        /*
         protected void finalize() throws Throwable {
             super.finalize();
-            this.free();
+            if (_ptr != 0) free0(_ptr);
+            _ptr = 0;
         }
-        */
 
         /**
          * Free the memory allocated for this pair.
