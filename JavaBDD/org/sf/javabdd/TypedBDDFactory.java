@@ -924,7 +924,7 @@ public class TypedBDDFactory extends BDDFactory {
         
     }
     
-    public class TypedBDDDomain extends BDDDomain {
+    class TypedBDDDomain extends BDDDomain {
 
         BDDDomain domain;
         
@@ -1004,7 +1004,7 @@ public class TypedBDDFactory extends BDDFactory {
 
     }
     
-    public class TypedBDDPairing extends BDDPairing {
+    class TypedBDDPairing extends BDDPairing {
 
         final Map domMap;
         final BDDPairing pairing;
