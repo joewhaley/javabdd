@@ -87,7 +87,7 @@ JNI_CLASSNAMES = org.sf.javabdd.CUDDFactory \
 JNI_INCLUDE = cudd_jni.h
 EXAMPLE_SOURCES = NQueens.java
 EXAMPLE_CLASSFILES = $(EXAMPLE_SOURCES:%.java=%.class)
-JAR_NAME = javabdd_0.4.jar
+JAR_NAME = javabdd_0.5.jar
 
 DLL_SRCS  = cudd_jni.c \
 	  $(CUDD_SRC)/cudd/cuddAPI.c $(CUDD_SRC)/cudd/cuddAddAbs.c $(CUDD_SRC)/cudd/cuddAddApply.c $(CUDD_SRC)/cudd/cuddAddFind.c $(CUDD_SRC)/cudd/cuddAddIte.c \
