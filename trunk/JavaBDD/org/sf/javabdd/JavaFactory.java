@@ -50,7 +50,7 @@ public class JavaFactory extends BDDFactory {
 
         bdd(int index) {
             this._index = index;
-            bdd_addref(_index);
+            addRef();
         }
 
         /* (non-Javadoc)
@@ -198,9 +198,10 @@ public class JavaFactory extends BDDFactory {
             int x = _index;
             int y = ((bdd) that)._index;
             int a = bdd_restrict(x, y);
+            //System.out.println("restrictWith("+System.identityHashCode(this)+") "+x+" -> "+a);
             bdd_delref(x);
             if (this != that)
-                bdd_delref(y);
+                that.free();
             bdd_addref(a);
             this._index = a;
         }
@@ -240,9 +241,10 @@ public class JavaFactory extends BDDFactory {
             int y = ((bdd) that)._index;
             int z = opr.id;
             int a = bdd_apply(x, y, z);
+            //System.out.println("applyWith("+System.identityHashCode(this)+", "+System.identityHashCode(that)+") "+x+","+y+" -> "+a);
             bdd_delref(x);
             if (this != that)
-                bdd_delref(y);
+                that.free();
             bdd_addref(a);
             this._index = a;
         }
@@ -330,6 +332,7 @@ public class JavaFactory extends BDDFactory {
         public void replaceWith(BDDPairing pair) {
             int x = _index;
             int y = bdd_replace(x, ((bddPair) pair));
+            //System.out.println("replaceWith("+System.identityHashCode(this)+") "+x+" -> "+y);
             bdd_delref(x);
             bdd_addref(y);
             _index = y;
@@ -382,6 +385,7 @@ public class JavaFactory extends BDDFactory {
          * @see org.sf.javabdd.BDD#addRef()
          */
         protected void addRef() {
+            //System.out.println(System.identityHashCode(this)+" addRef("+_index+") ");
             bdd_addref(_index);
         }
 
@@ -389,6 +393,7 @@ public class JavaFactory extends BDDFactory {
          * @see org.sf.javabdd.BDD#delRef()
          */
         protected void delRef() {
+            //System.out.println(System.identityHashCode(this)+" delRef("+_index+") ");
             bdd_delref(_index);
         }
         
@@ -2611,6 +2616,8 @@ public class JavaFactory extends BDDFactory {
     }
 
     int bdd_addref(int root) {
+        if (root == -1)
+            bdd_error(BDD_BREAK); /* distinctive */
         if (root < 2 || !bddrunning)
             return root;
         if (root >= bddnodesize)
@@ -2619,10 +2626,13 @@ public class JavaFactory extends BDDFactory {
             return bdd_error(BDD_ILLBDD);
 
         INCREF(root);
+        //System.out.println("INCREF("+root+") = "+bddnodes[root].getRef());
         return root;
     }
 
     int bdd_delref(int root) {
+        if (root == -1)
+            bdd_error(BDD_BREAK); /* distinctive */
         if (root < 2 || !bddrunning)
             return root;
         if (root >= bddnodesize)
@@ -2635,6 +2645,7 @@ public class JavaFactory extends BDDFactory {
             bdd_error(BDD_BREAK); /* distinctive */
 
         DECREF(root);
+        //System.out.println("DECREF("+root+") = "+bddnodes[root].getRef());
         return root;
     }
 
