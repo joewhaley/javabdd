@@ -898,6 +898,63 @@ public abstract class BDD {
         return sb.toString();
     }
     
+    static class OutputBuffer {
+        BDDToString ts;
+        StringBuffer sb;
+        int domain;
+        long lastLow;
+        long lastHigh;
+        boolean done;
+        
+        OutputBuffer(BDDToString ts, StringBuffer sb, int domain) {
+            this.ts = ts;
+            this.sb = sb;
+            this.lastHigh = -2L;
+        }
+        
+        void append(long low, long high) {
+            if (low == lastHigh + 1L) {
+                lastHigh = high;
+            } else {
+                finish();
+                lastLow = low; lastHigh = high;
+            }
+        }
+        
+        StringBuffer finish() {
+            if (lastHigh != -2L) {
+                if (done) sb.append('/');
+                sb.append(ts.elementNames(domain, lastLow, lastHigh));
+                lastHigh = -2L;
+            }
+            done = true;
+            return sb;
+        }
+        
+        void append(long low) {
+            append(low, low);
+        }
+    }
+    
+    static void fdd_printset_helper(OutputBuffer sb,
+                                    long value, int i,
+                                    int[] set, int[] var,
+                                    int maxSkip) {
+        int x;
+        if (i == maxSkip) {
+            //_assert(set[var[i]] == 0);
+            long maxValue = value | ((1L << (i+1)) - 1L);
+            sb.append(value, maxValue);
+            return;
+        }
+        int val = set[var[i]];
+        if (val == 0) {
+            long temp = value | (1L << i);
+            fdd_printset_helper(sb, temp, i-1, set, var, maxSkip);
+        }
+        fdd_printset_helper(sb, value, i-1, set, var, maxSkip);
+    }
+    
     static void fdd_printset_rec(BDDFactory bdd, StringBuffer sb, BDDToString ts, BDD r, int[] set) {
         int fdvarnum = bdd.numberOfDomains();
         
@@ -935,18 +992,36 @@ public abstract class BDD {
                     var = domain_n_ivar;
                     
                     long pos = 0L;
-                    long dontcare = 0L;
-                    for (i=domain_n_varnum-1; i>=0; i--) {
-                        dontcare <<= 1;
+                    int maxSkip = -1;
+                    boolean hasDontCare = false;
+                    for (i=0; i<domain_n_varnum; ++i) {
+                        int val = set[var[i]];
+                        if (val == 0) {
+                            hasDontCare = true;
+                            if (maxSkip == i-1)
+                                maxSkip = i;
+                        }
+                    }
+                    for (i=domain_n_varnum-1; i>=0; --i) {
                         pos <<= 1;
                         int val = set[var[i]];
-                        if (val == 0) dontcare |= 1L;
-                        else if (val == 2) pos |= 1L;
+                        if (val == 2) {
+                            pos |= 1L;
+                            //System.out.print('1');
+                        } else if (val == 1) {
+                            //System.out.print('0');
+                        } else {
+                            //System.out.print('x');
+                        }
                     }
-                    if (dontcare == 0L) {
+                    //System.out.println();
+                    if (!hasDontCare) {
                         sb.append(ts.elementName(n, pos));
                     } else {
-                        sb.append(ts.elementNames(n, pos, pos | dontcare));
+                        OutputBuffer ob = new OutputBuffer(ts, sb, n);
+                        fdd_printset_helper(ob, pos, domain_n_varnum-1,
+                                            set, var, maxSkip);
+                        ob.finish();
                     }
                 }
             }
