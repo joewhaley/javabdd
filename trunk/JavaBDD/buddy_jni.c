@@ -278,7 +278,7 @@ JNIEXPORT jobject JNICALL Java_org_sf_javabdd_BuDDyFactory_buildCube__II_3I
   arr = (int*) (*env)->GetPrimitiveArrayCritical(env, var, NULL);
   if (arr == NULL) return NULL;
   b = bdd_ibuildcube(value, width, arr);
-  (*env)->ReleasePrimitiveArrayCritical(env, var, arr, 0);
+  (*env)->ReleasePrimitiveArrayCritical(env, var, arr, JNI_ABORT);
 
   if (check_error(env)) return NULL;
   return BDD_CToJava(env, b);
@@ -300,7 +300,7 @@ JNIEXPORT jobject JNICALL Java_org_sf_javabdd_BuDDyFactory_makeSet
   arr = (int*) (*env)->GetPrimitiveArrayCritical(env, v, NULL);
   if (arr == NULL) return NULL;
   b = bdd_makeset(arr, n);
-  (*env)->ReleasePrimitiveArrayCritical(env, v, arr, 0);
+  (*env)->ReleasePrimitiveArrayCritical(env, v, arr, JNI_ABORT);
 
   if (check_error(env)) return NULL;
   return BDD_CToJava(env, b);
@@ -688,6 +688,30 @@ JNIEXPORT jint JNICALL Java_org_sf_javabdd_BuDDyFactory_reorderVerbose
   int result = bdd_reorder_verbose(level);
   check_error(env);
   return result;
+}
+
+/*
+ * Class:     org_sf_javabdd_BuDDyFactory
+ * Method:    setVarOrder
+ * Signature: ([I)V
+ */
+JNIEXPORT void JNICALL Java_org_sf_javabdd_BuDDyFactory_setVarOrder
+  (JNIEnv *env, jobject o, jintArray arr)
+{
+  jint *a;
+  jint size = (*env)->GetArrayLength(env, arr);
+  jint varnum = bdd_varnum();
+  if (size != varnum) {
+    jclass cls = (*env)->FindClass(env, "java/lang/IllegalArgumentException");
+    (*env)->ThrowNew(env, cls, "array size != number of vars");
+    (*env)->DeleteLocalRef(env, cls);
+    return;
+  }
+  a = (*env)->GetPrimitiveArrayCritical(env, arr, NULL);
+  if (a == NULL) return;
+  bdd_setvarorder((int*)a);
+  (*env)->ReleasePrimitiveArrayCritical(env, arr, a, JNI_ABORT);
+  check_error(env);
 }
 
 /*
@@ -1286,6 +1310,27 @@ JNIEXPORT jdouble JNICALL Java_org_sf_javabdd_BuDDyFactory_00024BuDDyBDD_logSatC
 
 /*
  * Class:     org_sf_javabdd_BuDDyFactory_BuDDyBDD
+ * Method:    varProfile
+ * Signature: ()[I
+ */
+JNIEXPORT jintArray JNICALL Java_org_sf_javabdd_BuDDyFactory_00024BuDDyBDD_varProfile
+  (JNIEnv *env, jobject o)
+{
+  jintArray result;
+  BDD b = BDD_JavaToC(env, o);
+  int size = bdd_varnum();
+  int* arr = bdd_varprofile(b);
+  if (check_error(env)) return NULL;
+  if (arr == NULL) return NULL;
+  result = (*env)->NewIntArray(env, size);
+  if (result == NULL) return NULL;
+  (*env)->SetIntArrayRegion(env, result, 0, size, (jint*) arr);
+  free(arr);
+  return result;
+}
+
+/*
+ * Class:     org_sf_javabdd_BuDDyFactory_BuDDyBDD
  * Method:    addRef
  * Signature: ()V
  */
@@ -1346,6 +1391,7 @@ JNIEXPORT jintArray JNICALL Java_org_sf_javabdd_BuDDyFactory_00024BuDDyBDD_scanS
   if (check_error(env)) return NULL;
   if (arr == NULL) return NULL;
   result = (*env)->NewIntArray(env, size);
+  if (result == NULL) return NULL;
   (*env)->SetIntArrayRegion(env, result, 0, size, (jint*) arr);
   free(arr);
   return result;
@@ -1380,6 +1426,7 @@ JNIEXPORT jintArray JNICALL Java_org_sf_javabdd_BuDDyFactory_00024BuDDyBDD_scanA
   if (arr == NULL) return NULL;
 
   result = (*env)->NewIntArray(env, size);
+  if (result == NULL) return NULL;
   (*env)->SetIntArrayRegion(env, result, 0, size, (jint*) arr);
   free(arr);
   return result;
@@ -1521,6 +1568,7 @@ JNIEXPORT jintArray JNICALL Java_org_sf_javabdd_BuDDyFactory_00024BuDDyBDDDomain
   if (arr == NULL) return NULL;
 
   result = (*env)->NewIntArray(env, size);
+  if (result == NULL) return NULL;
   (*env)->SetIntArrayRegion(env, result, 0, size, (jint*)arr);
   free(arr);
   return result;
@@ -1565,8 +1613,8 @@ JNIEXPORT void JNICALL Java_org_sf_javabdd_BuDDyFactory_00024BuDDyBDDPairing_set
   a2 = (*env)->GetPrimitiveArrayCritical(env, arr2, NULL);
   if (a2 == NULL) return;
   bdd_setpairs(p, (int*)a1, (int*)a2, size1);
-  (*env)->ReleasePrimitiveArrayCritical(env, arr1, a1, 0);
-  (*env)->ReleasePrimitiveArrayCritical(env, arr2, a2, 0);
+  (*env)->ReleasePrimitiveArrayCritical(env, arr1, a1, JNI_ABORT);
+  (*env)->ReleasePrimitiveArrayCritical(env, arr2, a2, JNI_ABORT);
   check_error(env);
 }
 
