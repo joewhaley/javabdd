@@ -181,7 +181,7 @@ public class BasicTests extends BDDTestCase {
     }
     
     static boolean isFreed(BDD b) {
-        return b.hashCode() == -1;
+        return b.hashCode() == -1 || b.hashCode() == 0x07ffffff;
     }
     
     void testApplyWith(BDDFactory bdd, BDDFactory.BDDOp op,
