@@ -75,7 +75,6 @@ $(EXAMPLE_CLASSFILES): $(EXAMPLE_SOURCES)
 	$(JAVAC) $(EXAMPLE_SOURCES)
 
 javadoc: $(JAVA_SOURCES)
-	$(JAVAC) $(JAVA_SOURCES)
 	$(JAVADOC) -d javadoc -breakiterator $(JAVA_PACKAGES)
 	
 jar: $(JAR_NAME)

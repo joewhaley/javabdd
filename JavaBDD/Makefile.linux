@@ -73,7 +73,6 @@ $(EXAMPLE_CLASSFILES): $(EXAMPLE_SOURCES)
 examples: $(EXAMPLE_CLASSFILES)
 
 javadoc: $(JAVA_SOURCES)
-	$(JAVAC) $(JAVA_SOURCES)
 	$(JAVADOC) -d javadoc -breakiterator $(JAVA_PACKAGES)
 
 jar: $(JAR_NAME)
