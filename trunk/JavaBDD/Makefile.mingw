@@ -29,6 +29,7 @@ MINGW_LIBDIR = $(MINGW_EXTRA)/lib
 
 JAVAC = $(JDK_ROOT)/bin/javac
 JAVAH = $(JDK_ROOT)/bin/javah
+JAVADOC = $(JDK_ROOT)/bin/javadoc
 
 AS = as
 DLLTOOL = dlltool
@@ -44,6 +45,7 @@ JAVA_SOURCES = org/sf/javabdd/BDD.java \
 	org/sf/javabdd/BDDFactory.java \
 	org/sf/javabdd/BuDDyFactory.java
 JAVA_CLASSFILES = org/sf/javabdd/*.class
+JAVA_PACKAGES = org.sf.javabdd
 JNI_CLASSFILE = org/sf/javabdd/BuDDyFactory.class
 JNI_CLASSNAMES = org.sf.javabdd.BuDDyFactory \
 	org.sf.javabdd.BuDDyFactory\$$BuDDyBDD
@@ -64,6 +66,10 @@ $(JNI_INCLUDES): $(JNI_CLASSFILE)
 
 examples: $(EXAMPLE_SOURCES)
 	$(JAVAC) $(EXAMPLE_SOURCES)
+
+javadoc: $(JAVA_SOURCES)
+	$(JAVAC) $(JAVA_SOURCES)
+	$(JAVADOC) -d javadoc -breakiterator $(JAVA_PACKAGES)
 
 #
 # DLL related variables. These are used when building the DLL. See later.
@@ -130,4 +136,4 @@ usedll.o: %o: %c
 
 clean:
 	-rm -f $(JAVA_CLASSFILES) $(JNI_INCLUDES) $(OBJS) $(DLL_OBJS) $(DLL_NAME) $(DLL_EXP_LIB) $(DLL_EXP_DEF) $(EXAMPLE_CLASSFILES)
-
+	-rm -rf javadoc
