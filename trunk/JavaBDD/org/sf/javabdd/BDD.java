@@ -1,9 +1,13 @@
 package org.sf.javabdd;
 
-import java.io.PrintStream;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Random;
+import java.util.Set;
+import java.io.PrintStream;
 
 /**
  * <p>Binary Decision Diagrams (BDDs) are used for efficient computation of many
@@ -665,6 +669,172 @@ public abstract class BDD {
         return res;
     }
 
+    static int[] varset2levels(BDD r) {
+        int size = 0;
+        BDD p = r.id();
+        while (!p.isOne() && !p.isZero()) {
+            ++size;
+            BDD p2 = p.high();
+            p.free();
+            p = p2;
+        }
+        p.free();
+        int[] result = new int[size];
+        size = -1;
+        p = r.id();
+        while (!p.isOne() && !p.isZero()) {
+            result[++size] = p.level();
+            BDD p2 = p.high();
+            p.free();
+            p = p2;
+        }
+        p.free();
+        return result;
+    }
+    
+    /**
+     * <p>Returns an iteration of the satisfying assignments of this BDD.  Returns
+     * an iteration of minterms.  The var argument is the set of variables that
+     * will be mentioned in the result.</p>
+     * 
+     * @return an iteration of minterms
+     */
+    public Iterator iterator(final BDD var) {
+        return new Iterator() {
+            int[] levels;
+            boolean[] values;
+            BDD[] nodes;
+            boolean more;
+            
+            {
+                if (!BDD.this.isZero()) {
+                    levels = varset2levels(var);
+                    values = new boolean[levels.length];
+                    nodes = new BDD[levels.length];
+                    fillInSatisfyingAssignment(BDD.this.id(), 0);
+                    more = true;
+                }
+            }
+            
+            void fillInSatisfyingAssignment(BDD node, int i) {
+                while (!node.isOne() && !node.isZero()) {
+                    int v = node.level();
+                    
+                    // Mark skipped variables as dont-cares.
+                    int j = i;
+                    while (j < levels.length && levels[j] != v) {
+                        if (nodes[j] != null)
+                            throw new InternalError("nodes["+j+"] should be null");
+                        ++j;
+                    }
+                    if (j == levels.length)
+                        throw new BDDException("BDD contains variable not in iteration set: "+getFactory().level2Var(v));
+                    i = j;
+                    
+                    // Put node in table.
+                    nodes[i] = node;
+                    
+                    // Choose zero edge.
+                    BDD node2 = node.low();
+                    if (node2.isZero()) {
+                        // Zero edge is F.  Choose one edge instead.
+                        node2.free();
+                        values[i] = true;
+                        node2 = node.high();
+                    }
+                    node = node2;
+                    ++i;
+                }
+            }
+            
+            boolean findNextSatisfyingAssignment() {
+                int i = nodes.length - 1;
+                for (;;) {
+                    if (i < 0) return false;
+                    if (nodes[i] != null) {
+                        if (!values[i]) {
+                            // We already tried zero, try a one here now.
+                            BDD hi = nodes[i].high();
+                            if (!hi.isZero()) {
+                                values[i] = true;
+                                fillInSatisfyingAssignment(hi, i+1);
+                                return true;
+                            } else {
+                                // Leads to zero, no satisfying assignments.
+                                // Fallthrough.
+                            }
+                        }
+                        // We already tried both zero and one.
+                        nodes[i].free();
+                        nodes[i] = null;
+                        values[i] = false;
+                        // Fallthrough: Go to next bit.
+                    } else {
+                        // This is a dont-care bit, skip it.
+                    }
+                    --i;
+                }
+            }
+            
+            BDD buildAssignment() {
+                more = false;
+                BDD b = getFactory().one();
+                boolean carry = true;
+                for (int i = levels.length - 1; i >= 0; --i) {
+                    int level = levels[i];
+                    int var = getFactory().level2Var(level);
+                    boolean val = values[i];
+                    if (nodes[i] == null) {
+                        if (carry) {
+                            values[i] = !val;
+                            more |= !val;
+                            carry = val;
+                        } else {
+                            more = true;
+                        }
+                    }
+                    BDD v = val ? getFactory().ithVar(var) : getFactory().nithVar(var);
+                    b.andWith(v);
+                }
+                return b;
+            }
+            
+            void free() {
+                for (int i = levels.length - 1; i >= 0; --i) {
+                    if (nodes[i] != null) {
+                        nodes[i].free();
+                        nodes[i] = null;
+                    }
+                }
+                nodes = null;
+            }
+            
+            public Object next() {
+                BDD b;
+                if (more) {
+                    b = buildAssignment();
+                } else {
+                    throw new NoSuchElementException();
+                }
+                if (!more) {
+                    more = findNextSatisfyingAssignment();
+                    if (!more) {
+                        free();
+                    }
+                }
+                return b;
+            }
+            
+            public boolean hasNext() {
+                return nodes != null;
+            }
+            
+            public void remove() {
+                throw new UnsupportedOperationException();
+            }
+        };
+    }
+    
     /**
      * <p>Returns an iteration of the satisfying assignments of this BDD.  Returns
      * an iteration of minterms.  The var argument is a set of variables that
@@ -672,7 +842,7 @@ public abstract class BDD {
      * 
      * @return an iteration of minterms
      */
-    public Iterator iterator(final BDD var) {
+    public Iterator iterator2(final BDD var) {
         final BDD b = id();
         final BDD zero = getFactory().zero();
         return new Iterator() {
@@ -1218,5 +1388,52 @@ public abstract class BDD {
      * <p>Protected constructor.</p>
      */
     protected BDD() { }
+    
+    public static void main(String[] args) {
+        BDDFactory bdd = BDDFactory.init(1000, 1000);
+        int domainSize = 1024;
+        BDDDomain d = bdd.extDomain(new int[] { domainSize })[0];
+        Random r = new Random();
+        int times = 1000;
+        int combine = 200;
+        for (int i = 0; i < times; ++i) {
+            int count = r.nextInt(combine);
+            BDD b = bdd.zero();
+            for (int j = 0; j < count; ++j) {
+                int varNum = r.nextInt(domainSize);
+                b.orWith(d.ithVar(varNum));
+            }
+            BDD var = d.set();
+            Iterator i1 = b.iterator(var);
+            Iterator i2 = b.iterator2(var);
+            var.free(); b.free();
+            Set s1 = new HashSet();
+            Set s2 = new HashSet();
+            while (i1.hasNext()) {
+                BDD b1 = (BDD) i1.next();
+                s1.add(b1);
+            }
+            while (i2.hasNext()) {
+                BDD b2 = (BDD) i2.next();
+                s2.add(b2);
+            }
+            if (!s1.equals(s2)) {
+                Set s1_minus_s2 = new HashSet(s1);
+                s1_minus_s2.removeAll(s2);
+                Set s2_minus_s1 = new HashSet(s2);
+                s2_minus_s1.removeAll(s1);
+                System.out.println("iterator() contains these extras: "+s1_minus_s2);
+                System.out.println("iterator2() contains these extras: "+s2_minus_s1);
+            }
+            for (Iterator k = s1.iterator(); k.hasNext(); ) {
+                BDD q = (BDD) k.next();
+                q.free();
+            }
+            for (Iterator k = s2.iterator(); k.hasNext(); ) {
+                BDD q = (BDD) k.next();
+                q.free();
+            }
+        }
+    }
     
 }
