@@ -2,10 +2,17 @@ package org.sf.javabdd;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.StringTokenizer;
-
+import java.io.DataInput;
+import java.io.DataInputStream;
+import java.io.DataOutput;
+import java.io.DataOutputStream;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -353,16 +360,177 @@ public abstract class BDDFactory {
      * 
      * Compare to bdd_load.
      */
-    public abstract BDD load(String filename) throws IOException;
+    public BDD load(String filename) throws IOException {
+        DataInputStream is = null;
+        try {
+            is = new DataInputStream(new FileInputStream(filename));
+            BDD result = load(is);
+            return result;
+        } finally {
+            if (is != null) try { is.close(); } catch (IOException _) { }
+        }
+    }
     // TODO: error code from bdd_load (?)
+    
+    public BDD load(DataInput ifile) throws IOException {
+
+        tokenizer = null;
+        
+        int lh_nodenum = Integer.parseInt(readNext(ifile));
+        int vnum = Integer.parseInt(readNext(ifile));
+
+        // Check for constant true / false
+        if (lh_nodenum == 0 && vnum == 0) {
+            int r = Integer.parseInt(readNext(ifile));
+            return r == 0 ? zero() : one();
+        }
+
+        // Not actually used.
+        int[] loadvar2level = new int[vnum];
+        for (int n = 0; n < vnum; n++) {
+            loadvar2level[n] = Integer.parseInt(readNext(ifile));
+        }
+
+        if (vnum > varNum())
+            setVarNum(vnum);
+
+        LoadHash[] lh_table = new LoadHash[lh_nodenum];
+        for (int n = 0; n < lh_nodenum; n++) {
+            lh_table[n] = new LoadHash();
+            lh_table[n].first = -1;
+            lh_table[n].next = n + 1;
+        }
+        lh_table[lh_nodenum - 1].next = -1;
+        int lh_freepos = 0;
+
+        BDD root = null;
+        for (int n = 0; n < lh_nodenum; n++) {
+            int key = Integer.parseInt(readNext(ifile));
+            int var = Integer.parseInt(readNext(ifile));
+            int lowi = Integer.parseInt(readNext(ifile));
+            int highi = Integer.parseInt(readNext(ifile));
+
+            BDD low, high;
+            
+            low = loadhash_get(lh_table, lh_nodenum, lowi);
+            high = loadhash_get(lh_table, lh_nodenum, highi);
+
+            if (low == null || high == null || var < 0)
+                throw new BDDException("Incorrect file format");
+
+            BDD b = ithVar(var);
+            root = b.ite(high, low);
+            b.free();
+
+            int hash = key % lh_nodenum;
+            int pos = lh_freepos;
+
+            lh_freepos = lh_table[pos].next;
+            lh_table[pos].next = lh_table[hash].first;
+            lh_table[hash].first = pos;
+
+            lh_table[pos].key = key;
+            lh_table[pos].data = root;
+        }
+        BDD tmproot = root.id();
+        
+        for (int n = 0; n < lh_nodenum; n++)
+            lh_table[n].data.free();
+
+        lh_table = null;
+        loadvar2level = null;
+
+        return tmproot;
+    }
+    
+    StringTokenizer tokenizer;
+    
+    String readNext(DataInput ifile) throws IOException {
+        while (tokenizer == null || !tokenizer.hasMoreTokens()) {
+            String s = ifile.readLine();
+            if (s == null)
+                throw new BDDException("Incorrect file format");
+            tokenizer = new StringTokenizer(s);
+        }
+        return tokenizer.nextToken();
+    }
+    
+    static class LoadHash {
+        int key;
+        BDD data;
+        int first;
+        int next;
+    }
+    
+    BDD loadhash_get(LoadHash[] lh_table, int lh_nodenum, int key) {
+        if (key < 0) return null;
+        if (key == 0) return zero();
+        if (key == 1) return one();
+        
+        int hash = lh_table[key % lh_nodenum].first;
+
+        while (hash != -1 && lh_table[hash].key != key)
+            hash = lh_table[hash].next;
+
+        if (hash == -1)
+            return null;
+        return lh_table[hash].data;
+    }
     
     /**
      * Saves a BDD to a file.
      * 
      * Compare to bdd_save.
      */
-    public abstract void save(String filename, BDD var) throws IOException;
+    public void save(String filename, BDD var) throws IOException {
+        DataOutputStream is = null;
+        try {
+            is = new DataOutputStream(new FileOutputStream(filename));
+            save(is, var);
+        } finally {
+            if (is != null) try { is.close(); } catch (IOException _) { }
+        }
+    }
     // TODO: error code from bdd_save (?)
+    
+    public void save(DataOutput out, BDD r) throws IOException {
+        if (r.isOne() || r.isZero()) {
+            out.writeBytes("0 0 " + (r.isOne()?1:0) + "\n");
+            return;
+        }
+
+        out.writeBytes(r.nodeCount() + " " + varNum() + "\n");
+
+        for (int x = 0; x < varNum(); x++)
+            out.writeBytes(var2Level(x) + " ");
+        out.writeBytes("\n");
+
+        Map visited = new HashMap();
+        save_rec(out, visited, r);
+    }
+
+    protected int save_rec(DataOutput out, Map visited, BDD root) throws IOException {
+        if (root.isZero()) return 0;
+        if (root.isOne()) return 1;
+        Integer i = (Integer) visited.get(root);
+        if (i != null) return i.intValue();
+        visited.put(root, i = new Integer(visited.size()+2));
+
+        BDD l = root.low();
+        int lo = save_rec(out, visited, l);
+        l.free();
+        
+        BDD h = root.high();
+        int hi = save_rec(out, visited, h);
+        h.free();
+
+        out.writeBytes(i.intValue() + " ");
+        out.writeBytes(root.var() + " ");
+        out.writeBytes(lo + " ");
+        out.writeBytes(hi + "\n");
+        
+        return i.intValue();
+    }
     
     // TODO: bdd_strm_hook, bdd_file_hook, bdd_blockfile_hook
     // TODO: bdd_versionnum, bdd_versionstr

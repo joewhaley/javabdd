@@ -3,14 +3,6 @@
 // Licensed under the terms of the GNU LGPL; see COPYING for details.
 package org.sf.javabdd;
 
-import java.io.DataInput;
-import java.io.DataInputStream;
-import java.io.DataOutput;
-import java.io.DataOutputStream;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
@@ -19,6 +11,10 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 import java.util.StringTokenizer;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
+import java.io.PrintStream;
 
 /**
  * <p>This is a 100% Java implementation of the BDD factory.  It is based on
@@ -4271,31 +4267,19 @@ public class JavaFactory extends BDDFactory {
     }
 
     /* (non-Javadoc)
-     * @see org.sf.javabdd.BDDFactory#load(java.lang.String)
+     * @see org.sf.javabdd.BDDFactory#load(java.io.DataInput)
      */
-    public BDD load(String filename) throws IOException {
-        DataInputStream is = null;
-        try {
-            is = new DataInputStream(new FileInputStream(filename));
-            int result = bdd_load(is);
-            return new bdd(result);
-        } finally {
-            is.close();
-        }
+    public BDD load(DataInput in) throws IOException {
+        int result = bdd_load(in);
+        return new bdd(result);
     }
 
     /* (non-Javadoc)
-     * @see org.sf.javabdd.BDDFactory#save(java.lang.String, org.sf.javabdd.BDD)
+     * @see org.sf.javabdd.BDDFactory#save(java.io.DataOutput, org.sf.javabdd.BDD)
      */
-    public void save(String filename, BDD b) throws IOException {
+    public void save(DataOutput out, BDD b) throws IOException {
         int x = ((bdd) b)._index;
-        DataOutputStream is = null;
-        try {
-            is = new DataOutputStream(new FileOutputStream(filename));
-            bdd_save(is, x);
-        } finally {
-            is.close();
-        }
+        bdd_save(out, x);
     }
 
     /* (non-Javadoc)
@@ -5422,12 +5406,13 @@ public class JavaFactory extends BDDFactory {
         lh_nodenum = Integer.parseInt(readNext(ifile));
         vnum = Integer.parseInt(readNext(ifile));
 
-        /* Check for constant true / false */
+        // Check for constant true / false
         if (lh_nodenum == 0 && vnum == 0) {
             root = Integer.parseInt(readNext(ifile));
             return root;
         }
 
+        // Not actually used.
         loadvar2level = new int[vnum];
         for (n = 0; n < vnum; n++) {
             loadvar2level[n] = Integer.parseInt(readNext(ifile));
