@@ -89,8 +89,8 @@ public class BuDDyFactory extends BDDFactory {
      * Converts collection of BuDDyBDD's into an int array, for passing to
      * native code.
      * 
-     * @param c
-     * @return
+     * @param c  collection of BuDDyBDD's
+     * @return  int array of indices
      */
     private static int[] toBuDDyArray(Collection c) {
         int[] a = new int[c.size()];
