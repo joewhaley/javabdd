@@ -531,7 +531,7 @@ public class JDDFactory extends BDDFactory {
      * @see org.sf.javabdd.BDDFactory#done()
      */
     public void done() {
-        // TODO Auto-generated method stub
+        bdd.cleanup();
     }
 
     /* (non-Javadoc)
