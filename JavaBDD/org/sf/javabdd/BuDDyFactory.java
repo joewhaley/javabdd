@@ -34,6 +34,10 @@ public class BuDDyFactory extends BDDFactory {
     private static BuDDyFactory INSTANCE;
     
     static {
+        String libpath = System.getProperty("java.library.path", "");
+        libpath += System.getProperty("path.separator");
+        libpath += ".";
+        System.setProperty("java.library.path", libpath);
         System.loadLibrary("buddy");
         registerNatives();
     }
