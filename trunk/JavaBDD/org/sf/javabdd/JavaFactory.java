@@ -3355,13 +3355,86 @@ public class JavaFactory extends BDDFactory {
             reorder_block(dis, method);
 
         if (t.seq != null) {
-            throw new InternalError();
-            //qsort(t.seq, t.last-t.first+1, sizeof(int), varseqCmp);
+            varseq_qsort(t.seq, 0, t.last-t.first + 1);
         }
 
         return t;
     }
-
+    
+    // due to Akihiko Tozawa
+    void varseq_qsort(int[] target, int from, int to) {
+        
+        int x, i, j;
+        
+        switch (to - from) {
+            case 0 :
+                return;
+    
+            case 1 :
+                return;
+    
+            case 2 :
+                if (bddvar2level[target[from]] <= bddvar2level[target[from + 1]])
+                    return;
+                else {
+                    x = target[from];
+                    target[from] = target[from + 1];
+                    target[from + 1] = x;
+                }
+                return;
+        }
+    
+        int r = target[from];
+        int s = target[(from + to) / 2];
+        int t = target[to - 1];
+    
+        if (bddvar2level[r] <= bddvar2level[s]) {
+            if (bddvar2level[s] <= bddvar2level[t]) {
+            } else if (bddvar2level[r] <= bddvar2level[t]) {
+                target[to - 1] = s;
+                target[(from + to) / 2] = t;
+            } else {
+                target[to - 1] = s;
+                target[from] = t;
+                target[(from + to) / 2] = r;
+            }
+        } else {
+            if (bddvar2level[r] <= bddvar2level[t]) {
+                target[(from + to) / 2] = r;
+                target[from] = s;
+            } else if (bddvar2level[s] <= bddvar2level[t]) {
+                target[to - 1] = r;
+                target[(from + to) / 2] = t;
+                target[from] = s;
+            } else {
+                target[to - 1] = r;
+                target[from] = t;
+            }
+        }
+        
+        int mid = target[(from + to) / 2];
+        
+        for (i = from + 1, j = to - 1; i + 1 != j;) {
+            if (target[i] == mid) {
+                target[i] = target[i + 1];
+                target[i + 1] = mid;
+            }
+            
+            x = target[i];
+            
+            if (x <= mid)
+                i++;
+            else {
+                x = target[--j];
+                target[j] = target[i];
+                target[i] = x;
+            }
+        }
+    
+        varseq_qsort(target, from, i);
+        varseq_qsort(target, i + 1, to);
+    }
+         
     BddTree reorder_win2(BddTree t) {
         BddTree dis = t, first = t;
 
@@ -4162,6 +4235,7 @@ public class JavaFactory extends BDDFactory {
     public BDD load(String filename) throws IOException {
         DataInputStream is = new DataInputStream(new FileInputStream(filename));
         int result = bdd_load(is);
+        is.close();
         return new bdd(result);
     }
 
@@ -4173,6 +4247,7 @@ public class JavaFactory extends BDDFactory {
         DataOutputStream is =
             new DataOutputStream(new FileOutputStream(filename));
         bdd_save(is, x);
+        is.close();
     }
 
     /* (non-Javadoc)
