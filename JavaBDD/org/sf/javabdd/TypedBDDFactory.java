@@ -942,7 +942,7 @@ public class TypedBDDFactory extends BDDFactory {
          */
         public double satCount(BDD set) {
             TypedBDD bdd1 = (TypedBDD) set;
-            if (!bdd1.dom.equals(dom)) {
+            if (!bdd.isZero() && !bdd1.dom.equals(dom)) {
                 out.println("Warning! satCount on the wrong domains: "+domainNames(dom)+" != "+domainNames(bdd1.dom));
                 new Exception().printStackTrace();
             }
