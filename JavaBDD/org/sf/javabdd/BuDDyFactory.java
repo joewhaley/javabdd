@@ -14,6 +14,13 @@ import java.util.List;
  * This class (and the BuDDy library) do NOT support multithreading.
  * Furthermore, there can be only one instance active at a time.  You can only
  * call "init()" again after you have called "done()" on the original instance.
+ * It is not recommended to call "init()" again after calling "done()" unless
+ * you are _completely_ sure that all BDD objects that reference the old
+ * factory have been freed.
+ * 
+ * If you really need multiple BDD factories, consider using the JavaFactory
+ * class for the additional BDD factories --- JavaFactory can have multiple
+ * factory instances active at a time.
  * 
  * @see org.sf.javabdd.BDDFactory
  * 
@@ -300,7 +307,7 @@ public class BuDDyFactory extends BDDFactory {
     /**
      * An implementation of a BDD class, used by the BuDDy interface.
      */
-    public static class BuDDyBDD extends BDD {
+    static class BuDDyBDD extends BDD {
     
         private int _id;
         
@@ -626,7 +633,7 @@ public class BuDDyFactory extends BDDFactory {
     /**
      * An implementation of a BDDDomain, used by the BuDDy interface.
      */
-    public static class BuDDyBDDDomain extends BDDDomain {
+    static class BuDDyBDDDomain extends BDDDomain {
 
         private BuDDyBDDDomain(int a, long b) {
             super(a, b);
@@ -639,7 +646,7 @@ public class BuDDyFactory extends BDDFactory {
     /**
      * An implementation of a BDDPairing, used by the BuDDy interface.
      */
-    public static class BuDDyBDDPairing extends BDDPairing {
+    static class BuDDyBDDPairing extends BDDPairing {
         
         private long _ptr;
         
@@ -706,7 +713,7 @@ public class BuDDyFactory extends BDDFactory {
     /**
      * An implementation of a BDDDomain, used by the BuDDy interface.
      */
-    public static class BuDDyBDDBitVector extends BDDBitVector {
+    static class BuDDyBDDBitVector extends BDDBitVector {
 
         private BuDDyBDDBitVector(int a) {
             super(a);
