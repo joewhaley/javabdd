@@ -222,7 +222,7 @@ test:	$(EXAMPLE_CLASSFILES)
 	$(JAVA) NQueens 8
 	$(JAVA) -Dbdd=cudd NQueens 8
 	$(JAVA) -Dbdd=cal NQueens 8
-	$(JAVA) -Dbdd=jdd NQueens 8
+	$(JAVA) -Dbdd=jdd -cp $(CLASSPATH) NQueens 8
 
 clean:
 	$(RM) -f $(JAVA_CLASSFILES) $(BUDDY_INCLUDE) $(CUDD_INCLUDE) $(CAL_INCLUDE) $(BUDDY_OBJS) $(CAL_OBJS) $(CUDD_OBJS) $(DLL_NAME) $(EXAMPLE_CLASSFILES) $(JAR_NAME)
