@@ -554,14 +554,16 @@ public class JavaFactory extends BDDFactory {
     /*=== OTHER INTERNAL DEFINITIONS =======================================*/
 
     static final int PAIR(int a, int b) {
-        return Math.abs((a + b) * (a + b + 1) / 2 + a);
+        //return Math.abs((a + b) * (a + b + 1) / 2 + a);
+        return ((a + b) * (a + b + 1) / 2 + a);
     }
     static final int TRIPLE(int a, int b, int c) {
-        return Math.abs(PAIR(c, PAIR(a, b)));
+        //return Math.abs(PAIR(c, PAIR(a, b)));
+        return (PAIR(c, PAIR(a, b)));
     }
 
     final int NODEHASH(int lvl, int l, int h) {
-        return (TRIPLE(lvl, l, h) % bddnodesize);
+        return Math.abs(TRIPLE(lvl, l, h) % bddnodesize);
     }
 
     /* (non-Javadoc)
@@ -2957,11 +2959,11 @@ public class JavaFactory extends BDDFactory {
     }
     
     BddCacheDataI BddCache_lookupI(BddCache cache, int hash) {
-        return (BddCacheDataI) cache.table[hash % cache.tablesize];
+        return (BddCacheDataI) cache.table[Math.abs(hash % cache.tablesize)];
     }
 
     BddCacheDataD BddCache_lookupD(BddCache cache, int hash) {
-        return (BddCacheDataD) cache.table[hash % cache.tablesize];
+        return (BddCacheDataD) cache.table[Math.abs(hash % cache.tablesize)];
     }
     
     void BddCache_reset(BddCache cache) {
@@ -4282,7 +4284,7 @@ public class JavaFactory extends BDDFactory {
     }
 
     int NODEHASHr(int var, int l, int h) {
-        return ((PAIR(l, (h)) % levels[var].size) + levels[var].start);
+        return (Math.abs(PAIR(l, (h)) % levels[var].size) + levels[var].start);
     }
 
     void bdd_setvarorder(int[] neworder) {
@@ -4655,7 +4657,7 @@ public class JavaFactory extends BDDFactory {
     }
 
     int NODEHASH2(int var, int l, int h) {
-        return ((PAIR(l, h) % levels[var].size) + levels[var].start);
+        return (Math.abs(PAIR(l, h) % levels[var].size) + levels[var].start);
     }
 
     boolean resizedInMakenode;

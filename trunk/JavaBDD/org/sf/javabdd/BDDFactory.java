@@ -17,6 +17,10 @@ public abstract class BDDFactory {
 
     public static BDDFactory init(int nodenum, int cachesize) {
         String bddpackage = System.getProperty("bdd", "buddy");
+        return init(bddpackage, nodenum, cachesize);
+    }
+
+    public static BDDFactory init(String bddpackage, int nodenum, int cachesize) {
         try {
             if (bddpackage.equals("buddy"))
                 return BuDDyFactory.init(nodenum, cachesize);
