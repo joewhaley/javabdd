@@ -1,7 +1,9 @@
 
 #ifdef GENERATE_TRACE
 
+#if defined(HAS_UNISTD_H)
 #include <unistd.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -14,6 +16,48 @@
 #endif
 
 /* Simple trace file generation */
+
+
+#define FAST_MALLOC
+
+#ifdef FAST_MALLOC
+static char* bufferStart = 0;
+static char* bufferPtr = 0;
+static char* bufferEnd = 0;
+static int startSize = 1<<16;
+static void grow_malloc(int sz)
+{
+	int oldSize, newSize;
+	oldSize = bufferEnd - bufferStart;
+	newSize = oldSize*2;
+	if (newSize < oldSize+sz) newSize = oldSize+sz;
+	if (newSize < startSize) newSize = startSize;
+	bufferStart = malloc(newSize);
+	assert(bufferStart);
+	bufferPtr = bufferStart;
+	bufferEnd = bufferStart + newSize;
+}
+
+static __inline__ void * xmalloc(int sz)
+{
+	void * retval;
+	if (bufferEnd - bufferPtr < sz) {
+		grow_malloc(sz);
+	}
+	retval = bufferPtr;
+	bufferPtr += sz;
+	return retval;
+}
+#else
+static __inline__ void * xmalloc(int sz)
+{
+	void * retval = malloc(sz);
+	assert(retval);
+	return retval;
+}
+#endif
+
+
 
 FILE * tracefp;
 const char * trace_fname;
@@ -398,12 +442,14 @@ void emit_trailer(void)
 }
 void output_trace(void)
 {
+	int i, first;
+	struct bdd_function * f;
+
 	if(trace_outputted) return;
 
 	trace_outputted = 1;
 
-	int i, first = 0;
-	struct bdd_function * f;
+	first = 0;
 
 	emit_header();
 
