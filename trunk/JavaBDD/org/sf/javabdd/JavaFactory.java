@@ -190,6 +190,20 @@ public class JavaFactory extends BDDFactory {
         }
 
         /* (non-Javadoc)
+         * @see org.sf.javabdd.BDD#restrictWith(org.sf.javabdd.BDD)
+         */
+        public void restrictWith(BDD that) {
+            int x = _index;
+            int y = ((bdd) that)._index;
+            int a = bdd_restrict(x, y);
+            bdd_delref(x);
+            if (this != that)
+                bdd_delref(y);
+            bdd_addref(a);
+            this._index = a;
+        }
+        
+        /* (non-Javadoc)
          * @see org.sf.javabdd.BDD#simplify(org.sf.javabdd.BDD)
          */
         public BDD simplify(BDD d) {
@@ -375,6 +389,22 @@ public class JavaFactory extends BDDFactory {
         protected void delRef() {
             bdd_delref(_index);
         }
+        
+        static final boolean USE_FINALIZER = true;
+        
+        /**
+         * @see java.lang.Object#finalize()
+         */
+        protected void finalize() throws Throwable {
+            super.finalize();
+            if (USE_FINALIZER) {
+                if (false && _index >= 0) {
+                    System.out.println("BDD not freed! "+System.identityHashCode(this));
+                }
+                this.delRef();
+            }
+        }
+        
     }
 
     /**

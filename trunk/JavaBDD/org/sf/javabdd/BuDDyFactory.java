@@ -432,6 +432,14 @@ public class BuDDyFactory extends BDDFactory {
         protected native BuDDyBDD restrict0(BuDDyBDD var);
         
         /**
+         * @see org.sf.javabdd.BDD#restrictWith(org.sf.javabdd.BDD)
+         */
+        public void restrictWith(BDD var) {
+            restrictWith0((BuDDyBDD) var);
+        }
+        protected native void restrictWith0(BuDDyBDD var);
+        
+        /**
          * @see org.sf.javabdd.BDD#simplify(org.sf.javabdd.BDD)
          */
         public BDD simplify(BDD d) {
@@ -577,18 +585,19 @@ public class BuDDyFactory extends BDDFactory {
          */
         protected native void delRef();
         
+        static final boolean USE_FINALIZER = true;
         /**
          * @see java.lang.Object#finalize()
          */
-        /*
         protected void finalize() throws Throwable {
             super.finalize();
-            if (false && _id >= 0) {
-                System.out.println("BDD not freed! "+System.identityHashCode(this));
+            if (USE_FINALIZER) {
+                if (false && _id >= 0) {
+                    System.out.println("BDD not freed! "+System.identityHashCode(this));
+                }
+                this.delRef();
             }
-            this.delRef();
         }
-        */
         
         /**
          * @see org.sf.javabdd.BDD#veccompose(org.sf.javabdd.BDDPairing)
