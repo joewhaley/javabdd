@@ -21,12 +21,12 @@ public class NQueens {
             return;
         }
 
-	long time = System.currentTimeMillis();
+        long time = System.currentTimeMillis();
 
         /* Initialize with reasonable nodes and cache size and NxN variables */
-	int numberOfNodes = (int) (Math.pow(4.4, N-6))*1000;
-	int cacheSize = 1000;
-	numberOfNodes = Math.max(1000, numberOfNodes);
+        int numberOfNodes = (int) (Math.pow(4.4, N-6))*1000;
+        int cacheSize = 1000;
+        numberOfNodes = Math.max(1000, numberOfNodes);
         B = BDDFactory.init(numberOfNodes, cacheSize);
         B.setVarNum(N * N);
 
@@ -68,8 +68,8 @@ public class NQueens {
         freeAll();
         B.done();
 
-	time = System.currentTimeMillis() - time;
-	System.out.println("Time: "+time/1000.+" seconds");
+        time = System.currentTimeMillis() - time;
+        System.out.println("Time: "+time/1000.+" seconds");
     }
 
     static void freeAll() {
