@@ -1650,14 +1650,9 @@ void bdd_reorder_auto(void)
    if (!bdd_reorder_ready)
       return;
    
-   if (reorder_handler != NULL)
-      reorder_handler(1);
-
    bdd_reorder(bddreordermethod);
    bddreordertimes--;
    
-   if (reorder_handler != NULL)
-      reorder_handler(0);
 }
 
 
@@ -1668,6 +1663,9 @@ static int reorder_init(void)
    if ((levels=NEW(levelData,bddvarnum)) == NULL)
       return -1;
    
+   if (reorder_handler != NULL)
+      reorder_handler(1);
+
    for (n=0 ; n<bddvarnum ; n++)
    {
       levels[n].start = -1;
@@ -1727,6 +1725,10 @@ static void reorder_done(void)
    free(levels);
    imatrixDelete(iactmtx);
    bdd_gbc();
+   
+   if (reorder_handler != NULL)
+      reorder_handler(0);
+
 }
 
 
@@ -1835,28 +1837,29 @@ void bdd_reorder(int method)
    bddreordermethod = method;
    bddreordertimes = 1;
 
-   if ((top=bddtree_new(-1)) == NULL)
-      RETURN();
-   if (reorder_init() < 0)
-      RETURN();
+   if ((top=bddtree_new(-1)) != NULL) {
+      if (reorder_init() >= 0) {
 
-   usednum_before = bddnodesize - bddfreenum;
+         usednum_before = bddnodesize - bddfreenum;
    
-   top->first = 0;
-   top->last = bdd_varnum()-1;
-   top->fixed = 0;
-   top->next = NULL;
-   top->nextlevel = vartree;
+         top->first = 0;
+         top->last = bdd_varnum()-1;
+         top->fixed = 0;
+         top->next = NULL;
+         top->nextlevel = vartree;
 
-   reorder_block(top, method);
-   vartree = top->nextlevel;
-   free(top);
+         reorder_block(top, method);
+         vartree = top->nextlevel;
+         free(top);
    
-   usednum_after = bddnodesize - bddfreenum;
+         usednum_after = bddnodesize - bddfreenum;
    
-   reorder_done();
-   bddreordermethod = savemethod;
-   bddreordertimes = savetimes;
+         reorder_done();
+         bddreordermethod = savemethod;
+         bddreordertimes = savetimes;
+      }
+   }
+   
    RETURN();
 }
 
