@@ -228,5 +228,11 @@ clean:
 	$(RM) -f $(JAVA_CLASSFILES) $(BUDDY_INCLUDE) $(CUDD_INCLUDE) $(CAL_INCLUDE) $(BUDDY_OBJS) $(CAL_OBJS) $(CUDD_OBJS) $(DLL_NAME) $(EXAMPLE_CLASSFILES) $(JAR_NAME)
 	$(RM) -rf javadoc
 
+update:
+	( export CVS_RSH=ssh ; cvs update -Pd )
+
+commit:
+	( export CVS_RSH=ssh ; cvs commit )
+
 empty := 
 space := $(empty) $(empty)
