@@ -15,7 +15,7 @@ import java.util.Iterator;
  * 
  * @author John Whaley
  * @version $Id$
- * @see BDDFactory#extDomain(int[])
+ * @see org.sf.javabdd.BDDFactory#extDomain(int[])
  */
 public abstract class BDDDomain {
 

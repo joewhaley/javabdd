@@ -22,7 +22,7 @@ import java.util.List;
  * by calling <tt>BDDDomain.set()</tt>.</p>
  * 
  * @see org.sf.javabdd.BDDFactory
- * @see BDDDomain#set()
+ * @see org.sf.javabdd.BDDDomain#set()
  * 
  * @author John Whaley
  * @version $Id$
@@ -260,7 +260,7 @@ public abstract class BDD {
      * @param that the BDD to 'and' with
      * @param var the BDD to existentially quantify with
      * @return the result of the relational product
-     * @see BDDDomain#set()
+     * @see org.sf.javabdd.BDDDomain#set()
      */
     public abstract BDD relprod(BDD that, BDD var);
     
@@ -312,7 +312,7 @@ public abstract class BDD {
      *
      * @param var BDD containing the variables to be existentially quantified
      * @return the result of the existential quantification
-     * @see BDDDomain#set()
+     * @see org.sf.javabdd.BDDDomain#set()
      */
     public abstract BDD exist(BDD var);
 
@@ -324,7 +324,7 @@ public abstract class BDD {
      * 
      * @param var BDD containing the variables to be universally quantified
      * @return the result of the universal quantification
-     * @see BDDDomain#set()
+     * @see org.sf.javabdd.BDDDomain#set()
      */
     public abstract BDD forAll(BDD var);
 
@@ -337,7 +337,7 @@ public abstract class BDD {
      * 
      * @param var BDD containing the variables to be uniquely quantified
      * @return the result of the unique quantification
-     * @see BDDDomain#set()
+     * @see org.sf.javabdd.BDDDomain#set()
      */
     public abstract BDD unique(BDD var);
     
@@ -350,7 +350,7 @@ public abstract class BDD {
      * 
      * @param var BDD containing the variables to be restricted
      * @return the result of the restrict operation
-     * @see BDDDomain#set()
+     * @see org.sf.javabdd.BDDDomain#set()
      */
     public abstract BDD restrict(BDD var);
 
@@ -363,7 +363,7 @@ public abstract class BDD {
      * <p>Compare to bdd_restrict and bdd_delref.</p>
      * 
      * @param var BDD containing the variables to be restricted
-     * @see BDDDomain#set()
+     * @see org.sf.javabdd.BDDDomain#set()
      */
     public abstract BDD restrictWith(BDD var);
 
@@ -423,7 +423,7 @@ public abstract class BDD {
      * @param opr the operator to apply
      * @param var BDD containing the variables to quantify
      * @return the result
-     * @see BDDDomain#set()
+     * @see org.sf.javabdd.BDDDomain#set()
      */
     public abstract BDD applyAll(BDD that, BDDFactory.BDDOp opr, BDD var);
 
@@ -437,7 +437,7 @@ public abstract class BDD {
      * @param opr the operator to apply
      * @param var BDD containing the variables to quantify
      * @return the result
-     * @see BDDDomain#set()
+     * @see org.sf.javabdd.BDDDomain#set()
      */
     public abstract BDD applyEx(BDD that, BDDFactory.BDDOp opr, BDD var);
 
@@ -451,7 +451,7 @@ public abstract class BDD {
      * @param opr the operator to apply
      * @param var BDD containing the variables to quantify
      * @return the result
-     * @see BDDDomain#set()
+     * @see org.sf.javabdd.BDDDomain#set()
      */
     public abstract BDD applyUni(BDD that, BDDFactory.BDDOp opr, BDD var);
 
