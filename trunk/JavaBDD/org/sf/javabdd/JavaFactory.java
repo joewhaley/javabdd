@@ -4274,10 +4274,14 @@ public class JavaFactory extends BDDFactory {
      * @see org.sf.javabdd.BDDFactory#load(java.lang.String)
      */
     public BDD load(String filename) throws IOException {
-        DataInputStream is = new DataInputStream(new FileInputStream(filename));
-        int result = bdd_load(is);
-        is.close();
-        return new bdd(result);
+        DataInputStream is = null;
+        try {
+            is = new DataInputStream(new FileInputStream(filename));
+            int result = bdd_load(is);
+            return new bdd(result);
+        } finally {
+            is.close();
+        }
     }
 
     /* (non-Javadoc)
@@ -4285,10 +4289,13 @@ public class JavaFactory extends BDDFactory {
      */
     public void save(String filename, BDD b) throws IOException {
         int x = ((bdd) b)._index;
-        DataOutputStream is =
-            new DataOutputStream(new FileOutputStream(filename));
-        bdd_save(is, x);
-        is.close();
+        DataOutputStream is = null;
+        try {
+            is = new DataOutputStream(new FileOutputStream(filename));
+            bdd_save(is, x);
+        } finally {
+            is.close();
+        }
     }
 
     /* (non-Javadoc)
