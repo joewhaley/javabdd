@@ -1087,4 +1087,15 @@ public class BuDDyFactory extends BDDFactory {
     }
     private static native String getVersion0();
     
+    private static void gc_callback(int i) {
+        INSTANCE.doCallbacks(INSTANCE.gc_callbacks, i);
+    }
+    
+    private static void reorder_callback(int i) {
+        INSTANCE.doCallbacks(INSTANCE.reorder_callbacks, i);
+    }
+    
+    private static void resize_callback(int i, int j) {
+        INSTANCE.doCallbacks(INSTANCE.resize_callbacks, i);
+    }
 }
