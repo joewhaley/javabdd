@@ -72,7 +72,7 @@ else
     LINKFLAGS = -static -shared $(CFLAGS)
   endif
   ifeq (${CC},pathcc)    # Pathscale compiler
-    CFLAGS = -DSPECIALIZE_RELPROD -DSPECIALIZE_AND -DSPECIALIZE_OR -m32 -O3 $(EXTRA_CFLAGS)
+    CFLAGS = -DSPECIALIZE_RELPROD -DSPECIALIZE_AND -DSPECIALIZE_OR -m32 -O2 $(EXTRA_CFLAGS)
     LINK = pathcc
     LINKFLAGS = -shared $(CFLAGS)
   endif
