@@ -458,9 +458,9 @@ JNIEXPORT jint JNICALL Java_org_sf_javabdd_BuDDyFactory_load0
 {
   BDD r;
   int rc;
-  jbyte *str;
+  char *str;
 
-  str = (jbyte*) (*env)->GetStringUTFChars(env, fname, NULL);
+  str = (char*) (*env)->GetStringUTFChars(env, fname, NULL);
   if (str == NULL) return -1;
 #if defined(TRACE_BUDDYLIB)
   printf("bdd_fnload(%s, %p)\n", str, &r);
@@ -480,9 +480,9 @@ JNIEXPORT void JNICALL Java_org_sf_javabdd_BuDDyFactory_save0
   (JNIEnv *env, jclass cl, jstring fname, jint r)
 {
   int rc;
-  jbyte *str;
+  char *str;
 
-  str = (jbyte*) (*env)->GetStringUTFChars(env, fname, NULL);
+  str = (char*) (*env)->GetStringUTFChars(env, fname, NULL);
   if (str == NULL) return;
 #if defined(TRACE_BUDDYLIB)
   printf("bdd_fnsave(%s, %d)\n", str, r);
