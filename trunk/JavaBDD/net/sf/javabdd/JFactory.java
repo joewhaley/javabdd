@@ -3435,12 +3435,12 @@ public class JFactory extends BDDFactory {
         if (cache == null) return 0;
         int n;
 
+        boolean is_d = cache.table instanceof BddCacheDataD[];
+
         free(cache.table);
         cache.table = null;
 
         newsize = bdd_prime_gte(newsize);
-
-        boolean is_d = cache.table instanceof BddCacheDataD[];
 
         if (is_d)
             cache.table = new BddCacheDataD[newsize];
