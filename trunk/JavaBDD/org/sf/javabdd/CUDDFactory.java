@@ -63,8 +63,6 @@ public class CUDDFactory extends BDDFactory {
         return new CUDDBDD(one);
     }
 
-    protected native BDD makeNode(int level, BDD low, BDD high);
-    
     /* (non-Javadoc)
      * @see org.sf.javabdd.BDDFactory#initialize(int, int)
      */
@@ -97,7 +95,7 @@ public class CUDDFactory extends BDDFactory {
      */
     public void setMinFreeNodes(int x) {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        System.err.println("Warning: setMinFreeNodes() not yet implemented");
     }
 
     /* (non-Javadoc)
@@ -106,7 +104,7 @@ public class CUDDFactory extends BDDFactory {
     public int setMaxIncrease(int x) {
         // TODO Auto-generated method stub
         System.err.println("Warning: setMaxIncrease() not yet implemented");
-        return 0;
+        return 50000;
     }
 
     /* (non-Javadoc)
@@ -251,10 +249,7 @@ public class CUDDFactory extends BDDFactory {
     /* (non-Javadoc)
      * @see org.sf.javabdd.BDDFactory#setVarOrder(int[])
      */
-    public void setVarOrder(int[] neworder) {
-        // TODO Auto-generated method stub
-        System.err.println("Warning: setVarOrder() not yet implemented");
-    }
+    public native void setVarOrder(int[] neworder);
 
     /* (non-Javadoc)
      * @see org.sf.javabdd.BDDFactory#addVarBlock(org.sf.javabdd.BDD, boolean)
@@ -432,10 +427,7 @@ public class CUDDFactory extends BDDFactory {
         /* (non-Javadoc)
          * @see org.sf.javabdd.BDD#veccompose(org.sf.javabdd.BDDPairing)
          */
-        public BDD veccompose(BDDPairing pair) {
-            // TODO Auto-generated method stub
-            throw new UnsupportedOperationException();
-        }
+        public native BDD veccompose(BDDPairing pair);
 
         /* (non-Javadoc)
          * @see org.sf.javabdd.BDD#constrain(org.sf.javabdd.BDD)
@@ -553,65 +545,7 @@ public class CUDDFactory extends BDDFactory {
         /* (non-Javadoc)
          * @see org.sf.javabdd.BDD#replace(org.sf.javabdd.BDDPairing)
          */
-        public BDD replace(BDDPairing p) {
-            // TODO very inefficient.
-            if (this.isZero())
-                return INSTANCE.zero();
-            BDD res;
-            CUDDBDDPairing pair = (CUDDBDDPairing) p;
-            CUDDBDD[] replacepair = pair.result;
-            int replacelast = pair.last;
-            //int replaceid = pair.id << 2 | CACHEID_REPLACE;
-            INSTANCE.disableReorder();
-            res = replace_rec(this, replacepair, replacelast);
-            INSTANCE.enableReorder();
-            return res;
-        }
-
-        static BDD replace_rec(BDD r, CUDDBDD[] replacepair, int replacelast) {
-            BDD res;
-   
-            if (r.isZero() || r.isOne() || r.level() > replacelast)
-                return r;
-
-            BDD low = replace_rec(r.low(), replacepair, replacelast);
-            BDD high = replace_rec(r.high(), replacepair, replacelast);
-            res = bdd_correctify(replacepair[r.level()].level(), low, high);
-            low.free();
-            high.free();
-
-            return res;
-        }
-
-        static BDD bdd_correctify(int level, BDD l, BDD r) {
-            BDD res;
-   
-            if (level < l.level() && level < r.level())
-                return INSTANCE.makeNode(level, l, r);
-
-            if (level == l.level() || level == r.level()) {
-                throw new BDDException();
-            }
-
-            if (l.level() == r.level()) {
-                BDD low = bdd_correctify(level, l.low(), r.low());
-                BDD high = bdd_correctify(level, l.high(), r.high());
-                res = INSTANCE.makeNode(l.level(), low, high);
-                low.free(); high.free();
-            } else if (l.level() < r.level()) {
-                BDD low = bdd_correctify(level, l.low(), r);
-                BDD high = bdd_correctify(level, l.high(), r);
-                res = INSTANCE.makeNode(l.level(), low, high);
-                low.free(); high.free();
-            } else {
-                BDD low = bdd_correctify(level, l, r.low());
-                BDD high = bdd_correctify(level, l, r.high());
-                res = INSTANCE.makeNode(r.level(), low, high);
-                low.free(); high.free();
-            }
-            
-            return res;
-        }
+        public native BDD replace(BDDPairing p);
 
         /* (non-Javadoc)
          * @see org.sf.javabdd.BDD#replaceWith(org.sf.javabdd.BDDPairing)
@@ -707,70 +641,29 @@ public class CUDDFactory extends BDDFactory {
      */
     public static class CUDDBDDPairing extends BDDPairing {
 
-        CUDDBDD[] result;
-        int last;
+        long _ptr;
 
         private CUDDBDDPairing() {
-            this.result = new CUDDBDD[INSTANCE.varNum()];
-            for (int n = 0; n < result.length; n++)
-                this.result[n] =
-                    (CUDDBDD) INSTANCE.ithVar(INSTANCE.level2Var(n));
-
-            this.last = -1;
+            _ptr = alloc();
         }
+
+        private static native long alloc();
 
         /* (non-Javadoc)
          * @see org.sf.javabdd.BDDPairing#set(int, int)
          */
-        public void set(int oldvar, int newvar) {
-            int bddvarnum = INSTANCE.varNum();
-            if (oldvar < 0 || oldvar > bddvarnum - 1)
-                throw new BDDException();
-            if (newvar < 0 || newvar > bddvarnum - 1)
-                throw new BDDException();
-
-            this.result[INSTANCE.var2Level(oldvar)].free();
-            this.result[INSTANCE.var2Level(oldvar)] = (CUDDBDD) INSTANCE.ithVar(newvar);
-
-            this.last = Math.max(this.last, INSTANCE.var2Level(oldvar));
-        }
+        public native void set(int oldvar, int newvar);
 
         /* (non-Javadoc)
          * @see org.sf.javabdd.BDDPairing#set(int, org.sf.javabdd.BDD)
          */
-        public void set(int oldvar, BDD newvar) {
-            int bddvarnum = INSTANCE.varNum();
-            if (oldvar < 0 || oldvar >= bddvarnum)
-                throw new BDDException();
-            int oldlevel = INSTANCE.var2Level(oldvar);
-
-            this.result[oldlevel].free();
-            this.result[oldlevel] = (CUDDBDD) newvar.id();
-
-            this.last = Math.max(oldlevel, this.last);
-        }
+        public native void set(int oldvar, BDD newvar);
 
         /* (non-Javadoc)
          * @see org.sf.javabdd.BDDPairing#reset()
          */
-        public void reset() {
-            for (int n = 0; n < this.result.length; n++)
-                this.result[n] = (CUDDBDD) INSTANCE.ithVar(INSTANCE.level2Var(n));
-            this.last = 0;
-        }
+        public native void reset();
         
-        public String toString() {
-            StringBuffer sb = new StringBuffer();
-            for (int i=0; i<result.length; ++i) {
-                if (i > 0) sb.append(',');
-                sb.append(i);
-                sb.append('=');
-                sb.append(result[i]);
-            }
-            sb.append(" last=");
-            sb.append(last);
-            return sb.toString();
-        }
     }
 
     public static void main(String[] args) {
