@@ -1,0 +1,48 @@
+<?xml version="1.0"?>
+<document>
+
+  <properties>
+    <title>JavaBDD Performance Comparison</title>
+    <author email="joewhaley@users.sourceforge.net">John Whaley</author> 
+  </properties>
+
+  <body>
+     <section name="Performance Comparison">
+      <p>
+      Here are the timings of solving the 12x12 NQueens problem on
+      my home machine (2.4GHz P4, WinXP, Sun JDK 1.5.0b2).  This test simply
+      does simple logic operations.  It primarily tests the speed of node
+      creation and BDD garbage collection.  The command line I used to test
+      was:
+      <br/>
+      <code>java -ms320m -mx320m -Dbdd=<i>package</i> -jar javabdd_0.6.jar 12</code>
+      <br/
+      <table border="2">
+        <tr>
+          <td>Package      </td> <td>Time  </td> <td>Peak Memory Usage</td>
+        </tr>
+        <tr>
+          <td>buddy        </td> <td> 77s  </td> <td> 150mb </td>
+        </tr>
+        <tr>
+          <td>cudd         </td> <td> 82s  </td> <td> 171mb </td>
+        </tr>
+        <tr>
+          <td>java -server </td> <td> 90s  </td> <td> 155mb </td>
+        </tr>
+        <tr>
+          <td>java -client </td> <td> 107s </td> <td> 155mb </td>
+        </tr>
+      </table>
+      <p>
+      Don't make any assumptions from these results about the relative
+      efficiency of C and Java.  The Java source code is a direct translation
+      of the C source code, and therefore there are many, many inefficiencies
+      that would not be present if it had been implemented from scratch in
+      Java.  At best, you could use this information as an example of the
+      type of performance you would see if you directly translate a
+      performance library written in C into Java.
+      </p>
+    </section>
+  </body>
+</document>
