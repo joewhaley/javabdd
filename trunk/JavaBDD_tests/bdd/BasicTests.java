@@ -180,6 +180,54 @@ public class BasicTests extends BDDTestCase {
         a.free();
     }
     
+    static boolean isFreed(BDD b) {
+        return b.hashCode() == -1;
+    }
+    
+    void testApplyWith(BDDFactory bdd, BDDFactory.BDDOp op,
+        boolean b1, boolean b2, boolean b3, boolean b4) {
+        BDD a, b, c, d;
+        a = bdd.zero(); b = bdd.zero();
+        c = a; d = b;
+        Assert.assertTrue(!isFreed(d));
+        a.applyWith(b, op);
+        Assert.assertEquals(b1, a.isOne());
+        Assert.assertEquals(b1, c.isOne());
+        Assert.assertTrue(isFreed(b));
+        Assert.assertTrue(isFreed(d));
+        a.free();
+
+        a = bdd.zero(); b = bdd.one();
+        c = a; d = b;
+        Assert.assertTrue(!isFreed(d));
+        a.applyWith(b, op);
+        Assert.assertEquals(b2, a.isOne());
+        Assert.assertEquals(b2, c.isOne());
+        Assert.assertTrue(isFreed(b));
+        Assert.assertTrue(isFreed(d));
+        a.free();
+
+        a = bdd.one(); b = bdd.zero();
+        c = a; d = b;
+        Assert.assertTrue(!isFreed(d));
+        a.applyWith(b, op);
+        Assert.assertEquals(b3, a.isOne());
+        Assert.assertEquals(b3, c.isOne());
+        Assert.assertTrue(isFreed(b));
+        Assert.assertTrue(isFreed(d));
+        a.free();
+        
+        a = bdd.one(); b = bdd.one();
+        c = a; d = b;
+        Assert.assertTrue(!isFreed(d));
+        a.applyWith(b, op);
+        Assert.assertEquals(b4, a.isOne());
+        Assert.assertEquals(b4, c.isOne());
+        Assert.assertTrue(isFreed(b));
+        Assert.assertTrue(isFreed(d));
+        a.free();
+    }
+    
     public void testOr() {
         reset();
         Assert.assertTrue(hasNext());
@@ -291,6 +339,25 @@ public class BasicTests extends BDDTestCase {
             BDDFactory bdd = nextFactory();
             // TODO: more tests
             testApply(bdd, BDDFactory.nor, true, false, false, false);
+        }
+    }
+    
+    public void testApplyWith() {
+        reset();
+        Assert.assertTrue(hasNext());
+        while (hasNext()) {
+            BDDFactory bdd = nextFactory();
+            // TODO: more tests
+            testApplyWith(bdd, BDDFactory.and, false, false, false, true);
+            testApplyWith(bdd, BDDFactory.or, false, true, true, true);
+            testApplyWith(bdd, BDDFactory.xor, false, true, true, false);
+            testApplyWith(bdd, BDDFactory.imp, true, true, false, true);
+            testApplyWith(bdd, BDDFactory.biimp, true, false, false, true);
+            testApplyWith(bdd, BDDFactory.diff, false, false, true, false);
+            testApplyWith(bdd, BDDFactory.less, false, true, false, false);
+            testApplyWith(bdd, BDDFactory.invimp, true, false, true, true);
+            testApplyWith(bdd, BDDFactory.nand, true, true, true, false);
+            testApplyWith(bdd, BDDFactory.nor, true, false, false, false);
         }
     }
     
