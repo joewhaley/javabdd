@@ -31,64 +31,11 @@
   #endif
 #endif
 
-static jclass bdd_cls;
-static jfieldID bdd_fid;
-static jmethodID bdd_mid;
-static jfieldID reorder_fid;
-static jfieldID op_fid;
-static jfieldID pair_fid;
-//static jfieldID domain_fid;
-
 static DdManager *manager;
 static jlong bdd_one, bdd_zero;
 static int varcount, varnum;
 
-#define TRACE_CUDDLIB
-
 #define INVALID_BDD 0L
-
-static DdNode *BDD_JavaToC(JNIEnv *env, jobject var)
-{
-  DdNode *bdd;
-  bdd = (DdNode*) (intptr_cast_type) (*env)->GetLongField(env, var, bdd_fid);
-  return bdd;
-}
-
-static jobject BDD_CToJava(JNIEnv *env, DdNode *var)
-{
-  jobject result = (*env)->NewObject(env, bdd_cls, bdd_mid, (jlong) (intptr_cast_type) var);
-  return result;
-}
-
-static int BDDOp_JavaToC(JNIEnv *env, jobject method)
-{
-  jint m;
-  m = (*env)->GetIntField(env, method, op_fid);
-  return m;
-}
-
-static DdNode **Pair_JavaToC(JNIEnv *env, jobject var)
-{
-  DdNode **r;
-  r = (DdNode **) (intptr_cast_type) (*env)->GetLongField(env, var, pair_fid);
-  return r;
-}
-
-/*
-static DdManager *Manager_JavaToC(JNIEnv *env, jobject var)
-{
-	DdManager* manager;
-	manager = (DdManager*) (*env)->GetIntField(env, var, manager_fid);
-	return manager;
-}
-
-static DdManager *Manager_BDDJavaToC(JNIEnv *env, jobject var)
-{
-	DdManager* manager;
-	jobject o = (*env)->GetObjectField(env, var, bddmanager_fid);
-	return Manager_JavaToC(env, o);
-}
-*/
 
 static void die(JNIEnv *env, char* msg)
 {
@@ -108,81 +55,18 @@ static void die(JNIEnv *env, char* msg)
  * Signature: ()V
  */
 JNIEXPORT void JNICALL Java_org_sf_javabdd_CUDDFactory_registerNatives
-  (JNIEnv *env, jclass c)
+  (JNIEnv *env, jclass cl)
 {
-  jclass cls;
-
-  cls = (*env)->FindClass(env, "org/sf/javabdd/CUDDFactory$CUDDBDD");
-  if (cls != NULL) {
-    bdd_cls = (*env)->NewWeakGlobalRef(env, cls);
-    bdd_fid = (*env)->GetFieldID(env, cls, "_ddnode_ptr", "J");
-    bdd_mid = (*env)->GetMethodID(env, cls, "<init>", "(J)V");
-  }
-
-  cls = (*env)->FindClass(env, "org/sf/javabdd/BDDFactory$ReorderMethod");
-  if (cls != NULL) {
-    reorder_fid = (*env)->GetFieldID(env, cls, "id", "I");
-  }
-  (*env)->DeleteLocalRef(env, cls);
-
-  cls = (*env)->FindClass(env, "org/sf/javabdd/BDDFactory$BDDOp");
-  if (cls != NULL) {
-    op_fid = (*env)->GetFieldID(env, cls, "id", "I");
-  }
-  (*env)->DeleteLocalRef(env, cls);
-
-  cls = (*env)->FindClass(env, "org/sf/javabdd/CUDDFactory$CUDDBDDPairing");
-  if (cls != NULL) {
-    pair_fid = (*env)->GetFieldID(env, cls, "_ptr", "J");
-  }
-  (*env)->DeleteLocalRef(env, cls);
-
-     /*
-  cls = (*env)->FindClass(env, "org/sf/javabdd/CUDDFactory$CUDDBDDDomain");
-  if (cls != NULL) {
-    domain_fid = (*env)->GetFieldID(env, cls, "_id", "I");
-  }
-  (*env)->DeleteLocalRef(env, cls);
-     */
-
-  if (!bdd_cls || !bdd_fid || !bdd_mid || !reorder_fid || !op_fid || !pair_fid
-      /* || !domain_fid*/
-      ) {
-     die(env, "cannot find members: version mismatch?");
-     return;
-  }
 }
 
 /*
  * Class:     org_sf_javabdd_CUDDFactory
- * Method:    makeNode
- * Signature: (ILorg/sf/javabdd/BDD;Lorg/sf/javabdd/BDD;)Lorg/sf/javabdd/BDD;
- */
-JNIEXPORT jobject JNICALL Java_org_sf_javabdd_CUDDFactory_makeNode
-  (JNIEnv *env, jobject o, jint level, jobject low, jobject high)
-{
-  DdNode* b = BDD_JavaToC(env, low);
-  DdNode* c = BDD_JavaToC(env, high);
-  DdNode* r = cuddUniqueInter(manager, (int)level, c, b);
-  jobject result;
-  if (r == NULL) {
-    return NULL;
-  }
-  Cudd_Ref(r);
-  Cudd_Ref(b); Cudd_Ref(c);
-  result = BDD_CToJava(env, r);
-  return result;
-}
-
-/*
- * Class:     org_sf_javabdd_CUDDFactory
- * Method:    initialize
+ * Method:    initialize0
  * Signature: (II)V
  */
-JNIEXPORT void JNICALL Java_org_sf_javabdd_CUDDFactory_initialize
-  (JNIEnv *env, jobject o, jint numSlots, jint cacheSize)
+JNIEXPORT void JNICALL Java_org_sf_javabdd_CUDDFactory_initialize0
+  (JNIEnv *env, jclass cl, jint numSlots, jint cacheSize)
 {
-    jclass cls;
     jfieldID one_fid;
     jfieldID zero_fid;
     
@@ -206,25 +90,24 @@ JNIEXPORT void JNICALL Java_org_sf_javabdd_CUDDFactory_initialize
     Cudd_Ref((DdNode *)(intptr_cast_type) bdd_one);
     Cudd_Ref((DdNode *)(intptr_cast_type) bdd_zero);
     
-    cls = (*env)->FindClass(env, "org/sf/javabdd/CUDDFactory");
-    one_fid = (*env)->GetFieldID(env, cls, "one", "J");
-    zero_fid = (*env)->GetFieldID(env, cls, "zero", "J");
+    one_fid = (*env)->GetStaticFieldID(env, cl, "one", "J");
+    zero_fid = (*env)->GetStaticFieldID(env, cl, "zero", "J");
     
     if (!one_fid || !zero_fid) {
         die(env, "cannot find members: version mismatch?");
         return;
     }
-    (*env)->SetLongField(env, o, one_fid, bdd_one);
-    (*env)->SetLongField(env, o, zero_fid, bdd_zero);
+    (*env)->SetStaticLongField(env, cl, one_fid, bdd_one);
+    (*env)->SetStaticLongField(env, cl, zero_fid, bdd_zero);
 }
 
 /*
  * Class:     org_sf_javabdd_CUDDFactory
- * Method:    isInitialized
+ * Method:    isInitialized0
  * Signature: ()Z
  */
-JNIEXPORT jboolean JNICALL Java_org_sf_javabdd_CUDDFactory_isInitialized
-  (JNIEnv *env, jobject o)
+JNIEXPORT jboolean JNICALL Java_org_sf_javabdd_CUDDFactory_isInitialized0
+  (JNIEnv *env, jclass cl)
 {
     return manager != NULL;
 }
@@ -235,7 +118,7 @@ JNIEXPORT jboolean JNICALL Java_org_sf_javabdd_CUDDFactory_isInitialized
  * Signature: ()V
  */
 JNIEXPORT void JNICALL Java_org_sf_javabdd_CUDDFactory_done0
-  (JNIEnv *env, jobject o)
+  (JNIEnv *env, jclass cl)
 {
     int bdds;
     DdManager* m;
@@ -255,22 +138,22 @@ JNIEXPORT void JNICALL Java_org_sf_javabdd_CUDDFactory_done0
 
 /*
  * Class:     org_sf_javabdd_CUDDFactory
- * Method:    varNum
+ * Method:    varNum0
  * Signature: ()I
  */
-JNIEXPORT jint JNICALL Java_org_sf_javabdd_CUDDFactory_varNum
-  (JNIEnv *env, jobject o)
+JNIEXPORT jint JNICALL Java_org_sf_javabdd_CUDDFactory_varNum0
+  (JNIEnv *env, jclass cl)
 {
     return varnum;
 }
 
 /*
  * Class:     org_sf_javabdd_CUDDFactory
- * Method:    setVarNum
+ * Method:    setVarNum0
  * Signature: (I)I
  */
-JNIEXPORT jint JNICALL Java_org_sf_javabdd_CUDDFactory_setVarNum
-  (JNIEnv *env, jobject o, jint x)
+JNIEXPORT jint JNICALL Java_org_sf_javabdd_CUDDFactory_setVarNum0
+  (JNIEnv *env, jclass cl, jint x)
 {
     jint old = varnum;
     varnum = varcount = x;
@@ -279,27 +162,27 @@ JNIEXPORT jint JNICALL Java_org_sf_javabdd_CUDDFactory_setVarNum
 
 /*
  * Class:     org_sf_javabdd_CUDDFactory
- * Method:    ithVar
- * Signature: (I)Lorg/sf/javabdd/BDD;
+ * Method:    ithVar0
+ * Signature: (I)J
  */
-JNIEXPORT jobject JNICALL Java_org_sf_javabdd_CUDDFactory_ithVar
-  (JNIEnv *env, jobject o, jint i)
+JNIEXPORT jlong JNICALL Java_org_sf_javabdd_CUDDFactory_ithVar0
+  (JNIEnv *env, jclass cl, jint i)
 {
   DdNode* d;
-  jobject result;
-  if (i >= CUDD_MAXINDEX - 1) return NULL;
+  jlong result;
+  if (i >= CUDD_MAXINDEX - 1) return INVALID_BDD;
   d = Cudd_bddIthVar(manager, i);
-  result = BDD_CToJava(env, d);
+  result = (jlong) (intptr_cast_type) d;
   return result;
 }
 
 /*
  * Class:     org_sf_javabdd_CUDDFactory
- * Method:    level2Var
+ * Method:    level2Var0
  * Signature: (I)I
  */
-JNIEXPORT jint JNICALL Java_org_sf_javabdd_CUDDFactory_level2Var
-  (JNIEnv *env, jobject o, jint level)
+JNIEXPORT jint JNICALL Java_org_sf_javabdd_CUDDFactory_level2Var0
+  (JNIEnv *env, jclass cl, jint level)
 {
 	//return manager->invperm[level];
 	return (jint) Cudd_ReadInvPerm(manager, level);
@@ -307,11 +190,11 @@ JNIEXPORT jint JNICALL Java_org_sf_javabdd_CUDDFactory_level2Var
 
 /*
  * Class:     org_sf_javabdd_CUDDFactory
- * Method:    var2Level
+ * Method:    var2Level0
  * Signature: (I)I
  */
-JNIEXPORT jint JNICALL Java_org_sf_javabdd_CUDDFactory_var2Level
-  (JNIEnv *env, jobject o, jint v)
+JNIEXPORT jint JNICALL Java_org_sf_javabdd_CUDDFactory_var2Level0
+  (JNIEnv *env, jclass cl, jint v)
 {
 	//return (jint) cuddI(manager, v);
 	return (jint) Cudd_ReadPerm(manager, v);
@@ -319,11 +202,11 @@ JNIEXPORT jint JNICALL Java_org_sf_javabdd_CUDDFactory_var2Level
 
 /*
  * Class:     org_sf_javabdd_CUDDFactory
- * Method:    setVarOrder
+ * Method:    setVarOrder0
  * Signature: ([I)V
  */
-JNIEXPORT void JNICALL Java_org_sf_javabdd_CUDDFactory_setVarOrder
-  (JNIEnv *env, jobject o, jintArray arr)
+JNIEXPORT void JNICALL Java_org_sf_javabdd_CUDDFactory_setVarOrder0
+  (JNIEnv *env, jclass cl, jintArray arr)
 {
   int *a;
   jint size = (*env)->GetArrayLength(env, arr);
@@ -338,289 +221,191 @@ JNIEXPORT void JNICALL Java_org_sf_javabdd_CUDDFactory_setVarOrder
   Cudd_ShuffleHeap(manager, a);
   (*env)->ReleasePrimitiveArrayCritical(env, arr, a, JNI_ABORT);
 }
-  
-/*
- * Class:     org_sf_javabdd_CUDDFactory_CUDDBDD
- * Method:    isZero
- * Signature: ()Z
- */
-JNIEXPORT jboolean JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_isZero
-  (JNIEnv *env, jobject o)
-{
-    DdNode* d;
-    d = BDD_JavaToC(env, o);
-    //return d == Cudd_Not(DD_ONE(manager));
-    return d == (DdNode*)(intptr_cast_type) bdd_zero;
-}
+
+/* class org_sf_javabdd_CUDDFactory_CUDDBDD */
 
 /*
  * Class:     org_sf_javabdd_CUDDFactory_CUDDBDD
- * Method:    isOne
- * Signature: ()Z
+ * Method:    var0
+ * Signature: (J)I
  */
-JNIEXPORT jboolean JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_isOne
-  (JNIEnv *env, jobject o)
+JNIEXPORT jint JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_var0
+  (JNIEnv *env, jclass cl, jlong b)
 {
     DdNode* d;
-    d = BDD_JavaToC(env, o);
-    //return d == DD_ONE(manager);
-    return d == (DdNode*)(intptr_cast_type) bdd_one;
-}
-
-/*
- * Class:     org_sf_javabdd_CUDDFactory_CUDDBDD
- * Method:    var
- * Signature: ()I
- */
-JNIEXPORT jint JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_var
-  (JNIEnv *env, jobject o)
-{
-    DdNode* d;
-    d = BDD_JavaToC(env, o);
+    d = (DdNode*) (intptr_cast_type) b;
     return Cudd_Regular(d)->index;
 }
 
 /*
  * Class:     org_sf_javabdd_CUDDFactory_CUDDBDD
- * Method:    high
- * Signature: ()Lorg/sf/javabdd/BDD;
+ * Method:    high0
+ * Signature: (J)J
  */
-JNIEXPORT jobject JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_high
-  (JNIEnv *env, jobject o)
+JNIEXPORT jlong JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_high0
+  (JNIEnv *env, jclass cl, jlong b)
 {
     DdNode* d;
     DdNode* res;
-    jobject result;
-    d = BDD_JavaToC(env, o);
+    jlong result;
+    d = (DdNode*) (intptr_cast_type) b;
     
     // TODO: check if d is a constant.
     res = Cudd_T(d);
     res = Cudd_NotCond(res, Cudd_IsComplement(d));
     
-    result = BDD_CToJava(env, res);
+    result = (jlong) (intptr_cast_type) res;
     return result;
 }
 
 /*
  * Class:     org_sf_javabdd_CUDDFactory_CUDDBDD
- * Method:    low
- * Signature: ()Lorg/sf/javabdd/BDD;
+ * Method:    low0
+ * Signature: (J)J
  */
-JNIEXPORT jobject JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_low
-  (JNIEnv *env, jobject o)
+JNIEXPORT jlong JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_low0
+  (JNIEnv *env, jclass cl, jlong b)
 {
     DdNode* d;
     DdNode* res;
-    jobject result;
-    d = BDD_JavaToC(env, o);
+    jlong result;
+    d = (DdNode*) (intptr_cast_type) b;
     
     // TODO: check if d is a constant.
     res = Cudd_E(d);
     res = Cudd_NotCond(res, Cudd_IsComplement(d));
     
-    result = BDD_CToJava(env, res);
+    result = (jlong) (intptr_cast_type) res;
     return result;
 }
 
 /*
  * Class:     org_sf_javabdd_CUDDFactory_CUDDBDD
- * Method:    not
- * Signature: ()Lorg/sf/javabdd/BDD;
+ * Method:    not0
+ * Signature: (J)J
  */
-JNIEXPORT jobject JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_not
-  (JNIEnv *env, jobject o)
+JNIEXPORT jlong JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_not0
+  (JNIEnv *env, jclass cl, jlong b)
 {
     DdNode* d;
-    jobject result;
-    d = BDD_JavaToC(env, o);
+    jlong result;
+    d = (DdNode*) (intptr_cast_type) b;
     d = Cudd_Not(d);
-    result = BDD_CToJava(env, d);
+    result = (jlong) (intptr_cast_type) d;
     return result;
 }
 
 /*
  * Class:     org_sf_javabdd_CUDDFactory_CUDDBDD
- * Method:    ite
- * Signature: (Lorg/sf/javabdd/BDD;Lorg/sf/javabdd/BDD;)Lorg/sf/javabdd/BDD;
+ * Method:    ite0
+ * Signature: (JJJ)J
  */
-JNIEXPORT jobject JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_ite
-  (JNIEnv *env, jobject a, jobject b, jobject c)
+JNIEXPORT jlong JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_ite0
+  (JNIEnv *env, jclass cl, jlong a, jlong b, jlong c)
 {
     DdNode* d;
     DdNode* e;
     DdNode* f;
     DdNode* g;
-    jobject result;
-    d = BDD_JavaToC(env, a);
-    e = BDD_JavaToC(env, b);
-    f = BDD_JavaToC(env, c);
+    jlong result;
+    d = (DdNode*) (intptr_cast_type) a;
+    e = (DdNode*) (intptr_cast_type) b;
+    f = (DdNode*) (intptr_cast_type) c;
     g = Cudd_bddIte(manager, d, e, f);
-    result = BDD_CToJava(env, g);
+    result = (jlong) (intptr_cast_type) g;
     return result;
 }
 
 /*
  * Class:     org_sf_javabdd_CUDDFactory_CUDDBDD
- * Method:    relprod
- * Signature: (Lorg/sf/javabdd/BDD;Lorg/sf/javabdd/BDD;)Lorg/sf/javabdd/BDD;
+ * Method:    relprod0
+ * Signature: (JJJ)J
  */
-JNIEXPORT jobject JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_relprod
-  (JNIEnv *env, jobject a, jobject b, jobject c)
+JNIEXPORT jlong JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_relprod0
+  (JNIEnv *env, jclass cl, jlong a, jlong b, jlong c)
 {
     DdNode* d;
     DdNode* e;
     DdNode* f;
     DdNode* g;
-    jobject result;
-    d = BDD_JavaToC(env, a);
-    e = BDD_JavaToC(env, b);
-    f = BDD_JavaToC(env, c);
+    jlong result;
+    d = (DdNode*) (intptr_cast_type) a;
+    e = (DdNode*) (intptr_cast_type) b;
+    f = (DdNode*) (intptr_cast_type) c;
     g = Cudd_bddAndAbstract(manager, d, e, f);
-    result = BDD_CToJava(env, g);
+    result = (jlong) (intptr_cast_type) g;
     return result;
 }
 
 /*
  * Class:     org_sf_javabdd_CUDDFactory_CUDDBDD
- * Method:    compose
- * Signature: (Lorg/sf/javabdd/BDD;I)Lorg/sf/javabdd/BDD;
+ * Method:    compose0
+ * Signature: (JJI)J
  */
-JNIEXPORT jobject JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_compose
-  (JNIEnv *env, jobject a, jobject b, jint i)
+JNIEXPORT jlong JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_compose0
+  (JNIEnv *env, jclass cl, jlong a, jlong b, jint i)
 {
     DdNode* d;
     DdNode* e;
     DdNode* f;
-    jobject result;
-    d = BDD_JavaToC(env, a);
-    e = BDD_JavaToC(env, b);
+    jlong result;
+    d = (DdNode*) (intptr_cast_type) a;
+    e = (DdNode*) (intptr_cast_type) b;
     f = Cudd_bddCompose(manager, d, e, i);
-    result = BDD_CToJava(env, f);
+    result = (jlong) (intptr_cast_type) f;
     return result;
 }
 
 /*
  * Class:     org_sf_javabdd_CUDDFactory_CUDDBDD
- * Method:    veccompose
- * Signature: (Lorg/sf/javabdd/BDDPairing;)Lorg/sf/javabdd/BDD;
+ * Method:    restrict0
+ * Signature: (JJ)J
  */
-JNIEXPORT jobject JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_veccompose
-  (JNIEnv *env, jobject a, jobject b)
-{
-	DdNode* d = BDD_JavaToC(env, a);
-	DdNode** e = Pair_JavaToC(env, b);
-	DdNode* f;
-    jobject result;
-    f = Cudd_bddVectorCompose(manager, d, e);
-    result = BDD_CToJava(env, f);
-    return result;
-}
-
-/*
- * Class:     org_sf_javabdd_CUDDFactory_CUDDBDD
- * Method:    replace
- * Signature: (Lorg/sf/javabdd/BDDPairing;)Lorg/sf/javabdd/BDD;
- */
-JNIEXPORT jobject JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_replace
-  (JNIEnv *env, jobject a, jobject b)
-{
-	DdNode* d = BDD_JavaToC(env, a);
-	DdNode** e = Pair_JavaToC(env, b);
-	DdNode* f;
-    jobject result;
-	int n;
-	int *arr = (int*) malloc(sizeof(int)*varnum);
-	if (arr == NULL) return NULL;
-	for (n=0; n<varnum; ++n) {
-		DdNode* node = e[n];
-		int var = Cudd_Regular(node)->index;
-		int level = var;
-		//int level = Cudd_ReadPerm(manager, var);
-		arr[n] = level;
-		//printf("arr[%d]=%d\n", n, arr[n]);
-	}
-    f = Cudd_bddPermute(manager, d, arr);
-    free(arr);
-    result = BDD_CToJava(env, f);
-    return result;
-}
-
-/*
- * Class:     org_sf_javabdd_CUDDFactory_CUDDBDD
- * Method:    restrict
- * Signature: (Lorg/sf/javabdd/BDD;)Lorg/sf/javabdd/BDD;
- */
-JNIEXPORT jobject JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_restrict
-  (JNIEnv *env, jobject o, jobject p)
+JNIEXPORT jlong JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_restrict0
+  (JNIEnv *env, jclass cl, jlong a, jlong b)
 {
     DdNode* d;
     DdNode* e;
     DdNode* f;
-    jobject result;
-    d = BDD_JavaToC(env, o);
-    e = BDD_JavaToC(env, p);
+    jlong result;
+    d = (DdNode*) (intptr_cast_type) a;
+    e = (DdNode*) (intptr_cast_type) b;
     f = Cudd_bddRestrict(manager, d, e);
-    result = BDD_CToJava(env, f);
+    result = (jlong) (intptr_cast_type) f;
     return result;
 }
 
 /*
  * Class:     org_sf_javabdd_CUDDFactory_CUDDBDD
- * Method:    restrictWith
- * Signature: (Lorg/sf/javabdd/BDD;)V
+ * Method:    support0
+ * Signature: (J)J
  */
-JNIEXPORT jobject JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_restrictWith
-  (JNIEnv *env, jobject o, jobject p)
+JNIEXPORT jlong JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_support0
+  (JNIEnv *env, jclass cl, jlong a)
 {
-    DdNode* d;
-    DdNode* e;
-    DdNode* f;
-    d = BDD_JavaToC(env, o);
-    e = BDD_JavaToC(env, p);
-    f = Cudd_bddRestrict(manager, d, e);
-    Cudd_Ref(f);
-    (*env)->SetLongField(env, p, bdd_fid, INVALID_BDD);
-    (*env)->SetLongField(env, o, bdd_fid, (jlong)(intptr_cast_type) f);
-    Cudd_RecursiveDeref(manager, e);
-    if ((*env)->IsSameObject(env, o, p) == JNI_FALSE) {
-        Cudd_RecursiveDeref(manager, d);
-    }
-    
-/*
- * Class:     org_sf_javabdd_CUDDFactory_CUDDBDD
- * Method:    support
- * Signature: ()Lorg/sf/javabdd/BDD;
- */
-JNIEXPORT jobject JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_support
-  (JNIEnv *env, jobject o)
-{
-    DdNode *f = BDD_JavaToC(env, o);
-    DdNode *support;
-    jobject result;
-
-    support = Cudd_Support(manager, f);
-    if (support == NULL) return NULL;
-
-    result = BDD_CToJava(env, f);
+    DdNode *d;
+    DdNode *e;
+    jlong result;
+    d = (DdNode*) (intptr_cast_type) a;
+    e = Cudd_Support(manager, d);
+    result = (jlong) (intptr_cast_type) e;
     return result;
 }
 
 /*
  * Class:     org_sf_javabdd_CUDDFactory_CUDDBDD
- * Method:    apply
- * Signature: (Lorg/sf/javabdd/BDD;Lorg/sf/javabdd/BDDFactory$BDDOp;)Lorg/sf/javabdd/BDD;
+ * Method:    apply0
+ * Signature: (JJI)J
  */
-JNIEXPORT jobject JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_apply
-  (JNIEnv *env, jobject o, jobject p, jobject op)
+JNIEXPORT jlong JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_apply0
+  (JNIEnv *env, jclass cl, jlong a, jlong b, jint oper)
 {
     DdNode* d;
     DdNode* e;
     DdNode* f;
-    int oper;
-    jobject result;
-    d = BDD_JavaToC(env, o);
-    e = BDD_JavaToC(env, p);
-    oper = BDDOp_JavaToC(env, op);
+    jlong result;
+    d = (DdNode*) (intptr_cast_type) a;
+    e = (DdNode*) (intptr_cast_type) b;
     switch (oper) {
     case 0: /* and */
         f = Cudd_bddAnd(manager, d, e);
@@ -666,82 +451,10 @@ JNIEXPORT jobject JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_apply
         break;
     default:
         die(env, "operation not supported");
-        return NULL;
+        return INVALID_BDD;
     }
-    result = BDD_CToJava(env, f);
+    result = (jlong) (intptr_cast_type) f;
     return result;
-}
-
-/*
- * Class:     org_sf_javabdd_CUDDFactory_CUDDBDD
- * Method:    applyWith
- * Signature: (Lorg/sf/javabdd/BDD;Lorg/sf/javabdd/BDDFactory$BDDOp;)V
- */
-JNIEXPORT void JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_applyWith
-  (JNIEnv *env, jobject o, jobject p, jobject op)
-{
-    DdNode* d;
-    DdNode* e;
-    DdNode* f;
-    DdNode* g;
-    int oper;
-    d = BDD_JavaToC(env, o);
-    e = BDD_JavaToC(env, p);
-    oper = BDDOp_JavaToC(env, op);
-    switch (oper) {
-    case 0: /* and */
-        f = Cudd_bddAnd(manager, d, e);
-        break;
-    case 1: /* xor */
-        f = Cudd_bddXor(manager, d, e);
-        break;
-    case 2: /* or */
-        f = Cudd_bddOr(manager, d, e);
-        break;
-    case 3: /* nand */
-        f = Cudd_bddNand(manager, d, e);
-        break;
-    case 4: /* nor */
-        f = Cudd_bddNor(manager, d, e);
-        break;
-    case 5: /* imp */
-        g = Cudd_Not(d);
-        Cudd_Ref(g);
-        f = Cudd_bddOr(manager, g, e);
-        Cudd_RecursiveDeref(manager, g);
-        break;
-    case 6: /* biimp */
-        f = Cudd_bddXnor(manager, d, e);
-        break;
-    case 7: /* diff */
-        g = Cudd_Not(e);
-        Cudd_Ref(g);
-        f = Cudd_bddAnd(manager, d, g);
-        Cudd_RecursiveDeref(manager, g);
-        break;
-    case 8: /* less */
-        g = Cudd_Not(d);
-        Cudd_Ref(g);
-        f = Cudd_bddAnd(manager, g, e);
-        Cudd_RecursiveDeref(manager, g);
-        break;
-    case 9: /* invimp */
-        g = Cudd_Not(e);
-        Cudd_Ref(g);
-        f = Cudd_bddOr(manager, d, g);
-        Cudd_RecursiveDeref(manager, g);
-        break;
-    default:
-        die(env, "operation not supported");
-        return;
-    }
-    Cudd_Ref(f);
-    (*env)->SetLongField(env, p, bdd_fid, INVALID_BDD);
-    (*env)->SetLongField(env, o, bdd_fid, (jlong)(intptr_cast_type) f);
-    Cudd_RecursiveDeref(manager, e);
-    if ((*env)->IsSameObject(env, o, p) == JNI_FALSE) {
-        Cudd_RecursiveDeref(manager, d);
-    }
 }
 
 static DdNode* satone_rec(DdNode* f)
@@ -805,97 +518,145 @@ static DdNode* satone_rec(DdNode* f)
 
 /*
  * Class:     org_sf_javabdd_CUDDFactory_CUDDBDD
- * Method:    satOne
- * Signature: ()Lorg/sf/javabdd/BDD;
+ * Method:    satOne0
+ * Signature: (J)J
  */
-JNIEXPORT jobject JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_satOne
-  (JNIEnv *env, jobject o)
+JNIEXPORT jlong JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_satOne0
+  (JNIEnv *env, jclass cl, jlong a)
 {
     DdNode* d;
     DdNode* res;
-    jobject result;
+    jlong result;
     
-    d = BDD_JavaToC(env, o);
+    d = (DdNode*) (intptr_cast_type) a;
     
     do {
         manager->reordered = 0;
         res = satone_rec(d);
     } while (manager->reordered == 1);
     
-    result = BDD_CToJava(env, res);
+    result = (jlong) (intptr_cast_type) res;
     return result;
 }
 
 /*
  * Class:     org_sf_javabdd_CUDDFactory_CUDDBDD
- * Method:    nodeCount
- * Signature: ()I
+ * Method:    nodeCount0
+ * Signature: (J)I
  */
-JNIEXPORT jint JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_nodeCount
-  (JNIEnv *env, jobject o)
+JNIEXPORT jint JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_nodeCount0
+  (JNIEnv *env, jclass cl, jlong a)
 {
     DdNode* d;
-    d = BDD_JavaToC(env, o);
+    d = (DdNode*) (intptr_cast_type) a;
     return Cudd_DagSize(d)-1;
 }
 
 /*
  * Class:     org_sf_javabdd_CUDDFactory_CUDDBDD
- * Method:    pathCount
- * Signature: ()D
+ * Method:    pathCount0
+ * Signature: (J)D
  */
-JNIEXPORT jdouble JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_pathCount
-  (JNIEnv *env, jobject o)
+JNIEXPORT jdouble JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_pathCount0
+  (JNIEnv *env, jclass cl, jlong a)
 {
     DdNode* d;
-    d = BDD_JavaToC(env, o);
+    d = (DdNode*) (intptr_cast_type) a;
     return Cudd_CountPathsToNonZero(d);
 }
 
 /*
  * Class:     org_sf_javabdd_CUDDFactory_CUDDBDD
- * Method:    satCount
- * Signature: ()D
+ * Method:    satCount0
+ * Signature: (J)D
  */
-JNIEXPORT jdouble JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_satCount
-  (JNIEnv *env, jobject o)
+JNIEXPORT jdouble JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_satCount0
+  (JNIEnv *env, jclass cl, jlong a)
 {
     DdNode* d;
-    d = BDD_JavaToC(env, o);
+    d = (DdNode*) (intptr_cast_type) a;
     return Cudd_CountMinterm(manager, d, varcount);
 }
 
 /*
  * Class:     org_sf_javabdd_CUDDFactory_CUDDBDD
  * Method:    addRef
- * Signature: ()V
+ * Signature: (J)V
  */
 JNIEXPORT void JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_addRef
-  (JNIEnv *env, jobject o)
+  (JNIEnv *env, jclass cl, jlong a)
 {
     DdNode* d;
-    //printf("Add: Java object %p\n", o);
-    d = BDD_JavaToC(env, o);
-    //printf("Add: BDD node %p\n", d);
+    d = (DdNode*) (intptr_cast_type) a;
     Cudd_Ref(d);
 }
 
 /*
  * Class:     org_sf_javabdd_CUDDFactory_CUDDBDD
  * Method:    delRef
- * Signature: ()V
+ * Signature: (J)V
  */
 JNIEXPORT void JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_delRef
-  (JNIEnv *env, jobject o)
+  (JNIEnv *env, jclass cl, jlong a)
 {
     DdNode* d;
     if (manager == NULL) return;
-    //printf("Del: Java object %p\n", o);
-    d = BDD_JavaToC(env, o);
-    //printf("Del: BDD node %p\n", d);
+    d = (DdNode*) (intptr_cast_type) a;
     if (d != INVALID_BDD)
         Cudd_IterDerefBdd(manager, d);
 }
+
+/*
+ * Class:     org_sf_javabdd_CUDDFactory_CUDDBDD
+ * Method:    veccompose0
+ * Signature: (JJ)J
+ */
+JNIEXPORT jlong JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_veccompose0
+  (JNIEnv *env, jclass cl, jlong a, jlong b)
+{
+	DdNode* d;
+	DdNode** e;
+	DdNode* f;
+    jlong result;
+    d = (DdNode*) (intptr_cast_type) a;
+    e = (DdNode**) (intptr_cast_type) b;
+    f = Cudd_bddVectorCompose(manager, d, e);
+    result = (jlong) (intptr_cast_type) f;
+    return result;
+}
+
+/*
+ * Class:     org_sf_javabdd_CUDDFactory_CUDDBDD
+ * Method:    replace0
+ * Signature: (JJ)J
+ */
+JNIEXPORT jlong JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_replace0
+  (JNIEnv *env, jclass cl, jlong a, jlong b)
+{
+	DdNode* d;
+	DdNode** e;
+	DdNode* f;
+    jlong result;
+	int n;
+	int *arr;
+	arr = (int*) malloc(sizeof(int)*varnum);
+	if (arr == NULL) return INVALID_BDD;
+    d = (DdNode*) (intptr_cast_type) a;
+    e = (DdNode**) (intptr_cast_type) b;
+	for (n=0; n<varnum; ++n) {
+		DdNode* node = e[n];
+		int var = Cudd_Regular(node)->index;
+		int level = var;
+		//int level = Cudd_ReadPerm(manager, var);
+		arr[n] = level;
+	}
+    f = Cudd_bddPermute(manager, d, arr);
+    free(arr);
+    result = (jlong) (intptr_cast_type) f;
+    return result;
+}
+
+/* class org_sf_javabdd_CUDDFactory_CUDDBDDPairing */
 
 /*
  * Class:     org_sf_javabdd_CUDDFactory_CUDDBDDPairing
@@ -903,29 +664,29 @@ JNIEXPORT void JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_delRef
  * Signature: ()J
  */
 JNIEXPORT jlong JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDDPairing_alloc
-  (JNIEnv *env, jclass c)
+  (JNIEnv *env, jclass cl)
 {
 	int n;
 	DdNode **r = (DdNode**) malloc(sizeof(DdNode*)*varnum);
 	if (r == NULL) return 0;
-	   for (n=0 ; n<varnum ; n++) {
-	   	  int var = n;
-	   	  //int var = Cudd_ReadInvPerm(manager, n); // level2var
-	      r[n] = Cudd_bddIthVar(manager, var);
-	      Cudd_Ref(r[n]);
-	   }
+	for (n=0 ; n<varnum ; n++) {
+		int var = n;
+		//int var = Cudd_ReadInvPerm(manager, n); // level2var
+		r[n] = Cudd_bddIthVar(manager, var);
+		Cudd_Ref(r[n]);
+	}
 	return (jlong) (intptr_cast_type) r;
 }
 
 /*
  * Class:     org_sf_javabdd_CUDDFactory_CUDDBDDPairing
- * Method:    set
- * Signature: (II)V
+ * Method:    set0
+ * Signature: (JII)V
  */
-JNIEXPORT void JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDDPairing_set__II
-  (JNIEnv *env, jobject o, jint var, jint b)
+JNIEXPORT void JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDDPairing_set0
+  (JNIEnv *env, jclass cl, jlong p, jint var, jint b)
 {
-	DdNode **r = Pair_JavaToC(env, o);
+	DdNode **r = (DdNode**) (intptr_cast_type) p;
 	int level1 = var;
 	//int level1 = Cudd_ReadPerm(manager, var);
 	//int level2 = Cudd_ReadPerm(manager, b);
@@ -936,14 +697,14 @@ JNIEXPORT void JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDDPairing_set__
 
 /*
  * Class:     org_sf_javabdd_CUDDFactory_CUDDBDDPairing
- * Method:    set
- * Signature: (ILorg/sf/javabdd/BDD;)V
+ * Method:    set2
+ * Signature: (JIJ)V
  */
-JNIEXPORT void JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDDPairing_set__ILorg_sf_javabdd_BDD_2
-  (JNIEnv *env, jobject o, jint var, jobject b)
+JNIEXPORT void JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDDPairing_set2
+  (JNIEnv *env, jclass cl, jlong p, jint var, jlong b)
 {
-	DdNode **r = Pair_JavaToC(env, o);
-	DdNode *d = BDD_JavaToC(env, b);
+	DdNode **r = (DdNode**) (intptr_cast_type) p;
+	DdNode *d = (DdNode*) (intptr_cast_type) b;
 	int level1 = var;
 	//int level1 = Cudd_ReadPerm(manager, var);
 	Cudd_RecursiveDeref(manager, r[level1]);
@@ -953,19 +714,36 @@ JNIEXPORT void JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDDPairing_set__
 
 /*
  * Class:     org_sf_javabdd_CUDDFactory_CUDDBDDPairing
- * Method:    reset
- * Signature: ()V
+ * Method:    reset0
+ * Signature: (J)V
  */
-JNIEXPORT void JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDDPairing_reset
-  (JNIEnv *env, jobject o)
+JNIEXPORT void JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDDPairing_reset0
+  (JNIEnv *env, jclass cl, jlong p)
 {
 	int n;
-	DdNode **r = Pair_JavaToC(env, o);
-   for (n=0 ; n<varnum ; n++) {
+	DdNode **r = (DdNode**) (intptr_cast_type) p;
+	for (n=0 ; n<varnum ; n++) {
+		int var;
 		Cudd_RecursiveDeref(manager, r[n]);
-	   	  int var = n;
-	   	  //int var = Cudd_ReadInvPerm(manager, n); // level2var
-	      r[n] = Cudd_bddIthVar(manager, var);
-	      Cudd_Ref(r[n]);
-   }
+		var = n;
+		//int var = Cudd_ReadInvPerm(manager, n); // level2var
+		r[n] = Cudd_bddIthVar(manager, var);
+		Cudd_Ref(r[n]);
+	}
+}
+
+/*
+ * Class:     org_sf_javabdd_CUDDFactory_CUDDBDDPairing
+ * Method:    free0
+ * Signature: (J)V
+ */
+JNIEXPORT void JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDDPairing_free0
+  (JNIEnv *env, jclass cl, jlong p)
+{
+	int n;
+	DdNode **r = (DdNode**) (intptr_cast_type) p;
+	for (n=0 ; n<varnum ; n++) {
+		Cudd_RecursiveDeref(manager, r[n]);
+	}
+	free(r);
 }
