@@ -4,6 +4,7 @@
 package org.sf.javabdd;
 
 import java.io.IOException;
+import java.io.PrintStream;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -18,6 +19,9 @@ import java.util.TreeSet;
  */
 public class TypedBDDFactory extends BDDFactory {
 
+    static PrintStream out = System.out;
+    static boolean STACK_TRACES = true;
+    
     BDDFactory factory;
     
     TypedBDDFactory(BDDFactory f) {
@@ -40,7 +44,9 @@ public class TypedBDDFactory extends BDDFactory {
      * @see org.sf.javabdd.BDDFactory#one()
      */
     public BDD one() {
-        return new TypedBDD(factory.zero(), allDomains());
+        Set s = makeSet();
+        //Set s = allDomains();
+        return new TypedBDD(factory.zero(), s);
     }
 
     /* (non-Javadoc)
@@ -106,19 +112,34 @@ public class TypedBDDFactory extends BDDFactory {
         return factory.setVarNum(num);
     }
 
+    BDDDomain whichDomain(int var) {
+        for (int i = 0; i < numberOfDomains(); ++i) {
+            int[] vars = getDomain(i).vars();
+            for (int j = 0; j < vars.length; ++j) {
+                if (var == vars[j])
+                    return getDomain(i);
+            }
+        }
+        return null;
+    }
+    
     /* (non-Javadoc)
      * @see org.sf.javabdd.BDDFactory#ithVar(int)
      */
     public BDD ithVar(int var) {
-        // TODO domains?
-        return new TypedBDD(factory.ithVar(var), makeSet());
+        Set s = makeSet();
+        //BDDDomain d = whichDomain(var);
+        //if (d != null) s.add(d);
+        return new TypedBDD(factory.ithVar(var), s);
     }
 
     /* (non-Javadoc)
      * @see org.sf.javabdd.BDDFactory#nithVar(int)
      */
     public BDD nithVar(int var) {
-        // TODO domains?
+        BDDDomain d = whichDomain(var);
+        Set s = makeSet();
+        if (d != null) s.add(d);
         return new TypedBDD(factory.nithVar(var), makeSet());
     }
 
@@ -141,16 +162,17 @@ public class TypedBDDFactory extends BDDFactory {
      * @see org.sf.javabdd.BDDFactory#load(java.lang.String)
      */
     public BDD load(String filename) throws IOException {
-        // TODO Auto-generated method stub
-        return null;
+        // TODO domains?
+        Set d = makeSet();
+        return new TypedBDD(factory.load(filename), d);
     }
 
     /* (non-Javadoc)
      * @see org.sf.javabdd.BDDFactory#save(java.lang.String, org.sf.javabdd.BDD)
      */
     public void save(String filename, BDD var) throws IOException {
-        // TODO Auto-generated method stub
-        factory.save(filename, var);
+        TypedBDD bdd1 = (TypedBDD) var;
+        factory.save(filename, bdd1.bdd);
     }
 
     /* (non-Javadoc)
@@ -320,7 +342,7 @@ public class TypedBDDFactory extends BDDFactory {
      * @see org.sf.javabdd.BDDFactory#createDomain(int, long)
      */
     protected BDDDomain createDomain(int a, long b) {
-        return new TypedBDDDomain(factory.createDomain(a, b), a, b);
+        return new TypedBDDDomain(factory.getDomain(a), a, b);
     }
 
     /* (non-Javadoc)
@@ -330,6 +352,11 @@ public class TypedBDDFactory extends BDDFactory {
         return factory.createBitVector(a);
     }
 
+    public BDDDomain[] extDomain(long[] domainSizes) {
+        factory.extDomain(domainSizes);
+        return super.extDomain(domainSizes);
+    }
+    
     static Set makeSet() {
         //return SortedArraySet.FACTORY.makeSet(domain_comparator);
         return new TreeSet(domain_comparator);
@@ -465,7 +492,9 @@ public class TypedBDDFactory extends BDDFactory {
             newDom.addAll(dom);
             newDom.addAll(bdd1.dom);
             if (!newDom.containsAll(bdd2.dom)) {
-                System.err.println("Warning! Quantifying domain that doesn't exist: "+domainNames(bdd2.dom));
+                out.println("Warning! Quantifying domain that doesn't exist: "+domainNames(bdd2.dom));
+                if (STACK_TRACES)
+                    new Exception().printStackTrace(out);
             }
             newDom.removeAll(bdd2.dom);
             return new TypedBDD(bdd.relprod(bdd1.bdd, bdd2.bdd), newDom);
@@ -503,7 +532,9 @@ public class TypedBDDFactory extends BDDFactory {
             Set newDom = makeSet();
             newDom.addAll(dom);
             if (!newDom.containsAll(bdd1.dom)) {
-                System.err.println("Warning! Quantifying domain that doesn't exist: "+domainNames(bdd1.dom));
+                out.println("Warning! Quantifying domain that doesn't exist: "+domainNames(bdd1.dom));
+                if (STACK_TRACES)
+                    new Exception().printStackTrace(out);
             }
             newDom.removeAll(bdd1.dom);
             return new TypedBDD(bdd.exist(bdd1.bdd), newDom);
@@ -517,7 +548,9 @@ public class TypedBDDFactory extends BDDFactory {
             Set newDom = makeSet();
             newDom.addAll(dom);
             if (!newDom.containsAll(bdd1.dom)) {
-                System.err.println("Warning! Quantifying domain that doesn't exist: "+domainNames(bdd1.dom));
+                out.println("Warning! Quantifying domain that doesn't exist: "+domainNames(bdd1.dom));
+                if (STACK_TRACES)
+                    new Exception().printStackTrace(out);
             }
             newDom.removeAll(bdd1.dom);
             return new TypedBDD(bdd.forAll(bdd1.bdd), newDom);
@@ -531,7 +564,9 @@ public class TypedBDDFactory extends BDDFactory {
             Set newDom = makeSet();
             newDom.addAll(dom);
             if (!newDom.containsAll(bdd1.dom)) {
-                System.err.println("Warning! Quantifying domain that doesn't exist: "+domainNames(bdd1.dom));
+                out.println("Warning! Quantifying domain that doesn't exist: "+domainNames(bdd1.dom));
+                if (STACK_TRACES)
+                    new Exception().printStackTrace(out);
             }
             newDom.removeAll(bdd1.dom);
             return new TypedBDD(bdd.unique(bdd1.bdd), newDom);
@@ -545,25 +580,42 @@ public class TypedBDDFactory extends BDDFactory {
             Set newDom = makeSet();
             newDom.addAll(dom);
             if (!newDom.containsAll(bdd1.dom)) {
-                System.err.println("Warning! Restricting domain that doesn't exist: "+domainNames(bdd1.dom));
+                out.println("Warning! Restricting domain that doesn't exist: "+domainNames(bdd1.dom));
+                if (STACK_TRACES)
+                    new Exception().printStackTrace(out);
             }
-            if (bdd1.satCount() > 1.0) {
-                System.err.println("Warning! Using restrict with more than one value");
+            if (bdd1.bdd.satCount(bdd1.getDomains()) > 1.0) {
+                out.println("Warning! Using restrict with more than one value");
+                if (STACK_TRACES)
+                    new Exception().printStackTrace(out);
             }
             newDom.removeAll(bdd1.dom);
             return new TypedBDD(bdd.restrict(bdd1.bdd), newDom);
         }
 
+        BDD getDomains() {
+            BDD b = factory.one();
+            for (Iterator i = dom.iterator(); i.hasNext(); ) {
+                TypedBDDDomain d = (TypedBDDDomain) i.next();
+                b.andWith(d.domain.set());
+            }
+            return b;
+        }
+        
         /* (non-Javadoc)
          * @see org.sf.javabdd.BDD#restrictWith(org.sf.javabdd.BDD)
          */
         public void restrictWith(BDD var) {
             TypedBDD bdd1 = (TypedBDD) var;
             if (!dom.containsAll(bdd1.dom)) {
-                System.err.println("Warning! Restricting domain that doesn't exist: "+domainNames(bdd1.dom));
+                out.println("Warning! Restricting domain that doesn't exist: "+domainNames(bdd1.dom));
+                if (STACK_TRACES)
+                    new Exception().printStackTrace(out);
             }
-            if (bdd1.satCount() > 1.0) {
-                System.err.println("Warning! Using restrict with more than one value");
+            if (bdd1.bdd.satCount(bdd1.getDomains()) > 1.0) {
+                out.println("Warning! Using restrict with more than one value");
+                if (STACK_TRACES)
+                    new Exception().printStackTrace(out);
             }
             dom.removeAll(bdd1.dom);
             bdd.restrictWith(bdd1.bdd);
@@ -596,7 +648,9 @@ public class TypedBDDFactory extends BDDFactory {
                 case 8: // less
                 case 9: // invimp
                     if (!bdd0.isZero() && !bdd1.isZero() && !newDom.equals(bdd1.dom)) {
-                        System.err.println("Warning! Or'ing BDD with different domains: "+domainNames(newDom)+" != "+domainNames(bdd1.dom));
+                        out.println("Warning! Or'ing BDD with different domains: "+domainNames(newDom)+" != "+domainNames(bdd1.dom));
+                        if (STACK_TRACES)
+                            new Exception().printStackTrace(out);
                     }
                     // fallthrough
                 case 0: // and
@@ -638,9 +692,12 @@ public class TypedBDDFactory extends BDDFactory {
             applyHelper(newDom, this, bdd1, opr);
             TypedBDD bdd2 = (TypedBDD) var;
             if (!newDom.containsAll(bdd2.dom)) {
-                System.err.println("Warning! Quantifying domain that doesn't exist: "+domainNames(bdd2.dom));
+                out.println("Warning! Quantifying domain that doesn't exist: "+domainNames(bdd2.dom));
+                if (STACK_TRACES)
+                    new Exception().printStackTrace(out);
             }
             newDom.removeAll(bdd2.dom);
+            out.println(domainNames(dom)+" "+opr+" "+domainNames(bdd1.dom)+" / "+domainNames(bdd2.dom)+" = "+domainNames(newDom));
             return new TypedBDD(bdd.applyAll(bdd1.bdd, opr, bdd2.bdd), newDom);
         }
 
@@ -654,9 +711,12 @@ public class TypedBDDFactory extends BDDFactory {
             applyHelper(newDom, this, bdd1, opr);
             TypedBDD bdd2 = (TypedBDD) var;
             if (!newDom.containsAll(bdd2.dom)) {
-                System.err.println("Warning! Quantifying domain that doesn't exist: "+domainNames(bdd2.dom));
+                out.println("Warning! Quantifying domain that doesn't exist: "+domainNames(bdd2.dom));
+                if (STACK_TRACES)
+                    new Exception().printStackTrace(out);
             }
             newDom.removeAll(bdd2.dom);
+            out.println(domainNames(dom)+" "+opr+" "+domainNames(bdd1.dom)+" / "+domainNames(bdd2.dom)+" = "+domainNames(newDom));
             return new TypedBDD(bdd.applyEx(bdd1.bdd, opr, bdd2.bdd), newDom);
         }
 
@@ -670,9 +730,12 @@ public class TypedBDDFactory extends BDDFactory {
             applyHelper(newDom, this, bdd1, opr);
             TypedBDD bdd2 = (TypedBDD) var;
             if (!newDom.containsAll(bdd2.dom)) {
-                System.err.println("Warning! Quantifying domain that doesn't exist: "+domainNames(bdd2.dom));
+                out.println("Warning! Quantifying domain that doesn't exist: "+domainNames(bdd2.dom));
+                if (STACK_TRACES)
+                    new Exception().printStackTrace(out);
             }
             newDom.removeAll(bdd2.dom);
+            out.println(domainNames(dom)+" "+opr+" "+domainNames(bdd1.dom)+" / "+domainNames(bdd2.dom)+" = "+domainNames(newDom));
             return new TypedBDD(bdd.applyUni(bdd1.bdd, opr, bdd2.bdd), newDom);
         }
 
@@ -699,7 +762,9 @@ public class TypedBDDFactory extends BDDFactory {
             Set newDom = makeSet();
             newDom.addAll(dom);
             if (!newDom.containsAll(bdd1.dom)) {
-                System.err.println("Warning! Selecting domain that doesn't exist: "+domainNames(bdd1.dom));
+                out.println("Warning! Selecting domain that doesn't exist: "+domainNames(bdd1.dom));
+                if (STACK_TRACES)
+                    new Exception().printStackTrace(out);
             }
             newDom.addAll(bdd1.dom);
             return new TypedBDD(bdd.satOneSet(bdd1.bdd, bdd2.bdd), newDom);
@@ -724,19 +789,19 @@ public class TypedBDDFactory extends BDDFactory {
                 Map.Entry e = (Map.Entry) i.next();
                 BDDDomain d_from = (BDDDomain) e.getKey();
                 BDDDomain d_to = (BDDDomain) e.getValue();
-                System.out.println("Replace "+domainNames(dom)+", "+d_from+" -> "+d_to);
+                //System.out.println("Replace "+domainNames(dom)+" ("+d_from+"->"+d_to+")");
                 if (!dom.contains(d_from)) {
-                    System.err.println("Warning! Replacing domain that doesn't exist: "+d_from.getName());
+                    out.println("Warning! Replacing domain that doesn't exist: "+d_from.getName());
                     new Exception().printStackTrace();
                 }
                 if (dom.contains(d_to) && !tpair.domMap.containsKey(d_to)) {
-                    System.err.println("Warning! Overwriting domain that exists: "+d_to.getName());
+                    out.println("Warning! Overwriting domain that exists: "+d_to.getName());
                     new Exception().printStackTrace();
                 }
             }
             newDom.removeAll(tpair.domMap.keySet());
             newDom.addAll(tpair.domMap.values());
-            System.out.println("Result = "+domainNames(newDom));
+            //System.out.println("Result = "+domainNames(newDom));
             return new TypedBDD(bdd.replace(tpair.pairing), newDom);
         }
 
@@ -750,10 +815,10 @@ public class TypedBDDFactory extends BDDFactory {
                 BDDDomain d_from = (BDDDomain) e.getKey();
                 BDDDomain d_to = (BDDDomain) e.getValue();
                 if (!dom.contains(d_from)) {
-                    System.err.println("Warning! Replacing domain that doesn't exist: "+d_from.getName());
+                    out.println("Warning! Replacing domain that doesn't exist: "+d_from.getName());
                 }
                 if (dom.contains(d_to) && !tpair.domMap.containsKey(d_to)) {
-                    System.err.println("Warning! Overwriting domain that exists: "+d_to.getName());
+                    out.println("Warning! Overwriting domain that exists: "+d_to.getName());
                 }
             }
             dom.removeAll(tpair.domMap.keySet());
@@ -795,7 +860,7 @@ public class TypedBDDFactory extends BDDFactory {
         public boolean equals(BDD that) {
             TypedBDD bdd1 = (TypedBDD) that;
             if (!dom.containsAll(bdd1.dom)) {
-                System.err.println("Warning! Comparing domain that doesn't exist: "+domainNames(bdd1.dom));
+                out.println("Warning! Comparing domain that doesn't exist: "+domainNames(bdd1.dom));
             }
             return bdd.equals(bdd1.bdd);
         }
@@ -855,9 +920,58 @@ public class TypedBDDFactory extends BDDFactory {
          * @see org.sf.javabdd.BDDDomain#ithVar(long)
          */
         public BDD ithVar(long val) {
+            BDD v = domain.ithVar(val);
             Set s = makeSet();
             s.add(this);
-            return new TypedBDD(domain.ithVar(val), s);
+            return new TypedBDD(v, s);
+        }
+
+        /* (non-Javadoc)
+         * @see org.sf.javabdd.BDDDomain#domain()
+         */
+        public BDD domain() {
+            BDD v = domain.domain();
+            Set s = makeSet();
+            s.add(this);
+            return new TypedBDD(v, s);
+        }
+
+        public BDD buildAdd(BDDDomain that, int bits, long value) {
+            TypedBDDDomain d = (TypedBDDDomain) that;
+            BDD v = domain.buildAdd(d.domain, bits, value);
+            Set s = makeSet();
+            s.add(this);
+            s.add(that);
+            return new TypedBDD(v, s);
+        }
+        
+        public BDD buildEquals(BDDDomain that) {
+            TypedBDDDomain d = (TypedBDDDomain) that;
+            BDD v = domain.buildEquals(d.domain);
+            Set s = makeSet();
+            s.add(this);
+            s.add(that);
+            return new TypedBDD(v, s);
+        }
+        
+        /* (non-Javadoc)
+         * @see org.sf.javabdd.BDDDomain#set()
+         */
+        public BDD set() {
+            BDD v = domain.set();
+            Set s = makeSet();
+            s.add(this);
+            return new TypedBDD(v, s);
+        }
+
+        /* (non-Javadoc)
+         * @see org.sf.javabdd.BDDDomain#varRange(long, long)
+         */
+        public BDD varRange(long lo, long hi) {
+            BDD v = domain.varRange(lo, hi);
+            Set s = makeSet();
+            s.add(this);
+            return new TypedBDD(v, s);
         }
 
     }
@@ -874,7 +988,7 @@ public class TypedBDDFactory extends BDDFactory {
         
         public void set(BDDDomain p1, BDDDomain p2) {
             if (domMap.containsValue(p2)) {
-                System.err.println("Warning! Set domain that already exists: "+p2.getName());
+                out.println("Warning! Set domain that already exists: "+p2.getName());
             }
             domMap.put(p1, p2);
             pairing.set(p1, p2);
