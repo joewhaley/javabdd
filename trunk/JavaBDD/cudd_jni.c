@@ -222,6 +222,28 @@ JNIEXPORT void JNICALL Java_org_sf_javabdd_CUDDFactory_setVarOrder0
   (*env)->ReleasePrimitiveArrayCritical(env, arr, a, JNI_ABORT);
 }
 
+/*
+ * Class:     org_sf_javabdd_CUDDFactory
+ * Method:    getAllocNum0
+ * Signature: ()I
+ */
+JNIEXPORT jint JNICALL Java_org_sf_javabdd_CUDDFactory_getAllocNum0
+  (JNIEnv *env, jclass cl)
+{
+  return Cudd_ReadPeakNodeCount(manager);
+}
+
+/*
+ * Class:     org_sf_javabdd_CUDDFactory
+ * Method:    getNodeNum0
+ * Signature: ()I
+ */
+JNIEXPORT jint JNICALL Java_org_sf_javabdd_CUDDFactory_getNodeNum0
+  (JNIEnv *env, jclass cl)
+{
+  return Cudd_ReadNodeCount(manager);
+}
+
 /* class org_sf_javabdd_CUDDFactory_CUDDBDD */
 
 /*
@@ -352,6 +374,44 @@ JNIEXPORT jlong JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_compose0
     d = (DdNode*) (intptr_cast_type) a;
     e = (DdNode*) (intptr_cast_type) b;
     f = Cudd_bddCompose(manager, d, e, i);
+    result = (jlong) (intptr_cast_type) f;
+    return result;
+}
+
+/*
+ * Class:     org_sf_javabdd_CUDDFactory_CUDDBDD
+ * Method:    exist0
+ * Signature: (JJ)J
+ */
+JNIEXPORT jlong JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_exist0
+  (JNIEnv *env, jclass cl, jlong a, jlong b)
+{
+    DdNode* d;
+    DdNode* e;
+    DdNode* f;
+    jlong result;
+    d = (DdNode*) (intptr_cast_type) a;
+    e = (DdNode*) (intptr_cast_type) b;
+    f = Cudd_bddExistAbstract(manager, d, e);
+    result = (jlong) (intptr_cast_type) f;
+    return result;
+}
+
+/*
+ * Class:     org_sf_javabdd_CUDDFactory_CUDDBDD
+ * Method:    forAll0
+ * Signature: (JJ)J
+ */
+JNIEXPORT jlong JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_forAll0
+  (JNIEnv *env, jclass cl, jlong a, jlong b)
+{
+    DdNode* d;
+    DdNode* e;
+    DdNode* f;
+    jlong result;
+    d = (DdNode*) (intptr_cast_type) a;
+    e = (DdNode*) (intptr_cast_type) b;
+    f = Cudd_bddUnivAbstract(manager, d, e);
     result = (jlong) (intptr_cast_type) f;
     return result;
 }

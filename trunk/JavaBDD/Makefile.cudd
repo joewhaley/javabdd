@@ -7,7 +7,7 @@
 #   JDK_ROOT     -- location where you installed JDK
 #
 
-CUDD_SRC = cudd-2.3.1
+CUDD_SRC = cudd-2.4.0
 
 ifeq (${OS},Windows_NT)
   JDK_ROOT = $(firstword $(wildcard c:/j2sdk*))
