@@ -42,7 +42,7 @@ public class BuDDyFactory extends BDDFactory {
     private static BuDDyFactory INSTANCE;
     
     static {
-        String libname = "buddy";
+        String libname = System.getProperty("buddylib", "buddy");
         try {
             System.loadLibrary(libname);
         } catch (java.lang.UnsatisfiedLinkError x) {
