@@ -1441,22 +1441,34 @@ int bdd_makenode(unsigned int level, int low, int high)
 
 int bdd_noderesize(int doRehash)
 {
-   BddNode *newnodes;
    int oldsize = bddnodesize;
+   int newsize;
    int n;
 
    if (bddnodesize >= bddmaxnodesize  &&  bddmaxnodesize > 0)
       return -1;
    
-   bddnodesize = bddnodesize << 1;
+   newsize = bddnodesize << 1;
 
-   if (bddnodesize > oldsize + bddmaxnodeincrease)
-      bddnodesize = oldsize + bddmaxnodeincrease;
+   if (newsize > oldsize + bddmaxnodeincrease)
+      newsize = oldsize + bddmaxnodeincrease;
 
-   if (bddnodesize > bddmaxnodesize  &&  bddmaxnodesize > 0)
-      bddnodesize = bddmaxnodesize;
+   if (newsize > bddmaxnodesize  &&  bddmaxnodesize > 0)
+      newsize = bddmaxnodesize;
+   
+   return bdd_noderesize2(doRehash, oldsize, newsize);
+}
 
-   bddnodesize = bdd_prime_lte(bddnodesize);
+int bdd_noderesize2(int doRehash, int oldsize, int newsize)
+{
+   int n;
+   
+   newsize = bdd_prime_lte(newsize);
+   
+   if (oldsize > newsize) {
+     return 0;
+   }
+   bddnodesize = newsize;
    
    if (resize_handler != NULL)
       resize_handler(oldsize, bddnodesize);
