@@ -71,8 +71,6 @@ public class JFactory extends BDDFactory {
     private class bdd extends BDD {
         int _index;
 
-        static final int INVALID_BDD = -1;
-
         bdd(int index) {
             this._index = index;
             bdd_addref(_index);
@@ -441,6 +439,8 @@ public class JFactory extends BDDFactory {
     static final int REF_MASK = 0xFFC00000;
     static final int MARK_MASK = 0x00200000;
     static final int LEV_MASK = 0x001FFFFF;
+    static final int MAXVAR = LEV_MASK;
+    static final int INVALID_BDD = -1;
 
     static final int REF_INC = 0x00400000;
     
@@ -702,7 +702,6 @@ public class JFactory extends BDDFactory {
             "Illegal shift-left/right parameter",
             "Division by zero" };
 
-    static final int MAXVAR = 0x1FFFFF;
     static final int DEFAULTMAXNODEINC = 50000;
 
     /*=== OTHER INTERNAL DEFINITIONS =======================================*/
@@ -778,7 +777,7 @@ public class JFactory extends BDDFactory {
             bdd_error(BDD_RUNNING);
         else if (r < 0 || r >= bddnodesize)
             bdd_error(BDD_ILLBDD);
-        else if (r >= 2 && LOW(r) == -1)
+        else if (r >= 2 && LOW(r) == INVALID_BDD)
             bdd_error(BDD_ILLBDD);
     }
     void CHECKa(int r, int x) {
@@ -2376,7 +2375,7 @@ public class JFactory extends BDDFactory {
         if (r < 2)
             return;
 
-        if (MARKED(r) || LOW(r) == -1)
+        if (MARKED(r) || LOW(r) == INVALID_BDD)
             return;
 
         support[LEVEL(r)] = supportID;
@@ -2644,7 +2643,7 @@ public class JFactory extends BDDFactory {
         bddfreenum = 0;
 
         for (n = bddnodesize - 1; n >= 2; n--) {
-            if (LOW(n) != -1) {
+            if (LOW(n) != INVALID_BDD) {
                 int hash2;
 
                 hash2 = NODEHASH(LEVEL(n), LOW(n), HIGH(n));
@@ -2896,7 +2895,7 @@ public class JFactory extends BDDFactory {
 
         for (n = bddnodesize - 1; n >= 2; n--) {
 
-            if (MARKED(n) && LOW(n) != -1) {
+            if (MARKED(n) && LOW(n) != INVALID_BDD) {
                 int hash2;
 
                 UNMARK(n);
@@ -2904,7 +2903,7 @@ public class JFactory extends BDDFactory {
                 SETNEXT(n, HASH(hash2));
                 SETHASH(hash2, n);
             } else {
-                SETLOW(n, -1);
+                SETLOW(n, INVALID_BDD);
                 SETNEXT(n, bddfreepos);
                 bddfreepos = n;
                 bddfreenum++;
@@ -2935,13 +2934,13 @@ public class JFactory extends BDDFactory {
     }
 
     int bdd_addref(int root) {
-        if (root == -1)
+        if (root == INVALID_BDD)
             bdd_error(BDD_BREAK); /* distinctive */
         if (root < 2 || !bddrunning)
             return root;
         if (root >= bddnodesize)
             return bdd_error(BDD_ILLBDD);
-        if (LOW(root) == -1)
+        if (LOW(root) == INVALID_BDD)
             return bdd_error(BDD_ILLBDD);
 
         INCREF(root);
@@ -2950,13 +2949,13 @@ public class JFactory extends BDDFactory {
     }
 
     int bdd_delref(int root) {
-        if (root == -1)
+        if (root == INVALID_BDD)
             bdd_error(BDD_BREAK); /* distinctive */
         if (root < 2 || !bddrunning)
             return root;
         if (root >= bddnodesize)
             return bdd_error(BDD_ILLBDD);
-        if (LOW(root) == -1)
+        if (LOW(root) == INVALID_BDD)
             return bdd_error(BDD_ILLBDD);
 
         /* if the following line is present, fails there much earlier */
@@ -2973,7 +2972,7 @@ public class JFactory extends BDDFactory {
         if (i < 2)
             return;
 
-        if (MARKED(i) || LOW(i) == -1)
+        if (MARKED(i) || LOW(i) == INVALID_BDD)
             return;
 
         SETMARK(i);
@@ -2982,29 +2981,12 @@ public class JFactory extends BDDFactory {
         bdd_mark(HIGH(i));
     }
 
-    void bdd_mark_upto(int i, int level) {
-
-        if (i < 2)
-            return;
-
-        if (MARKED(i) || LOW(i) == -1)
-            return;
-
-        if (LEVEL(i) > level)
-            return;
-
-        SETMARK(i);
-
-        bdd_mark_upto(LOW(i), level);
-        bdd_mark_upto(LOW(i), level);
-    }
-
     void bdd_markcount(int i, int[] cou) {
 
         if (i < 2)
             return;
 
-        if (MARKED(i) || LOW(i) == -1)
+        if (MARKED(i) || LOW(i) == INVALID_BDD)
             return;
 
         SETMARK(i);
@@ -3019,29 +3001,12 @@ public class JFactory extends BDDFactory {
         if (i < 2)
             return;
 
-        if (!MARKED(i) || LOW(i) == -1)
+        if (!MARKED(i) || LOW(i) == INVALID_BDD)
             return;
         UNMARK(i);
 
         bdd_unmark(LOW(i));
         bdd_unmark(HIGH(i));
-    }
-
-    void bdd_unmark_upto(int i, int level2) {
-
-        if (i < 2)
-            return;
-
-        if (!MARKED(i))
-            return;
-
-        UNMARK(i);
-
-        if (LEVEL(i) > level2)
-            return;
-
-        bdd_unmark_upto(LOW(i), level2);
-        bdd_unmark_upto(HIGH(i), level2);
     }
 
     public static final boolean CACHESTATS = false;
@@ -3180,7 +3145,7 @@ public class JFactory extends BDDFactory {
                 SETHASH(n, 0);
 
         for (n = oldsize; n < bddnodesize; n++) {
-            SETLOW(n, -1);
+            SETLOW(n, INVALID_BDD);
             //SETREFCOU(n, 0);
             //SETHASH(n, 0);
             //SETLEVEL(n, 0);
@@ -3214,7 +3179,7 @@ public class JFactory extends BDDFactory {
         bddresized = false;
 
         for (n = 0; n < bddnodesize; n++) {
-            SETLOW(n, -1);
+            SETLOW(n, INVALID_BDD);
             //SETREFCOU(n, 0);
             //SETHASH(n, 0);
             //SETLEVEL(n, 0);
@@ -3509,7 +3474,7 @@ public class JFactory extends BDDFactory {
         int n;
         for (n = 0; n < cache.tablesize; n++) {
             int a = cache.table[n].a;
-            if (a >= 0 && LOW(a) == -1) {
+            if (a >= 0 && LOW(a) == INVALID_BDD) {
                 cache.table[n].a = -1;
             }
         }
@@ -3521,8 +3486,8 @@ public class JFactory extends BDDFactory {
         for (n = 0; n < cache.tablesize; n++) {
             int a = cache.table[n].a;
             if (a < 0) continue;
-            if (LOW(a) == -1 ||
-                LOW(((BddCacheDataI)cache.table[n]).res) == -1) {
+            if (LOW(a) == INVALID_BDD ||
+                LOW(((BddCacheDataI)cache.table[n]).res) == INVALID_BDD) {
                 cache.table[n].a = -1;
             }
         }
@@ -3534,9 +3499,9 @@ public class JFactory extends BDDFactory {
         for (n = 0; n < cache.tablesize; n++) {
             int a = cache.table[n].a;
             if (a < 0) continue;
-            if (LOW(a) == -1 ||
-                (cache.table[n].b != 0 && LOW(cache.table[n].b) == -1) ||
-                LOW(((BddCacheDataI)cache.table[n]).res) == -1) {
+            if (LOW(a) == INVALID_BDD ||
+                (cache.table[n].b != 0 && LOW(cache.table[n].b) == INVALID_BDD) ||
+                LOW(((BddCacheDataI)cache.table[n]).res) == INVALID_BDD) {
                 cache.table[n].a = -1;
             }
         }
@@ -3549,9 +3514,9 @@ public class JFactory extends BDDFactory {
             int a = cache.table[n].a;
             if (a < 0) continue;
             if (LOW(a) == -1 ||
-                LOW(cache.table[n].b) == -1 ||
-                LOW(cache.table[n].c) == -1 ||
-                LOW(((BddCacheDataI)cache.table[n]).res) == -1) {
+                LOW(cache.table[n].b) == INVALID_BDD ||
+                LOW(cache.table[n].c) == INVALID_BDD ||
+                LOW(((BddCacheDataI)cache.table[n]).res) == INVALID_BDD) {
                 cache.table[n].a = -1;
             }
         }
@@ -5092,7 +5057,7 @@ public class JFactory extends BDDFactory {
                     DECREF(LOW(r));
                     DECREF(HIGH(r));
 
-                    SETLOW(r, -1);
+                    SETLOW(r, INVALID_BDD);
                     SETNEXT(r, bddfreepos);
                     bddfreepos = r;
                     levels[var1].nodenum--;
@@ -5219,7 +5184,7 @@ public class JFactory extends BDDFactory {
                     DECREF(LOW(r));
                     DECREF(HIGH(r));
 
-                    SETLOW(r, -1);
+                    SETLOW(r, INVALID_BDD);
                     SETNEXT(r, bddfreepos);
                     bddfreepos = r;
                     levels[var1].nodenum--;
@@ -5546,7 +5511,7 @@ public class JFactory extends BDDFactory {
                 SETHASH(hash, n);
 
             } else {
-                SETLOW(n, -1);
+                SETLOW(n, INVALID_BDD);
                 SETNEXT(n, bddfreepos);
                 bddfreepos = n;
                 bddfreenum++;
@@ -5749,7 +5714,7 @@ public class JFactory extends BDDFactory {
         int n;
 
         for (n = 0; n < bddnodesize; n++) {
-            if (LOW(n) != -1) {
+            if (LOW(n) != INVALID_BDD) {
                 out.print(
                     "["
                         + right(n, 5)
