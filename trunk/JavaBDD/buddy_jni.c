@@ -1047,6 +1047,26 @@ JNIEXPORT void JNICALL Java_net_sf_javabdd_BuDDyFactory_printStat0
 }
 
 /*
+ * Class:     net_sf_javabdd_BuDDyFactory
+ * Method:    getVersion0
+ * Signature: ()Ljava/lang/String;
+ */
+JNIEXPORT jstring JNICALL Java_net_sf_javabdd_BuDDyFactory_getVersion0
+  (JNIEnv *env, jclass c)
+{
+  char *buf;
+  jstring result;
+  jnienv = env;
+#if defined(TRACE_BUDDYLIB)
+  printf("bdd_versionstr()\n");
+#endif
+  buf = bdd_versionstr();
+  result = (*env)->NewStringUTF(env, buf);
+  check_error(env);
+  return result;
+}
+
+/*
  * Class:     net_sf_javabdd_BuDDyFactory_BuDDyBDD
  * Method:    var0
  * Signature: (I)I
@@ -1861,3 +1881,4 @@ JNIEXPORT void JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDDPairing_fre
     bdd_freepair(p);
   }
 }
+
