@@ -507,29 +507,42 @@ public abstract class BDDFactory {
 
         Map visited = new HashMap();
         save_rec(out, visited, r);
+        
+        for (Iterator it = visited.keySet().iterator(); it.hasNext(); ) {
+            BDD b = (BDD) it.next();
+            b.free();
+        }
     }
 
     protected int save_rec(DataOutput out, Map visited, BDD root) throws IOException {
-        if (root.isZero()) return 0;
-        if (root.isOne()) return 1;
+        if (root.isZero()) {
+            root.free();
+            return 0;
+        }
+        if (root.isOne()) {
+            root.free();
+            return 1;
+        }
         Integer i = (Integer) visited.get(root);
-        if (i != null) return i.intValue();
-        visited.put(root, i = new Integer(visited.size()+2));
-
+        if (i != null) {
+            root.free();
+            return i.intValue();
+        }
+        int v = visited.size() + 2;
+        visited.put(root, new Integer(v));
+        
         BDD l = root.low();
         int lo = save_rec(out, visited, l);
-        l.free();
         
         BDD h = root.high();
         int hi = save_rec(out, visited, h);
-        h.free();
 
-        out.writeBytes(i.intValue() + " ");
+        out.writeBytes(v + " ");
         out.writeBytes(root.var() + " ");
         out.writeBytes(lo + " ");
         out.writeBytes(hi + "\n");
         
-        return i.intValue();
+        return v;
     }
     
     // TODO: bdd_strm_hook, bdd_file_hook, bdd_blockfile_hook

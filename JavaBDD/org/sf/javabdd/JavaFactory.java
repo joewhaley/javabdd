@@ -370,7 +370,8 @@ public class JavaFactory extends BDDFactory {
          * @see org.sf.javabdd.BDD#equals(org.sf.javabdd.BDD)
          */
         public boolean equals(BDD that) {
-            return this._index == ((bdd) that)._index;
+            boolean b = this._index == ((bdd) that)._index; 
+            return b;
         }
 
         /* (non-Javadoc)
@@ -4277,7 +4278,7 @@ public class JavaFactory extends BDDFactory {
     /* (non-Javadoc)
      * @see org.sf.javabdd.BDDFactory#save(java.io.DataOutput, org.sf.javabdd.BDD)
      */
-    public void save(DataOutput out, BDD b) throws IOException {
+    public void save_(DataOutput out, BDD b) throws IOException {
         int x = ((bdd) b)._index;
         bdd_save(out, x);
     }
