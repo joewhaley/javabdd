@@ -232,6 +232,7 @@ test:	$(EXAMPLE_CLASSFILES)
 	$(JAVA) NQueens 8
 	$(JAVA) -Dbdd=cudd NQueens 8
 	$(JAVA) -Dbdd=cal NQueens 8
+	$(JAVA) -Dbdd=java NQueens 8
 	$(JAVA) -Dbdd=jdd -cp $(CLASSPATH) NQueens 8
 
 clean:
