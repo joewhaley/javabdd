@@ -486,9 +486,9 @@ RETURN  {* The negated bdd. *}
 BDD bdd_not(BDD r)
 {
    BDD res;
-   firstReorder = 1;
    BUDDY_PROLOGUE;
    ADD_ARG1(T_BDD,r);
+   firstReorder = 1;
    CHECKa(r, bddfalse);
 
    if (applycache.table == NULL && BddCache4_init(&applycache,cachesize) < 0)
@@ -595,11 +595,11 @@ DESCR   {* The {\tt bdd\_apply} function performs all of the basic
 BDD bdd_apply(BDD l, BDD r, int op)
 {
    BDD res;
-   firstReorder = 1;
    BUDDY_PROLOGUE;
    ADD_ARG1(T_BDD,l);
    ADD_ARG1(T_BDD,r);
    ADD_ARG1(T_INT,op);
+   firstReorder = 1;
    
    CHECKa(l, bddfalse);
    CHECKa(r, bddfalse);
@@ -1129,13 +1129,14 @@ ALSO    {* bdd\_apply *}
 BDD bdd_ite(BDD f, BDD g, BDD h)
 {
    BDD res;
-   firstReorder = 1;
 
    BUDDY_PROLOGUE;
    ADD_ARG1(T_BDD,f);
    ADD_ARG1(T_BDD,g);
    ADD_ARG1(T_BDD,h);
    
+   firstReorder = 1;
+
    CHECKa(f, bddfalse);
    CHECKa(g, bddfalse);
    CHECKa(h, bddfalse);
@@ -1308,12 +1309,13 @@ ALSO    {* bdd\_makeset, bdd\_exist, bdd\_forall *}
 BDD bdd_restrict(BDD r, BDD var)
 {
    BDD res;
-   firstReorder = 1;
 
    BUDDY_PROLOGUE;
    ADD_ARG1(T_BDD,r);
    ADD_ARG1(T_BDD,var);
    
+   firstReorder = 1;
+
    CHECKa(r,bddfalse);
    CHECKa(var,bddfalse);
    
@@ -1410,12 +1412,13 @@ ALSO    {* bdd\_restrict, bdd\_simplify *}
 BDD bdd_constrain(BDD f, BDD c)
 {
    BDD res;
-   firstReorder = 1;
 
    BUDDY_PROLOGUE;
    ADD_ARG1(T_BDD,f);
    ADD_ARG1(T_BDD,c);
    
+   firstReorder = 1;
+
    CHECKa(f,bddfalse);
    CHECKa(c,bddfalse);
    
@@ -1538,12 +1541,13 @@ RETURN {* The result of the operation. *}
 BDD bdd_replace(BDD r, bddPair *pair)
 {
    BDD res;
-   firstReorder = 1;
 
    BUDDY_PROLOGUE;
    ADD_ARG1(T_BDD,r);
    ADD_ARG1(T_BDD_PAIR,pair);
    
+   firstReorder = 1;
+
    CHECKa(r, bddfalse);
    
      if (replacecache.table == NULL && BddCache3_init(&replacecache,cachesize) < 0)
@@ -1664,13 +1668,14 @@ ALSO    {* bdd\_veccompose, bdd\_replace, bdd\_restrict *}
 BDD bdd_compose(BDD f, BDD g, int var)
 {
    BDD res;
-   firstReorder = 1;
 
    BUDDY_PROLOGUE;
    ADD_ARG1(T_BDD,f);
    ADD_ARG1(T_BDD,g);
    ADD_ARG1(T_INT,var);
    
+   firstReorder = 1;
+
    CHECKa(f, bddfalse);
    CHECKa(g, bddfalse);
    if (var < 0 || var >= bddvarnum)
@@ -1792,12 +1797,12 @@ ALSO    {* bdd\_compose, bdd\_replace, bdd\_restrict *}
 BDD bdd_veccompose(BDD f, bddPair *pair)
 {
    BDD res;
-   firstReorder = 1;
 
    BUDDY_PROLOGUE;
    ADD_ARG1(T_BDD,f);
    ADD_ARG1(T_BDD_PAIR,pair);
 
+   firstReorder = 1;
    
    CHECKa(f, bddfalse);
    
@@ -1886,12 +1891,13 @@ RETURN  {* The simplified BDD *}
 BDD bdd_simplify(BDD f, BDD d)
 {
    BDD res;
-   firstReorder = 1;
 
    BUDDY_PROLOGUE;
    ADD_ARG1(T_BDD,f);
    ADD_ARG1(T_BDD,d);
    
+   firstReorder = 1;
+
    CHECKa(f, bddfalse);
    CHECKa(d, bddfalse);
    
@@ -2011,12 +2017,13 @@ RETURN  {* The quantified BDD. *}
 BDD bdd_exist(BDD r, BDD var)
 {
    BDD res;
-   firstReorder = 1;
 
    BUDDY_PROLOGUE;
    ADD_ARG1(T_BDD,r);
    ADD_ARG1(T_BDD,var);
    
+   firstReorder = 1;
+
    CHECKa(r, bddfalse);
    CHECKa(var, bddfalse);
    
@@ -2069,12 +2076,13 @@ RETURN  {* The quantified BDD. *}
 BDD bdd_forall(BDD r, BDD var)
 {
    BDD res;
-   firstReorder = 1;
 
    BUDDY_PROLOGUE;
    ADD_ARG1(T_BDD,r);
    ADD_ARG1(T_BDD,var);
    
+   firstReorder = 1;
+
    CHECKa(r, bddfalse);
    CHECKa(var, bddfalse);
    
@@ -2130,12 +2138,13 @@ RETURN  {* The quantified BDD. *}
 BDD bdd_unique(BDD r, BDD var)
 {
    BDD res;
-   firstReorder = 1;
 
    BUDDY_PROLOGUE;
    ADD_ARG1(T_BDD,r);
    ADD_ARG1(T_BDD,var);
    
+   firstReorder = 1;
+
    CHECKa(r, bddfalse);
    CHECKa(var, bddfalse);
    
@@ -2237,7 +2246,6 @@ RETURN  {* The result of the operation. *}
 BDD bdd_appex(BDD l, BDD r, int opr, BDD var)
 {
    BDD res;
-   firstReorder = 1;
 
    BUDDY_PROLOGUE;
    ADD_ARG1(T_BDD,l);
@@ -2245,6 +2253,8 @@ BDD bdd_appex(BDD l, BDD r, int opr, BDD var)
    ADD_ARG1(T_INT,opr);
    ADD_ARG1(T_BDD,var);
    
+   firstReorder = 1;
+
    CHECKa(l, bddfalse);
    CHECKa(r, bddfalse);
    CHECKa(var, bddfalse);
@@ -2311,7 +2321,6 @@ RETURN  {* The result of the operation. *}
 BDD bdd_appall(BDD l, BDD r, int opr, BDD var)
 {
    BDD res;
-   firstReorder = 1;
 
    BUDDY_PROLOGUE;
    ADD_ARG1(T_BDD,l);
@@ -2319,6 +2328,8 @@ BDD bdd_appall(BDD l, BDD r, int opr, BDD var)
    ADD_ARG1(T_INT,opr);
    ADD_ARG1(T_BDD,var);
    
+   firstReorder = 1;
+
    CHECKa(l, bddfalse);
    CHECKa(r, bddfalse);
    CHECKa(var, bddfalse);
@@ -2386,7 +2397,6 @@ RETURN  {* The result of the operation. *}
 BDD bdd_appuni(BDD l, BDD r, int opr, BDD var)
 {
    BDD res;
-   firstReorder = 1;
 
    BUDDY_PROLOGUE;
    ADD_ARG1(T_BDD,l);
@@ -2394,6 +2404,8 @@ BDD bdd_appuni(BDD l, BDD r, int opr, BDD var)
    ADD_ARG1(T_INT,opr);
    ADD_ARG1(T_BDD,var);
    
+   firstReorder = 1;
+
    CHECKa(l, bddfalse);
    CHECKa(r, bddfalse);
    CHECKa(var, bddfalse);
