@@ -78,25 +78,50 @@ public abstract class BDDDomain {
     public BDD buildAdd(BDDDomain that, long value) {
         if (this.varNum() != that.varNum())
             throw new BDDException();
-
+        return buildAdd(that, this.varNum(), value);
+    }
+    public BDD buildAdd(BDDDomain that, int bits, long value) {
+        if (bits > this.varNum() ||
+            bits > that.varNum())
+            throw new BDDException();
+        
         BDDFactory bdd = getFactory();
         
         if (value == 0L) {
             BDD result = bdd.one();
-            for (int n = 0; n < this.varNum(); n++) {
-                result.andWith(bdd.ithVar(this.ivar[n]).biimp(bdd.ithVar(that.ivar[n])));
+            int n;
+            for (n = 0; n < bits; n++) {
+                BDD b = bdd.ithVar(this.ivar[n]);
+                b.biimpWith(bdd.ithVar(that.ivar[n]));
+                result.andWith(b);
+            }
+            for ( ; n < that.varNum(); n++) {
+                BDD b = bdd.nithVar(this.ivar[n]);
+                b.andWith(bdd.nithVar(that.ivar[n]));
+                result.andWith(b);
             }
             return result;
         }
 
-        BDDBitVector y = bdd.buildVector(this);
-        BDDBitVector v = bdd.constantVector(this.varNum(), value);
+        int[] vars = new int[bits];
+        System.arraycopy(this.ivar, 0, vars, 0, vars.length);
+        BDDBitVector y = bdd.buildVector(vars);
+        BDDBitVector v = bdd.constantVector(bits, value);
         BDDBitVector z = y.add(v);
         
-        BDDBitVector x = bdd.buildVector(that);
+        int[] thatvars = new int[bits];
+        System.arraycopy(that.ivar, 0, thatvars, 0, thatvars.length);
+        BDDBitVector x = bdd.buildVector(thatvars);
         BDD result = bdd.one();
-        for (int n = 0; n < x.size(); n++) {
-            result.andWith(x.bitvec[n].biimp(z.bitvec[n]));
+        int n;
+        for (n = 0; n < x.size(); n++) {
+            BDD b = x.bitvec[n].biimp(z.bitvec[n]);
+            result.andWith(b);
+        }
+        for ( ; n < that.varNum(); n++) {
+            BDD b = bdd.nithVar(this.ivar[n]);
+            b.andWith(bdd.nithVar(that.ivar[n]));
+            result.andWith(b);
         }
         x.free(); y.free(); z.free(); v.free();
         return result;
@@ -125,7 +150,7 @@ public abstract class BDDDomain {
         for (int n = 0; n < this.varNum(); n++) {
             BDD a = factory.ithVar(this_ivar[n]);
             BDD b = factory.ithVar(that_ivar[n]);
-            a.applyWith(b, BDDFactory.biimp);
+            a.biimpWith(b);
             e.andWith(a);
         }
 
