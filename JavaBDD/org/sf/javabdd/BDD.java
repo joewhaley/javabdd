@@ -1,5 +1,6 @@
 package org.sf.javabdd;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -699,140 +700,201 @@ public abstract class BDD {
      * 
      * @return an iteration of minterms
      */
-    public Iterator iterator(final BDD var) {
-        return new Iterator() {
-            int[] levels;
-            boolean[] values;
-            BDD[] nodes;
-            boolean more;
-            
-            {
-                if (!BDD.this.isZero()) {
-                    levels = varset2levels(var);
-                    values = new boolean[levels.length];
-                    nodes = new BDD[levels.length];
-                    fillInSatisfyingAssignment(BDD.this.id(), 0);
-                    more = true;
-                }
+    public BDDIterator iterator(final BDD var) {
+        return new BDDIterator(this, var);
+    }
+    
+    public static class BDDIterator implements Iterator {
+        BDDFactory factory;
+        int[] levels;
+        boolean[] values;
+        BDD[] nodes = null;
+        boolean more = false;
+        
+        public BDDIterator(BDD dis, BDD var){
+            factory = dis.getFactory();
+            if (!dis.isZero()) {
+                levels = varset2levels(var);
+                values = new boolean[levels.length];
+                nodes = new BDD[levels.length];
+                fillInSatisfyingAssignment(dis.id(), 0);
+                more = true;
             }
-            
-            void fillInSatisfyingAssignment(BDD node, int i) {
-                while (!node.isOne() && !node.isZero()) {
-                    int v = node.level();
-                    
-                    // Mark skipped variables as dont-cares.
-                    int j = i;
-                    while (j < levels.length && levels[j] != v) {
-                        if (nodes[j] != null)
-                            throw new InternalError("nodes["+j+"] should be null");
-                        ++j;
-                    }
-                    if (j == levels.length)
-                        throw new BDDException("BDD contains variable not in iteration set: "+getFactory().level2Var(v));
-                    i = j;
-                    
-                    // Put node in table.
-                    nodes[i] = node;
-                    
-                    // Choose zero edge.
-                    BDD node2 = node.low();
-                    if (node2.isZero()) {
-                        // Zero edge is F.  Choose one edge instead.
-                        node2.free();
-                        values[i] = true;
-                        node2 = node.high();
-                    }
-                    node = node2;
-                    ++i;
+        }
+        
+        void fillInSatisfyingAssignment(BDD node, int i) {
+            while (!node.isOne() && !node.isZero()) {
+                int v = node.level();
+                
+                // Mark skipped variables as dont-cares.
+                int j = i;
+                while (j < levels.length && levels[j] != v) {
+                    if (nodes[j] != null)
+                        throw new InternalError("nodes["+j+"] should be null");
+                    ++j;
                 }
-            }
-            
-            boolean findNextSatisfyingAssignment() {
-                int i = nodes.length - 1;
-                for (;;) {
-                    if (i < 0) return false;
-                    if (nodes[i] != null) {
-                        if (!values[i]) {
-                            // We already tried zero, try a one here now.
-                            BDD hi = nodes[i].high();
-                            if (!hi.isZero()) {
-                                values[i] = true;
-                                fillInSatisfyingAssignment(hi, i+1);
-                                return true;
-                            } else {
-                                // Leads to zero, no satisfying assignments.
-                                // Fallthrough.
-                            }
-                        }
-                        // We already tried both zero and one.
-                        nodes[i].free();
-                        nodes[i] = null;
-                        values[i] = false;
-                        // Fallthrough: Go to next bit.
-                    } else {
-                        // This is a dont-care bit, skip it.
-                    }
-                    --i;
+                if (j == levels.length)
+                    throw new BDDException("BDD contains variable not in iteration set: "+factory.level2Var(v));
+                i = j;
+                
+                // Put node in table.
+                nodes[i] = node;
+                
+                // Choose zero edge.
+                BDD node2 = node.low();
+                if (node2.isZero()) {
+                    // Zero edge is F.  Choose one edge instead.
+                    node2.free();
+                    values[i] = true;
+                    node2 = node.high();
                 }
+                node = node2;
+                ++i;
             }
-            
-            BDD buildAssignment() {
-                more = false;
-                BDD b = getFactory().one();
-                boolean carry = true;
-                for (int i = levels.length - 1; i >= 0; --i) {
-                    int level = levels[i];
-                    int var = getFactory().level2Var(level);
-                    boolean val = values[i];
-                    if (nodes[i] == null) {
-                        if (carry) {
-                            values[i] = !val;
-                            more |= !val;
-                            carry = val;
+        }
+        
+        boolean findNextSatisfyingAssignment() {
+            int i = nodes.length - 1;
+            for (;;) {
+                if (i < 0) return false;
+                if (nodes[i] != null) {
+                    if (!values[i]) {
+                        // We already tried zero, try a one here now.
+                        BDD hi = nodes[i].high();
+                        if (!hi.isZero()) {
+                            values[i] = true;
+                            fillInSatisfyingAssignment(hi, i+1);
+                            return true;
                         } else {
-                            more = true;
+                            // Leads to zero, no satisfying assignments.
+                            // Fallthrough.
                         }
                     }
-                    BDD v = val ? getFactory().ithVar(var) : getFactory().nithVar(var);
-                    b.andWith(v);
-                }
-                return b;
-            }
-            
-            void free() {
-                for (int i = levels.length - 1; i >= 0; --i) {
-                    if (nodes[i] != null) {
-                        nodes[i].free();
-                        nodes[i] = null;
-                    }
-                }
-                nodes = null;
-            }
-            
-            public Object next() {
-                BDD b;
-                if (more) {
-                    b = buildAssignment();
+                    // We already tried both zero and one.
+                    nodes[i].free();
+                    nodes[i] = null;
+                    values[i] = false;
+                    // Fallthrough: Go to next bit.
                 } else {
-                    throw new NoSuchElementException();
+                    // This is a dont-care bit, skip it.
                 }
-                if (!more) {
-                    more = findNextSatisfyingAssignment();
-                    if (!more) {
-                        free();
+                --i;
+            }
+        }
+        
+        void increment() {
+            more = false;
+            boolean carry = true;
+            for (int i = levels.length - 1; i >= 0; --i) {
+                boolean val = values[i];
+                if (nodes[i] == null) {
+                    if (carry) {
+                        values[i] = !val;
+                        more |= !val;
+                        carry = val;
                     }
                 }
-                return b;
             }
-            
-            public boolean hasNext() {
-                return nodes != null;
+        }
+        
+        BDD buildAndIncrement() {
+            more = false;
+            BDD b = factory.one();
+            boolean carry = true;
+            for (int i = levels.length - 1; i >= 0; --i) {
+                int level = levels[i];
+                int var = factory.level2Var(level);
+                boolean val = values[i];
+                if (nodes[i] == null) {
+                    if (carry) {
+                        values[i] = !val;
+                        more |= !val;
+                        carry = val;
+                    }
+                }
+                BDD v = val ? factory.ithVar(var) : factory.nithVar(var);
+                b.andWith(v);
             }
-            
-            public void remove() {
-                throw new UnsupportedOperationException();
+            return b;
+        }
+        
+        void free() {
+            for (int i = levels.length - 1; i >= 0; --i) {
+                if (nodes[i] != null) {
+                    nodes[i].free();
+                    nodes[i] = null;
+                }
             }
-        };
+            nodes = null;
+        }
+        
+        public Object next() {
+            BDD b;
+            if (more) {
+                b = buildAndIncrement();
+            } else {
+                throw new NoSuchElementException();
+            }
+            if (!more) {
+                more = findNextSatisfyingAssignment();
+                if (!more) {
+                    free();
+                }
+            }
+            return b;
+        }
+        
+        public boolean hasNext() {
+            return nodes != null;
+        }
+        
+        public void remove() {
+            throw new UnsupportedOperationException();
+        }
+        
+        public boolean isDontCare(int var) {
+            if (levels == null)
+                throw new BDDException(); 
+            int level = factory.var2Level(var);
+            int i = Arrays.binarySearch(levels, level);
+            if (i == -1)
+                throw new BDDException(); 
+            return nodes[i] == null;
+        }
+        
+        public boolean isDontCare(BDDDomain d) {
+            int[] vars = d.vars();
+            for (int i = 0; i < vars.length; ++i) {
+                if (!isDontCare(vars[i])) return false;
+            }
+            return true;
+        }
+        
+        void fastForward0(int var) {
+            if (levels == null)
+                throw new BDDException(); 
+            int level = factory.var2Level(var);
+            int i = Arrays.binarySearch(levels, level);
+            if (i == -1)
+                throw new BDDException(); 
+            if (nodes[i] != null)
+                throw new BDDException();
+            values[i] = true;
+        }
+        
+        public void fastForward(int var) {
+            fastForward0(var);
+            //increment();
+        }
+        
+        public void skipDontCare(BDDDomain d) {
+            int[] vars = d.vars();
+            for (int i = 0; i < vars.length; ++i) {
+                fastForward0(vars[i]);
+            }
+            //increment();
+        }
+        
     }
     
     /**
@@ -843,12 +905,20 @@ public abstract class BDD {
      * @return an iteration of minterms
      */
     public Iterator iterator2(final BDD var) {
-        final BDD b = id();
-        final BDD zero = getFactory().zero();
         return new Iterator() {
 
-            BDD last;
-                
+            BDD b = null;
+            BDD zero;
+            BDD myVar;
+            BDD last = null;
+            {
+                if (!isZero()) {
+                    b = id();
+                    zero = getFactory().zero();
+                    myVar = var.id();
+                }
+            }
+            
             public void remove() {
                 if (last != null) {
                     applyWith(last.id(), BDDFactory.diff);
@@ -859,12 +929,19 @@ public abstract class BDD {
             }
 
             public boolean hasNext() {
-                return !b.isZero();
+                return b != null;
             }
 
             public Object next() {
-                BDD c = b.satOne(var, zero);
+                if (b == null)
+                    throw new NoSuchElementException();
+                BDD c = b.satOne(myVar, zero);
                 b.applyWith(c.id(), BDDFactory.diff);
+                if (b.isZero()) {
+                    myVar.free(); myVar = null;
+                    b.free(); b = null;
+                    zero.free(); zero = null;
+                }
                 return last = c;
             }
                 
@@ -1392,16 +1469,19 @@ public abstract class BDD {
     public static void main(String[] args) {
         BDDFactory bdd = BDDFactory.init(1000, 1000);
         int domainSize = 1024;
-        BDDDomain d = bdd.extDomain(new int[] { domainSize })[0];
+        bdd.extDomain(new int[] { domainSize, domainSize });
+        BDDDomain d = bdd.getDomain(0);
+        BDDDomain d2 = bdd.getDomain(1);
         Random r = new Random();
         int times = 1000;
-        int combine = 200;
+        int combine = 400;
         for (int i = 0; i < times; ++i) {
             int count = r.nextInt(combine);
             BDD b = bdd.zero();
             for (int j = 0; j < count; ++j) {
                 int varNum = r.nextInt(domainSize);
-                b.orWith(d.ithVar(varNum));
+                BDD c = d.ithVar(varNum); //.andWith(d2.ithVar(domainSize - varNum - 1));
+                b.orWith(c);
             }
             BDD var = d.set();
             Iterator i1 = b.iterator(var);
