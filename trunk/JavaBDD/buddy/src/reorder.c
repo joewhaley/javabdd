@@ -52,6 +52,16 @@
  */
 
    /* Change macros to reflect the above idea */
+#if defined(SMALL_NODES)
+#define VAR(n)  ((bddnodes[n].low_llev >> LEV_LPOS) | \
+                ((bddnodes[n].high_hlev & LEV_HMASK) >> (LEV_HPOS-LEV_LBITS)))
+#define VARp(p) (((p)->low_llev >> LEV_LPOS) | \
+                (((p)->high_hlev & LEV_HMASK) >> (LEV_HPOS-LEV_LBITS)))
+#define SETVARp(p,v) { \
+	(p)->low_llev = ((v) << LEV_LPOS) | ((p)->low_llev & ~NODE_MASK); \
+	(p)->high_hlev = (((v) << (LEV_HPOS-LEV_LBITS)) & LEV_HMASK) | ((p)->high_hlev & ~NODE_MASK); \
+	}
+#else
 #if defined(USE_BITFIELDS)
 #define VAR(n) (bddnodes[n].level)
 #define VARp(p) ((p)->level)
@@ -60,6 +70,7 @@
 #define VAR(n) (bddnodes[n].refcou_and_level >> 10)
 #define VARp(p) ((p)->refcou_and_level >> 10)
 #define SETVARp(p,v) ((p)->refcou_and_level = ((p)->refcou_and_level & MAXREF) | (v << 10))
+#endif
 #endif
 
    /* Avoid these - they are misleading! */
@@ -879,11 +890,8 @@ static int mark_roots(void)
    {
          /* This is where we go from .level to .var!
 	  * - Do NOT use the LEVEL macro here. */
-#if defined(USE_BITFIELDS)
-      bddnodes[n].level = bddlevel2var[bddnodes[n].level];
-#else
-      bddnodes[n].refcou_and_level = (bddlevel2var[bddnodes[n].refcou_and_level >> 10] << 10) | REF(n);
-#endif
+	  int v = bddlevel2var[VAR(n)];
+      SETVARp(&bddnodes[n], v);
       
       if (REF(n) > 0)
       {
@@ -918,11 +926,11 @@ static int mark_roots(void)
 
       /* Make sure the hash field is empty. This saves a loop in the
 	 initial GBC */
-      node->hash = 0;
+      SETHASHp(node, 0);
    }
 
-   bddnodes[0].hash = 0;
-   bddnodes[1].hash = 0;
+   SETHASH(0, 0);
+   SETHASH(1, 0);
 
    free(dep);
    return 0;
@@ -951,14 +959,14 @@ static void reorder_gbc(void)
 	 register unsigned int hash;
 	 
 	 hash = NODEHASH(VARp(node), LOWp(node), HIGHp(node));
-	 node->next = bddnodes[hash].hash;
-	 bddnodes[hash].hash = n;
+	 SETNEXTp(node, HASH(hash));
+	 SETHASH(hash, n);
 
       }
       else
       {
-	 LOWp(node) = -1;
-	 node->next = bddfreepos;
+	 SETLOWp(node, INVALID_BDD);
+	 SETNEXTp(node, bddfreepos);
 	 bddfreepos = n;
 	 bddfreenum++;
       }
@@ -1001,7 +1009,7 @@ static void reorder_rehashAll(void)
    bddfreepos = 0;
 
    for (n=bddnodesize-1 ; n>=0 ; n--)
-      bddnodes[n].hash = 0;
+      SETHASH(n, 0);
    
    for (n=bddnodesize-1 ; n>=2 ; n--)
    {
@@ -1012,12 +1020,12 @@ static void reorder_rehashAll(void)
 	 register unsigned int hash;
 	 
 	 hash = NODEHASH(VARp(node), LOWp(node), HIGHp(node));
-	 node->next = bddnodes[hash].hash;
-	 bddnodes[hash].hash = n;
+	 SETNEXTp(node, HASH(hash));
+	 SETHASH(hash, n);
       }
       else
       {
-	 node->next = bddfreepos;
+	 SETNEXTp(node, bddfreepos);
 	 bddfreepos = n;
       }
    }
@@ -1051,7 +1059,7 @@ static int reorder_makenode(int var, int low, int high)
 
       /* Try to find an existing node of this kind */
    hash = NODEHASH(var, low, high);
-   res = bddnodes[hash].hash;
+   res = HASH(hash);
       
    while(res != 0)
    {
@@ -1063,7 +1071,7 @@ static int reorder_makenode(int var, int low, int high)
 	 INCREF(res);
 	 return res;
       }
-      res = bddnodes[res].next;
+      res = NEXT(res);
       
 #ifdef CACHESTATS
       bddcachestats.uniqueChain++;
@@ -1099,22 +1107,23 @@ static int reorder_makenode(int var, int low, int high)
 
       /* Build new node */
    res = bddfreepos;
-   bddfreepos = bddnodes[bddfreepos].next;
+   bddfreepos = NEXT(bddfreepos);
    levels[var].nodenum++;
    bddproduced++;
    bddfreenum--;
    
    node = &bddnodes[res];
    SETVARp(node, var);
-   LOWp(node) = low;
-   HIGHp(node) = high;
+   SETLOWp(node, low);
+   SETHIGHp(node, high);
 
       /* Insert node in hash chain */
-   node->next = bddnodes[hash].hash;
-   bddnodes[hash].hash = res;
+   SETNEXTp(node, HASH(hash));
+   SETHASH(hash, res);
 
       /* Make sure it is reference counted */
-   SETREFp(node, 1);
+   CLRREFp(node); // <-- is this necessary?
+   INCREFp(node);
    INCREF(LOWp(node));
    INCREF(HIGHp(node));
    
@@ -1141,25 +1150,25 @@ static int reorder_downSimple(int var0)
    {
       int r;
 
-      r = bddnodes[n + vl0].hash;
-      bddnodes[n + vl0].hash = 0;
+      r = HASH(n + vl0);
+      SETHASH(n + vl0, 0);
 
       while (r != 0)
       {
 	 BddNode *node = &bddnodes[r];
-	 int next = node->next;
+	 int next = NEXTp(node);
 
 	 if (VAR(LOWp(node)) != var1  &&  VAR(HIGHp(node)) != var1)
 	 {
  	       /* Node does not depend on next var, let it stay in the chain */
-	    node->next = bddnodes[n+vl0].hash;
-	    bddnodes[n+vl0].hash = r;
+	    SETNEXTp(node, HASH(n+vl0));
+	    SETHASH(n+vl0, r);
 	    levels[var0].nodenum++;
 	 }
 	 else
 	 {
    	       /* Node depends on next var - save it for later procesing */
-	    node->next = toBeProcessed;
+	    SETNEXTp(node, toBeProcessed);
 	    toBeProcessed = r;
 #ifdef SWAPCOUNT
 	    bddcachestats.swapCount++;
@@ -1187,7 +1196,7 @@ static void reorder_swap(int toBeProcessed, int var0)
    while (toBeProcessed)
    {
       BddNode *node = &bddnodes[toBeProcessed];
-      int next = node->next;
+      int next = NEXTp(node);
       int f0 = LOWp(node);
       int f1 = HIGHp(node);
       int f00, f01, f10, f11, hash;
@@ -1225,15 +1234,15 @@ static void reorder_swap(int toBeProcessed, int var0)
       
          /* Update in-place */
       SETVARp(node, var1);
-      LOWp(node) = f0;
-      HIGHp(node) = f1;
+      SETLOWp(node, f0);
+      SETHIGHp(node, f1);
 	    
       levels[var1].nodenum++;
       
          /* Rehash the node since it got new childs */
       hash = NODEHASH(VARp(node), LOWp(node), HIGHp(node));
-      node->next = bddnodes[hash].hash;
-      bddnodes[hash].hash = toBeProcessed;
+      SETNEXTp(node, HASH(hash));
+      SETHASH(hash, toBeProcessed);
 
       toBeProcessed = next;
    }
@@ -1254,26 +1263,26 @@ static void reorder_localGbc(int var0)
    for (n=0 ; n<size1 ; n++)
    {
       int hash = n+vl1;
-      int r = bddnodes[hash].hash;
-      bddnodes[hash].hash = 0;
+      int r = HASH(hash);
+      SETHASH(hash, 0);
 
       while (r)
       {
 	 BddNode *node = &bddnodes[r];
-	 int next = node->next;
+	 int next = NEXTp(node);
 
 	 if (REFp(node) > 0)
 	 {
-	    node->next = bddnodes[hash].hash;
-	    bddnodes[hash].hash = r;
+	    SETNEXTp(node, HASH(hash));
+	    SETHASH(hash, r);
 	 }
 	 else
 	 {
 	    DECREF(LOWp(node));
 	    DECREF(HIGHp(node));
 	    
-	    LOWp(node) = -1;
-	    node->next = bddfreepos; 
+	    SETLOWp(node, INVALID_BDD);
+	    SETNEXTp(node, bddfreepos);
 	    bddfreepos = r;
 	    levels[var1].nodenum--;
 	    bddfreenum++;
@@ -1296,7 +1305,7 @@ static void reorder_swapResize(int toBeProcessed, int var0)
    while (toBeProcessed)
    {
       BddNode *node = &bddnodes[toBeProcessed];
-      int next = node->next;
+      int next = NEXTp(node);
       int f0 = LOWp(node);
       int f1 = HIGHp(node);
       int f00, f01, f10, f11;
@@ -1333,9 +1342,9 @@ static void reorder_swapResize(int toBeProcessed, int var0)
       DECREF(HIGHp(node));
       
          /* Update in-place */
-      VARp(node) = var1;
-      LOWp(node) = f0;
-      HIGHp(node) = f1;
+      SETVARp(node, var1);
+      SETLOWp(node, f0);
+      SETHIGHp(node, f1);
 	    
       levels[var1].nodenum++;
       
@@ -1356,17 +1365,17 @@ static void reorder_localGbcResize(int toBeProcessed, int var0)
    for (n=0 ; n<size1 ; n++)
    {
       int hash = n+vl1;
-      int r = bddnodes[hash].hash;
-      bddnodes[hash].hash = 0;
+      int r = HASH(hash);
+      SETHASH(hash, 0);
 
       while (r)
       {
 	 BddNode *node = &bddnodes[r];
-	 int next = node->next;
+	 int next = NEXTp(node);
 
 	 if (REFp(node) > 0)
 	 {
-	    node->next = toBeProcessed;
+	    SETNEXTp(node, toBeProcessed);
 	    toBeProcessed = r;
 	 }
 	 else
@@ -1374,8 +1383,8 @@ static void reorder_localGbcResize(int toBeProcessed, int var0)
 	    DECREF(LOWp(node));
 	    DECREF(HIGHp(node));
 	    
-	    LOWp(node) = -1;
-	    node->next = bddfreepos; 
+	    SETLOWp(node, INVALID_BDD);
+	    SETNEXTp(node, bddfreepos);
 	    bddfreepos = r;
 	    levels[var1].nodenum--;
 	    bddfreenum++;
@@ -1398,11 +1407,11 @@ static void reorder_localGbcResize(int toBeProcessed, int var0)
    while (toBeProcessed)
    {
       BddNode *node = &bddnodes[toBeProcessed];
-      int next = node->next;
+      int next = NEXTp(node);
       int hash = NODEHASH(VARp(node), LOWp(node), HIGHp(node));
 	 
-      node->next = bddnodes[hash].hash;
-      bddnodes[hash].hash = toBeProcessed;
+      SETNEXTp(node, HASH(hash));
+      SETHASH(hash, toBeProcessed);
 
       toBeProcessed = next;
    }   
@@ -1438,7 +1447,7 @@ static void sanitycheck(void)
 	 while (r)
 	 {
 	    assert(VAR(r) == v);
-	    r = bddnodes[r].next;
+	    r = NEXT(r);
 	    cou++;
 	    vcou++;
 	 }
@@ -1699,28 +1708,13 @@ static void reorder_done(void)
       if (MARKED(n))
 	 UNMARK(n);
       else
-	 SETREF(n, 0);
+	 CLRREF(n);
 
          /* This is where we go from .var to .level again!
 	  * - Do NOT use the LEVEL macro here. */
-#if defined(USE_BITFIELDS)
-      bddnodes[n].level = bddvar2level[bddnodes[n].level];
-#else
-      bddnodes[n].refcou_and_level = (bddvar2level[bddnodes[n].refcou_and_level >> 10] << 10) | REF(n);
-#endif
+      { int v = bddvar2level[VAR(n)]; SETVARp(&bddnodes[n], v); }
    }
 
-#if 0
-   for (n=0 ; n<bddvarnum ; n++)
-      printf("%3d\n", bddlevel2var[n]);
-   printf("\n");
-#endif
-   
-#if 0
-   for (n=0 ; n<bddvarnum ; n++)
-      printf("%3d: %4d nodes , %4d entries\n", n, levels[n].nodenum,
-	     levels[n].size);
-#endif
    free(extroots);
    free(levels);
    imatrixDelete(iactmtx);

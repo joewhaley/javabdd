@@ -56,23 +56,163 @@
 #define CHECK(r)\
    if (!bddrunning) return bdd_error(BDD_RUNNING);\
    else if ((r) < 0  ||  (r) >= bddnodesize) return bdd_error(BDD_ILLBDD);\
-   else if (r >= 2 && LOW(r) == -1) return bdd_error(BDD_ILLBDD)\
+   else if (r >= 2 && LOW(r) == INVALID_BDD) return bdd_error(BDD_ILLBDD)\
 
    /* Sanity check argument and return eventually the argument 'a' */
 #define CHECKa(r,a)\
    if (!bddrunning) { bdd_error(BDD_RUNNING); return (a); }\
    else if ((r) < 0  ||  (r) >= bddnodesize)\
      { bdd_error(BDD_ILLBDD); return (a); }\
-   else if (r >= 2 && LOW(r) == -1)\
+   else if (r >= 2 && LOW(r) == INVALID_BDD)\
      { bdd_error(BDD_ILLBDD); return (a); }
 
 #define CHECKn(r)\
    if (!bddrunning) { bdd_error(BDD_RUNNING); return; }\
    else if ((r) < 0  ||  (r) >= bddnodesize)\
      { bdd_error(BDD_ILLBDD); return; }\
-   else if (r >= 2 && LOW(r) == -1)\
+   else if (r >= 2 && LOW(r) == INVALID_BDD)\
      { bdd_error(BDD_ILLBDD); return; }
 
+#if defined(SMALL_NODES)
+
+/*=== SEMI-INTERNAL TYPES ==============================================*/
+
+typedef struct s_BddNode /* Node table entry */
+{
+   unsigned int hash_lref;
+   unsigned int next_href_mark;
+   unsigned int low_llev;
+   unsigned int high_hlev;
+} BddNode;
+
+/*=== KERNEL DEFINITIONS ===============================================*/
+
+#define NODE_MASK   0x07FFFFFF
+#define LEV_LMASK   0xF8000000
+#define LEV_HMASK   0xF8000000
+
+#define REF_LMASK   0xF8000000
+#define REF_HMASK   0xF0000000
+#define REF_LINC    0x08000000
+#define REF_HINC    0x10000000
+#define MARK_MASK   0x08000000
+#define HASH_MASK   0x07FFFFFF
+#define NEXT_MASK   0x07FFFFFF
+
+#define NODE_BITS  27
+#define LEV_LPOS   27
+#define LEV_LBITS  5
+#define LEV_HPOS   27
+#define LEV_HBITS  5
+#define REF_LPOS   27
+#define REF_LBITS  5
+#define REF_HPOS   28
+#define REF_HBITS  4
+
+#define INVALID_BDD NODE_MASK
+#define MAXVAR ((1 << (LEV_LBITS + LEV_HBITS)) - 1)
+#define MAX_PAIRSID MAXVAR
+#define MAXREF ((1 << (REF_LBITS + REF_HBITS)) - 1)
+
+   /* Reference counting */
+#define LREF(n)  (bddnodes[n].hash_lref & REF_LMASK)
+#define LREFp(n) (n->hash_lref & REF_LMASK)
+#define HREF(n)  (bddnodes[n].next_href_mark & REF_HMASK)
+#define HREFp(n) (n->next_href_mark & REF_HMASK)
+#define REF(n)   ((bddnodes[n].hash_lref >> REF_LPOS) | \
+		 ((bddnodes[n].next_href_mark & REF_HMASK) >> (REF_HPOS-REF_LBITS)))
+#define REFp(n)  (((n)->hash_lref >> REF_LPOS) | \
+		 (((n)->next_href_mark & REF_HMASK) >> (REF_HPOS-REF_LBITS)))
+
+#define DECREF(n) { \
+	if (LREF(n)!=REF_LMASK || HREF(n)!=REF_HMASK) { \
+		if (LREF(n)==0) bddnodes[n].next_href_mark -= REF_HINC; \
+		bddnodes[n].hash_lref -= REF_LINC; \
+	} }
+#define INCREF(n) { \
+	if (LREF(n)!=REF_LMASK) bddnodes[n].hash_lref += REF_LINC; \
+	else if (HREF(n)!=REF_HMASK) { \
+		bddnodes[n].hash_lref += REF_LINC; \
+		bddnodes[n].next_href_mark += REF_HINC; \
+	} }
+#define DECREFp(n) { \
+	if (LREFp(n)!=REF_LMASK || HREFp(n)!=REF_HMASK) { \
+		if (LREFp(n)==0) (n)->next_href_mark -= REF_HINC; \
+		(n)->hash_lref -= REF_LINC; \
+	} }
+#define INCREFp(n) { \
+	if (LREFp(n)!=REF_LMASK) (n)->hash_lref += REF_LINC; \
+	else if (HREFp(n)!=REF_HMASK) { \
+		(n)->hash_lref += REF_LINC; \
+		(n)->next_href_mark += REF_HINC; \
+	} }
+#define HASREF(n) (LREF(n) != 0 || HREF(n) != 0)
+
+   /* Marking BDD nodes */
+
+#define MARKHIDE  NEXT_MASK
+#define SETMARK(n)  (bddnodes[n].next_href_mark |= MARK_MASK)
+#define UNMARK(n)   (bddnodes[n].next_href_mark &= ~MARK_MASK)
+#define MARKED(n)   (bddnodes[n].next_href_mark & MARK_MASK)
+#define SETMARKp(p) ((p)->next_href_mark |= MARK_MASK)
+#define UNMARKp(p)  ((p)->next_href_mark &= ~MARK_MASK)
+#define MARKEDp(p)  ((p)->next_href_mark & MARK_MASK)
+
+#define LOW(a)     (bddnodes[a].low_llev & NODE_MASK)
+#define HIGH(a)    (bddnodes[a].high_hlev & NODE_MASK)
+#define LOWp(p)     ((p)->low_llev & NODE_MASK)
+#define HIGHp(p)    ((p)->high_hlev & NODE_MASK)
+#define SETLOW(a,n)   (bddnodes[a].low_llev = (n) | (bddnodes[a].low_llev & ~NODE_MASK))
+#define SETLOWp(p,n)  ((p)->low_llev = (n) | ((p)->low_llev & ~NODE_MASK))
+#define SETLOWpz(p,n)  ((p)->low_llev = (n))
+#define SETHIGH(a,n)  (bddnodes[a].high_hlev = (n) | (bddnodes[a].high_hlev & ~NODE_MASK))
+#define SETHIGHp(p,n) ((p)->high_hlev = (n) | ((p)->high_hlev & ~NODE_MASK))
+#define HASH(a)       (bddnodes[a].hash_lref & HASH_MASK)
+#define HASHp(p)      ((p)->hash_lref & HASH_MASK)
+#define SETHASH(a,n)  (bddnodes[a].hash_lref = (n) | (bddnodes[a].hash_lref & ~HASH_MASK))
+#define SETHASHp(p,n) ((p)->hash_lref = (n) | ((p)->hash_lref & ~HASH_MASK))
+#define NEXT(a)       (bddnodes[a].next_href_mark & NEXT_MASK)
+#define NEXTp(p)      ((p)->next_href_mark & NEXT_MASK)
+#define SETNEXT(a,n)  (bddnodes[a].next_href_mark = (n) | (bddnodes[a].next_href_mark & ~NEXT_MASK))
+#define SETNEXTp(p,n) ((p)->next_href_mark = (n) | ((p)->next_href_mark & ~NEXT_MASK))
+#define SETNEXTpz(p,n) ((p)->next_href_mark = (n))
+#define CLRREF(n)     { bddnodes[n].hash_lref &= ~REF_LMASK; bddnodes[n].next_href_mark &= ~REF_HMASK; }
+#define CLRREFp(p)    { (p)->hash_lref &= ~REF_LMASK; (p)->next_href_mark &= ~REF_HMASK; }
+#define SETMAXREF(n)  { bddnodes[n].hash_lref |= REF_LMASK; bddnodes[n].next_href_mark |= REF_HMASK; }
+#define SETMAXREFp(p) { (p)->hash_lref |= REF_LMASK; (p)->next_href_mark |= REF_HMASK; }
+#define LEVEL(n)  ((bddnodes[n].low_llev >> LEV_LPOS) | \
+		   ((bddnodes[n].high_hlev & LEV_HMASK) >> (LEV_HPOS-LEV_LBITS)))
+#define LEVELp(p) (((p)->low_llev >> LEV_LPOS) | \
+		   (((p)->high_hlev & LEV_HMASK) >> (LEV_HPOS-LEV_LBITS)))
+#define SETLEVEL(n,v) { \
+	bddnodes[n].low_llev = ((v) << LEV_LPOS) | (bddnodes[n].low_llev & NODE_MASK); \
+	bddnodes[n].high_hlev = (((v) << (LEV_HPOS-LEV_LBITS)) & LEV_HMASK) | (bddnodes[n].high_hlev & NODE_MASK); \
+	}
+#define SETLEVELp(p,v) { \
+	(p)->low_llev = ((v) << LEV_LPOS) | ((p)->low_llev & NODE_MASK); \
+	(p)->high_hlev = (((v) << (LEV_HPOS-LEV_LBITS)) & LEV_HMASK) | ((p)->high_hlev & NODE_MASK); \
+	}
+#define CLRLEVELREF(n) { \
+	bddnodes[n].hash_lref &= ~REF_LMASK; \
+	bddnodes[n].next_href_mark &= ~REF_HMASK; \
+	bddnodes[n].low_llev &= ~LEV_LMASK; \
+	bddnodes[n].high_hlev &= ~LEV_HMASK; \
+	}
+
+#define INIT_NODE(n) { \
+	bddnodes[n].hash_lref = 0; \
+	bddnodes[n].next_href_mark = (n)+1; \
+	bddnodes[n].low_llev = INVALID_BDD; \
+	bddnodes[n].high_hlev = 0; \
+	}
+
+#define CREATE_NODE(n, lev, lo, hi, nxt) { \
+	bddnodes[n].next_href_mark = nxt; \
+	bddnodes[n].low_llev = lo | ((lev) << LEV_LPOS); \
+	bddnodes[n].high_hlev = hi | (((lev) << (LEV_HPOS-LEV_LBITS)) & LEV_HMASK); \
+	}
+
+#else  // SMALL_NODES
 
 /*=== SEMI-INTERNAL TYPES ==============================================*/
 
@@ -90,39 +230,11 @@ typedef struct s_BddNode /* Node table entry */
    int next;
 } BddNode;
 
-
-/*=== KERNEL VARIABLES =================================================*/
-
-#ifdef CPLUSPLUS
-extern "C" {
-#endif
-
-extern int       bddrunning;         /* Flag - package initialized */
-extern int       bdderrorcond;       /* Some error condition was met */
-extern int       bddnodesize;        /* Number of allocated nodes */
-extern int       bddmaxnodesize;     /* Maximum allowed number of nodes */
-extern int       bddmaxnodeincrease; /* Max. # of nodes used to inc. table */
-extern BddNode*  bddnodes;           /* All of the bdd nodes */
-extern int       bddvarnum;          /* Number of defined BDD variables */
-extern int*      bddrefstack;        /* Internal node reference stack */
-extern int*      bddrefstacktop;     /* Internal node reference stack top */
-extern int*      bddvar2level;
-extern int*      bddlevel2var;
-extern jmp_buf   bddexception;
-extern int       bddreorderdisabled;
-extern int       bddresized;
-extern bddCacheStat bddcachestats;
-
-#ifdef CPLUSPLUS
-}
-#endif
-
-
 /*=== KERNEL DEFINITIONS ===============================================*/
 
 #define MAXVAR 0x1FFFFF
 #define MAXREF 0x3FF
-#define SRAND48SEED 0xbeef
+#define INVALID_BDD -1
 
    /* Reference counting */
 #if defined(USE_BITFIELDS)
@@ -131,13 +243,13 @@ extern bddCacheStat bddcachestats;
 #define DECREFp(n) if (REFp(n)!=MAXREF && REFp(n)>0) n->refcou--
 #define INCREFp(n) if (REFp(n)<MAXREF) n->refcou++
 #define HASREF(n) (REF(n) > 0)
-#else
+#else // USE_BITFIELDS
 #define DECREF(n) if (REF(n)!=MAXREF && REF(n)>0) bddnodes[n].refcou_and_level--
 #define INCREF(n) if (REF(n)<MAXREF) bddnodes[n].refcou_and_level++
 #define DECREFp(n) if (REFp(n)!=MAXREF && REFp(n)>0) n->refcou_and_level--
 #define INCREFp(n) if (REFp(n)<MAXREF) n->refcou_and_level++
 #define HASREF(n) (REF(n) > 0)
-#endif
+#endif // USE_BITFIELDS
 
    /* Marking BDD nodes */
 
@@ -151,7 +263,7 @@ extern bddCacheStat bddcachestats;
 #define SETMARKp(p) (LEVELp(p) |= MARKON1)
 #define UNMARKp(p)  (LEVELp(p) &= MARKOFF1)
 #define MARKEDp(p)  (LEVELp(p) & MARKON1)
-#else
+#else // USE_BITFIELDS
 #define MARKON2   0x80000000    /* Bit used to mark a node (1) */
 #define MARKOFF2  0x7FFFFFFF    /* - unmark */
 #define MARKHIDE  0x1FFFFF
@@ -161,8 +273,69 @@ extern bddCacheStat bddcachestats;
 #define SETMARKp(p) ((p)->refcou_and_level |= MARKON2)
 #define UNMARKp(p)  ((p)->refcou_and_level &= MARKOFF2)
 #define MARKEDp(p)  ((p)->refcou_and_level & MARKON2)
-#endif
+#endif // USE_BITFIELDS
 
+#define LOW(a)     (bddnodes[a].low)
+#define HIGH(a)    (bddnodes[a].high)
+#define LOWp(p)     ((p)->low)
+#define HIGHp(p)    ((p)->high)
+#define SETLOW(a,n) (bddnodes[a].low = (n))
+#define SETLOWp(p,n) ((p)->low = (n))
+#define SETLOWpz(p,n) ((p)->low = (n))
+#define SETHIGH(a,n) (bddnodes[a].high = (n))
+#define SETHIGHp(p,n) ((p)->high = (n))
+#define NEXT(a)    (bddnodes[a].next)
+#define NEXTp(p)   ((p)->next)
+#define SETNEXT(a,n) (bddnodes[a].next = (n))
+#define SETNEXTp(p,n) ((p)->next = (n))
+#define SETNEXTpz(p,n) ((p)->next = (n))
+#define HASH(a)    (bddnodes[a].hash)
+#define HASHp(p)   ((p)->hash)
+#define SETHASH(a,n) (bddnodes[a].hash = (n))
+#define SETHASHp(p,n) ((p)->hash = (n))
+#if defined(USE_BITFIELDS)
+#define REF(n) (bddnodes[n].refcou)
+#define REFp(n) ((n)->refcou)
+#define CLRREF(n)    (bddnodes[n].refcou = 0)
+#define CLRREFp(p)   ((p)->refcou = 0)
+#define SETMAXREF(n) (bddnodes[n].refcou = MAXREF)
+#define SETMAXREFp(p) ((p)->refcou |= MAXREF)
+#define LEVEL(n) (bddnodes[n].level)
+#define LEVELp(p)   ((p)->level)
+#define SETLEVEL(n,v) (LEVEL(n) = (v))
+#define SETLEVELp(p,v) (LEVELp(p) = (v))
+#define CLRLEVELREF(n) (bddnodes[n].refcou = bddnodes[n].level = 0)
+#define SETLEVELREF(n,v) { bddnodes[n].refcou = 0; bddnodes[n].level = v; }
+#else // USE_BITFIELDS
+#define REF(n) (bddnodes[n].refcou_and_level & MAXREF)
+#define REFp(n) ((n)->refcou_and_level & MAXREF)
+#define CLRREF(n)    (bddnodes[n].refcou_and_level &= ~MAXREF)
+#define CLRREFp(p)   ((p)->refcou_and_level &= ~MAXREF)
+#define SETMAXREF(n) (bddnodes[n].refcou_and_level |= MAXREF)
+#define SETMAXREFp(p) ((p)->refcou_and_level |= MAXREF)
+#define LEVEL(n) (bddnodes[n].refcou_and_level >> 10)
+#define LEVELp(p) ((p)->refcou_and_level >> 10)
+#define SETLEVEL(n,v) (bddnodes[n].refcou_and_level = (bddnodes[n].refcou_and_level & MAXREF) | (v << 10))
+#define SETLEVELp(p,v) ((p)->refcou_and_level = ((p)->refcou_and_level & MAXREF) | (v << 10))
+#define CLRLEVELREF(n) (bddnodes[n].refcou_and_level = 0)
+#define SETLEVELREF(n,v) (bddnodes[n].refcou_and_level = v << 10)
+#endif // USE_BITFIELDS
+
+#define INIT_NODE(n) { \
+	CLRLEVELREF(n); \
+        SETLOW(n, INVALID_BDD); \
+        SETHASH(n, 0); \
+        SETNEXT(n, n+1); \
+	}
+
+#define CREATE_NODE(n,lev,lo,hi,nxt) { \
+	SETLEVELREF(n, lev); \
+	SETLOW(n, lo); \
+	SETHIGH(n, hi); \
+	SETNEXT(n, nxt); \
+	}
+
+#endif // SMALL_NODES
 
    /* Hashfunctions */
 
@@ -175,31 +348,8 @@ extern bddCacheStat bddcachestats;
 #define ISNONCONST(a) ((a) >= 2)
 #define ISONE(a)   ((a) == 1)
 #define ISZERO(a)  ((a) == 0)
-#define LOW(a)     (bddnodes[a].low)
-#define HIGH(a)    (bddnodes[a].high)
-#define LOWp(p)     ((p)->low)
-#define HIGHp(p)    ((p)->high)
-#if defined(USE_BITFIELDS)
-#define REF(n) (bddnodes[n].refcou)
-#define REFp(n) ((n)->refcou)
-#define SETREF(n,v) (bddnodes[n].refcou = (v))
-#define SETREFp(n,v) ((n)->refcou = (v))
-#define LEVEL(n) (bddnodes[n].level)
-#define LEVELp(p)   ((p)->level)
-#define SETLEVEL(n,v) (LEVEL(n) = (v))
-#define SETLEVELp(p,v) (LEVELp(p) = (v))
-#define CLRLEVELREF(n) (bddnodes[n].refcou = bddnodes[n].level = 0)
-#else
-#define REF(n) (bddnodes[n].refcou_and_level & MAXREF)
-#define REFp(n) ((n)->refcou_and_level & MAXREF)
-#define SETREF(n,v) (bddnodes[n].refcou_and_level = (bddnodes[n].refcou_and_level & ~MAXREF) | (v))
-#define SETREFp(p,v) ((p)->refcou_and_level = ((p)->refcou_and_level & ~MAXREF) | (v))
-#define LEVEL(n) (bddnodes[n].refcou_and_level >> 10)
-#define LEVELp(p) ((p)->refcou_and_level >> 10)
-#define SETLEVEL(n,v) (bddnodes[n].refcou_and_level = (bddnodes[n].refcou_and_level & MAXREF) | (v << 10))
-#define SETLEVELp(p,v) ((p)->refcou_and_level = ((p)->refcou_and_level & MAXREF) | (v << 10))
-#define CLRLEVELREF(n) (bddnodes[n].refcou_and_level = 0)
-#endif
+
+#define SRAND48SEED 0xbeef
 
    /* Stacking for garbage collector */
 #define INITREF    bddrefstacktop = bddrefstack
@@ -232,6 +382,32 @@ extern bddCacheStat bddcachestats;
 #define alloca(x) _alloca(x)
 #endif
 
+
+/*=== KERNEL VARIABLES =================================================*/
+
+#ifdef CPLUSPLUS
+extern "C" {
+#endif
+
+extern int       bddrunning;         /* Flag - package initialized */
+extern int       bdderrorcond;       /* Some error condition was met */
+extern int       bddnodesize;        /* Number of allocated nodes */
+extern int       bddmaxnodesize;     /* Maximum allowed number of nodes */
+extern int       bddmaxnodeincrease; /* Max. # of nodes used to inc. table */
+extern BddNode*  bddnodes;           /* All of the bdd nodes */
+extern int       bddvarnum;          /* Number of defined BDD variables */
+extern int*      bddrefstack;        /* Internal node reference stack */
+extern int*      bddrefstacktop;     /* Internal node reference stack top */
+extern int*      bddvar2level;
+extern int*      bddlevel2var;
+extern jmp_buf   bddexception;
+extern int       bddreorderdisabled;
+extern int       bddresized;
+extern bddCacheStat bddcachestats;
+
+#ifdef CPLUSPLUS
+}
+#endif
 
 /*=== KERNEL PROTOTYPES ================================================*/
 
