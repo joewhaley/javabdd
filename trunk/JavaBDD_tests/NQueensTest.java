@@ -2,7 +2,7 @@
 // Copyright (C) 2004 John Whaley <jwhaley@alum.mit.edu>
 // Licensed under the terms of the GNU LGPL; see COPYING for details.
 import junit.framework.Assert;
-import junit.framework.TestCase;
+import bdd.BDDTestCase;
 
 /**
  * NQueensTest
@@ -10,7 +10,7 @@ import junit.framework.TestCase;
  * @author John Whaley
  * @version $Id$
  */
-public class NQueensTest extends TestCase {
+public class NQueensTest extends BDDTestCase {
     public static void main(String[] args) {
         junit.textui.TestRunner.run(NQueensTest.class);
     }
@@ -23,13 +23,14 @@ public class NQueensTest extends TestCase {
       24233937684440. };
     
     public void testNQueens() {
-        for (int i = 1; i <= CHECK; ++i) {
-            NQueens.N = i;
-            double n = NQueens.runTest();
-            Assert.assertEquals(n, ANSWERS[i-1], 0.1);
-            NQueens.freeAll();
+        while (hasNext()) {
+            NQueens.B = nextFactory();
+            for (int i = 1; i <= CHECK; ++i) {
+                NQueens.N = i;
+                double n = NQueens.runTest();
+                Assert.assertEquals(n, ANSWERS[i-1], 0.1);
+                NQueens.freeAll();
+            }
         }
-        NQueens.B.done();
-        NQueens.B = null;
     }
 }

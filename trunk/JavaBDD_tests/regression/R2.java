@@ -3,11 +3,10 @@
 // Licensed under the terms of the GNU LGPL; see COPYING for details.
 package regression;
 
-import org.sf.javabdd.BDD;
-import org.sf.javabdd.BDDDomain;
-import org.sf.javabdd.BDDFactory;
 import junit.framework.Assert;
-import junit.framework.TestCase;
+import org.sf.javabdd.BDD;
+import org.sf.javabdd.BDDFactory;
+import bdd.BDDTestCase;
 
 /**
  * support() bug
@@ -15,21 +14,24 @@ import junit.framework.TestCase;
  * @author John Whaley
  * @version $Id$
  */
-public class R2 extends TestCase {
+public class R2 extends BDDTestCase {
     public static void main(String[] args) {
         junit.textui.TestRunner.run(R2.class);
     }
     
     public void testR2() {
-        BDDFactory bdd = BDDFactory.init(1000, 1000);
-        BDD zero = bdd.zero();
-        BDD one = bdd.one();
-        Assert.assertTrue(zero.isZero());
-        Assert.assertTrue(one.isOne());
-        BDD s0 = zero.support();
-        BDD s1 = one.support();
-        Assert.assertTrue(s0.isOne());
-        Assert.assertTrue(s1.isOne());
-        bdd.done();
+        while (hasNext()) {
+            BDDFactory bdd = nextFactory();
+            BDD zero = bdd.zero();
+            BDD one = bdd.one();
+            Assert.assertTrue(bdd.toString(), zero.isZero());
+            Assert.assertTrue(bdd.toString(), one.isOne());
+            BDD s0 = zero.support();
+            BDD s1 = one.support();
+            Assert.assertTrue(bdd.toString(), s0.isOne());
+            Assert.assertTrue(bdd.toString(), s1.isOne());
+            zero.free(); one.free();
+            s0.free(); s1.free();
+        }
     }
 }

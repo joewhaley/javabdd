@@ -4,10 +4,10 @@
 package regression;
 
 import junit.framework.Assert;
-import junit.framework.TestCase;
 import org.sf.javabdd.BDD;
 import org.sf.javabdd.BDDDomain;
 import org.sf.javabdd.BDDFactory;
+import bdd.BDDTestCase;
 
 /**
  * satCount bug
@@ -15,21 +15,22 @@ import org.sf.javabdd.BDDFactory;
  * @author John Whaley
  * @version $Id$
  */
-public class R1 extends TestCase {
+public class R1 extends BDDTestCase {
     public static void main(String[] args) {
         junit.textui.TestRunner.run(R1.class);
     }
     
     public void testR1() {
-        BDDFactory bdd = BDDFactory.init(1000, 1000);
-        BDDDomain d = bdd.extDomain(new int[] { 16 })[0];
-        BDD x = d.ithVar(6).orWith(d.ithVar(13));
-        BDD set = d.set();
-        double s1 = x.satCount(set);
-        bdd.setVarNum(20);
-        double s2 = x.satCount(set);
-        Assert.assertEquals(s1, s2, 0.00001);
-        x.free(); set.free();
-        bdd.done();
+        while (hasNext()) {
+            BDDFactory bdd = nextFactory();
+            BDDDomain d = bdd.extDomain(new int[] { 16 })[0];
+            BDD x = d.ithVar(6).orWith(d.ithVar(13));
+            BDD set = d.set();
+            double s1 = x.satCount(set);
+            bdd.setVarNum(20);
+            double s2 = x.satCount(set);
+            Assert.assertEquals(bdd.toString(), s1, s2, 0.00001);
+            x.free(); set.free();
+        }
     }
 }
