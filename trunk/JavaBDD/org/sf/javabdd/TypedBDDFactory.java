@@ -982,7 +982,7 @@ public class TypedBDDFactory extends BDDFactory {
             return bdd.hashCode();
         }
 
-        public Iterator iterator(BDD var) {
+        public BDDIterator iterator(BDD var) {
             TypedBDD bdd1 = (TypedBDD) var;
             if (!dom.equals(bdd1.dom)) {
                 out.println("Warning! iterator on the wrong domain(s): "+domainNames(dom)+" != "+domainNames(bdd1.dom));
@@ -990,7 +990,7 @@ public class TypedBDDFactory extends BDDFactory {
             return super.iterator(var);
         }
         
-        public Iterator iterator() {
+        public BDDIterator iterator() {
             Set newDom = makeSet();
             newDom.addAll(dom);
             return super.iterator(new TypedBDD(getDomains(), newDom));
