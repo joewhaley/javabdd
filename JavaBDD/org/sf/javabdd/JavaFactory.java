@@ -4278,7 +4278,7 @@ public class JavaFactory extends BDDFactory {
     /* (non-Javadoc)
      * @see org.sf.javabdd.BDDFactory#save(java.io.DataOutput, org.sf.javabdd.BDD)
      */
-    public void save_(DataOutput out, BDD b) throws IOException {
+    public void save(DataOutput out, BDD b) throws IOException {
         int x = ((bdd) b)._index;
         bdd_save(out, x);
     }
