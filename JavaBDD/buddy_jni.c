@@ -4,6 +4,31 @@
 #include <stdlib.h>
 #include "buddy_jni.h"
 
+/*
+** When casting from `int' to a pointer type, you should
+** first cast to `intptr_cast_type'.  This is a type
+** that is (a) the same size as a pointer, on most platforms,
+** to avoid compiler warnings about casts from pointer to int of
+** different size; and (b) guaranteed to be at least as big as
+** `int'.
+*/
+#if __STDC_VERSION__ >= 199901
+  #include <inttypes.h>
+  #if INTPTR_MAX >= INT_MAX
+    typedef intptr_t intptr_cast_type;
+  #else /* no intptr_t, or intptr_t smaller than `int' */
+    typedef intmax_t intptr_cast_type;
+  #endif
+#else
+  #include <stddef.h>
+  #include <limits.h>
+  #if PTRDIFF_MAX >= INT_MAX
+    typedef ptrdiff_t intptr_cast_type;
+  #else
+    typedef int intptr_cast_type;
+  #endif
+#endif
+
 static jclass bdd_cls;
 static jfieldID bdd_fid;
 static jmethodID bdd_mid;
@@ -161,7 +186,7 @@ static bddPair* Pair_JavaToC(JNIEnv *env, jobject pair)
   jlong m;
   bddPair* result;
   m = (*env)->GetLongField(env, pair, pair_fid);
-  result = (bddPair*) m;
+  result = (bddPair*) (intptr_cast_type) m;
   return result;
 }
 
@@ -225,17 +250,39 @@ JNIEXPORT void JNICALL Java_org_sf_javabdd_BuDDyFactory_registerNatives
   }
 }
 
+extern int    bdd_makenode(unsigned int, int, int);
+/*
+ * Class:     org_sf_javabdd_BuDDyFactory
+ * Method:    makeNode0
+ * Signature: (ILorg/sf/javabdd/BuDDyFactory$BuDDyBDD;Lorg/sf/javabdd/BuDDyFactory$BuDDyBDD;)Lorg/sf/javabdd/BuDDyFactory$BuDDyBDD;
+ */
+JNIEXPORT jobject JNICALL Java_org_sf_javabdd_BuDDyFactory_makeNode0
+  (JNIEnv *env, jobject o, jint level, jobject low, jobject high)
+{
+  BDD b = BDD_JavaToC(env, low);
+  BDD c = BDD_JavaToC(env, high);
+#if defined(TRACE_BUDDYLIB)
+  printf("bdd_makenode(%d, %d, %d)\n", level, b, c);
+#endif
+  jobject result = BDD_CToJava(env, bdd_makenode(level, b, c));
+  check_error(env);
+  return result;
+}
+
 /*
  * Class:     org_sf_javabdd_BuDDyFactory
  * Method:    buildCube0
- * Signature: (II[Lorg/sf/javabdd/BuDDyFactory$BuDDyBDD;)Lorg/sf/javabdd/BuDDyFactory$BuDDyBDD;
+ * Signature: (I[Lorg/sf/javabdd/BuDDyFactory$BuDDyBDD;)Lorg/sf/javabdd/BuDDyFactory$BuDDyBDD;
  */
 JNIEXPORT jobject JNICALL Java_org_sf_javabdd_BuDDyFactory_buildCube0
-  (JNIEnv *env, jobject o, jint value, jint width, jobjectArray arr)
+  (JNIEnv *env, jobject o, jint value, jobjectArray arr)
 {
   int i;
+  jint width;
   BDD* a;
   BDD r;
+  width = (*env)->GetArrayLength(env, arr);
+  
   a = (BDD*) malloc(sizeof(BDD) * width);
   if (a == NULL) return NULL;
   
@@ -255,14 +302,16 @@ JNIEXPORT jobject JNICALL Java_org_sf_javabdd_BuDDyFactory_buildCube0
 /*
  * Class:     org_sf_javabdd_BuDDyFactory
  * Method:    buildCube1
- * Signature: (II[I)Lorg/sf/javabdd/BDD;
+ * Signature: (I[I)Lorg/sf/javabdd/BDD;
  */
 JNIEXPORT jobject JNICALL Java_org_sf_javabdd_BuDDyFactory_buildCube1
-  (JNIEnv *env, jobject o, jint value, jint width, jintArray var)
+  (JNIEnv *env, jobject o, jint value, jintArray var)
 {
   int* arr;
   BDD b;
+  jint width;
 
+  width = (*env)->GetArrayLength(env, var);
   arr = (int*) (*env)->GetPrimitiveArrayCritical(env, var, NULL);
   if (arr == NULL) return NULL;
 #if defined(TRACE_BUDDYLIB)
@@ -527,7 +576,7 @@ JNIEXPORT jobject JNICALL Java_org_sf_javabdd_BuDDyFactory_makePair
       printf("bdd_newpair()\n");
 #endif
       bddPair* pair = bdd_newpair();
-      jlong param = (jlong) pair;
+      jlong param = (jlong) (intptr_cast_type) pair;
       result = (*env)->NewObject(env, cls, mid, param);
     }
   }
@@ -2124,13 +2173,12 @@ JNIEXPORT void JNICALL Java_org_sf_javabdd_BuDDyFactory_00024BuDDyBDDPairing_set
 /*
  * Class:     org_sf_javabdd_BuDDyFactory_BuDDyBDDPairing
  * Method:    set2
- * Signature: (Lorg/sf/javabdd/BuDDyFactory$BuDDyBDD;Lorg/sf/javabdd/BuDDyFactory$BuDDyBDD;)V
+ * Signature: (ILorg/sf/javabdd/BuDDyFactory$BuDDyBDD;)V
  */
 JNIEXPORT void JNICALL Java_org_sf_javabdd_BuDDyFactory_00024BuDDyBDDPairing_set2
-  (JNIEnv *env, jobject o, jobject that1, jobject that2)
+  (JNIEnv *env, jobject o, jint b, jobject that2)
 {
   bddPair* p = Pair_JavaToC(env, o);
-  BDD b = BDD_JavaToC(env, that1);
   BDD c = BDD_JavaToC(env, that2);
 #if defined(TRACE_BUDDYLIB)
   printf("bdd_setbddpair(%p, %d, %d)\n", p, b, c);
@@ -2142,16 +2190,17 @@ JNIEXPORT void JNICALL Java_org_sf_javabdd_BuDDyFactory_00024BuDDyBDDPairing_set
 /*
  * Class:     org_sf_javabdd_BuDDyFactory_BuDDyBDDPairing
  * Method:    set3
- * Signature: ([Lorg/sf/javabdd/BDD;[Lorg/sf/javabdd/BDD;)V
+ * Signature: ([I[Lorg/sf/javabdd/BDD;)V
  */
 JNIEXPORT void JNICALL Java_org_sf_javabdd_BuDDyFactory_00024BuDDyBDDPairing_set3
-  (JNIEnv *env, jobject o, jobjectArray arr1, jobjectArray arr2)
+  (JNIEnv *env, jobject o, jintArray arr1, jobjectArray arr2)
 {
   bddPair* p = Pair_JavaToC(env, o);
   bdd *a1;
   bdd *a2;
   jint size1 = (*env)->GetArrayLength(env, arr1);
   jint size2 = (*env)->GetArrayLength(env, arr2);
+  jint* arr;
   int i;
   if (size1 != size2) {
     jclass cls = (*env)->FindClass(env, "java/lang/IllegalArgumentException");
@@ -2161,12 +2210,12 @@ JNIEXPORT void JNICALL Java_org_sf_javabdd_BuDDyFactory_00024BuDDyBDDPairing_set
   }
   a1 = (bdd*) malloc(size1 * sizeof(bdd*));
   a2 = (bdd*) malloc(size1 * sizeof(bdd*));
+  arr = (*env)->GetIntArrayElements(env, arr1, 0);
   for (i=0; i<size1; ++i) {
-    jobject obj1 = (*env)->GetObjectArrayElement(env, arr1, i);
+    int foo = arr[i];
     jobject obj2 = (*env)->GetObjectArrayElement(env, arr2, i);
-    a1[i] = BDD_JavaToC(env, obj1);
+    a1[i] = foo;
     a2[i] = BDD_JavaToC(env, obj2);
-    (*env)->DeleteLocalRef(env, obj1);
     (*env)->DeleteLocalRef(env, obj2);
   }
 #if defined(TRACE_BUDDYLIB)

@@ -148,6 +148,25 @@ JNIEXPORT void JNICALL Java_org_sf_javabdd_CUDDFactory_registerNatives
 
 /*
  * Class:     org_sf_javabdd_CUDDFactory
+ * Method:    makeNode
+ * Signature: (ILorg/sf/javabdd/BDD;Lorg/sf/javabdd/BDD;)Lorg/sf/javabdd/BDD;
+ */
+JNIEXPORT jobject JNICALL Java_org_sf_javabdd_CUDDFactory_makeNode
+  (JNIEnv *env, jobject o, jint level, jobject low, jobject high)
+{
+  DdNode* b = BDD_JavaToC(env, low);
+  DdNode* c = BDD_JavaToC(env, high);
+  DdNode* r = cuddUniqueInter(manager, (int)level, c, b);
+  if (r == NULL) {
+    return NULL;
+  }
+  Cudd_Ref(r);
+  jobject result = BDD_CToJava(env, r);
+  return result;
+}
+
+/*
+ * Class:     org_sf_javabdd_CUDDFactory
  * Method:    initialize
  * Signature: (II)V
  */
@@ -214,7 +233,7 @@ JNIEXPORT void JNICALL Java_org_sf_javabdd_CUDDFactory_done0
     Cudd_Deref((DdNode *)(intptr_cast_type) bdd_one);
     Cudd_Deref((DdNode *)(intptr_cast_type) bdd_zero);
     
-    fprintf(stderr, "Garbage collections: %d  Time spent: %dms\n",
+    fprintf(stderr, "Garbage collections: %d  Time spent: %ldms\n",
     	Cudd_ReadGarbageCollections(manager), Cudd_ReadGarbageCollectionTime(manager));
     
     bdds = Cudd_CheckZeroRef(manager);
