@@ -16,6 +16,12 @@
     <menu name="Documentation">
       <item name="Javadoc"
             href="apidocs/index.html" />
+      <item name="Build Instructions"
+            href="compiling.html"/>
+      <item name="Installing"
+            href="installing.html"/>
+      <item name="Performance"
+            href="performance.html"/>
     </menu>
     <menu name="Downloads">
       <item name="JavaBDD for Windows"
