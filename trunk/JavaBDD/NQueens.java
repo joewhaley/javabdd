@@ -58,6 +58,7 @@ public class NQueens {
 
         BDD solution = queen.satOne();
         solution.printSet();
+        System.out.println();
 
         B.done();
     }
