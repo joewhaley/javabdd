@@ -1,10 +1,12 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <project>
   <pomVersion>3</pomVersion>
+  <artifactId>javabdd</artifactId>
   <name>JavaBDD</name>
+  <groupId>javabdd</groupId>
   <id>javabdd</id>
   <currentVersion>1.0b1</currentVersion>
-  <logo>/images/logo2_mid.jpg</logo> 
+  <logo>/images/logo2_mid.jpg</logo>
   <organization>
     <name>John Whaley</name>
     <url>http://sourceforge.net</url>
@@ -12,58 +14,41 @@
   </organization>
   <inceptionYear>2003</inceptionYear>
   <package>net.sf.javabdd</package>
-
   <shortDescription>Java Binary Decision Diagram library</shortDescription>
-
   <description>
-    <![CDATA[
-     <p>JavaBDD is a Java library for manipulating BDDs (Binary Decision Diagrams). 
+    
+     &lt;p&gt;JavaBDD is a Java library for manipulating BDDs (Binary Decision Diagrams). 
 	Binary decision diagrams are widely used in model checking, formal 
 	verification, optimizing circuit diagrams, etc. For an excellent overview of 
-	the BDD data structure, see this set of <a href="http://www.itu.dk/people/hra/notes-index.html">
-	lecture notes</a> by Henrik Reif Andersen.</p>
-	<p>The JavaBDD API is based on that of the popular <a href="http://www.itu.dk/research/buddy/">
-	BuDDy</a> package, a BDD package written in C by Jørn Lind-Nielsen. 
+	the BDD data structure, see this set of &lt;a href="http://www.itu.dk/people/hra/notes-index.html"&gt;
+	lecture notes&lt;/a&gt; by Henrik Reif Andersen.&lt;/p&gt;
+	&lt;p&gt;The JavaBDD API is based on that of the popular &lt;a href="http://www.itu.dk/research/buddy/"&gt;
+	BuDDy&lt;/a&gt; package, a BDD package written in C by Jørn Lind-Nielsen. 
 	However, JavaBDD's API is designed to be object-oriented. The ugly C function 
 	interface and reference counting schemes have been hidden underneath a uniform, 
-	object-oriented interface.</p>
-	<p>JavaBDD includes a 100% Java implementation.  It can also interface with the
-        <a href="http://javaddlib.sourceforge.net/jdd/">JDD</a> library, or with three
-	popular BDD libraries written in C via a JNI interface: <a href="http://www.itu.dk/research/buddy/">
-	BuDDy</a>, <a href="http://vlsi.colorado.edu/~fabio/CUDD/cuddIntro.html">CUDD</a>,
-	and <a href="http://www-cad.eecs.berkeley.edu/Research/cal_bdd/">CAL</a>.
+	object-oriented interface.&lt;/p&gt;
+	&lt;p&gt;JavaBDD includes a 100% Java implementation.  It can also interface with the
+        &lt;a href="http://javaddlib.sourceforge.net/jdd/"&gt;JDD&lt;/a&gt; library, or with three
+	popular BDD libraries written in C via a JNI interface: &lt;a href="http://www.itu.dk/research/buddy/"&gt;
+	BuDDy&lt;/a&gt;, &lt;a href="http://vlsi.colorado.edu/~fabio/CUDD/cuddIntro.html"&gt;CUDD&lt;/a&gt;,
+	and &lt;a href="http://www-cad.eecs.berkeley.edu/Research/cal_bdd/"&gt;CAL&lt;/a&gt;.
 	JavaBDD provides a uniform interface to all of these libraries, so you can easily switch between
-	them without having to make changes to your application.</p>
-	<p>JavaBDD is designed for high performance applications, so it also exposes many 
+	them without having to make changes to your application.&lt;/p&gt;
+	&lt;p&gt;JavaBDD is designed for high performance applications, so it also exposes many 
 	of the lower level options of the BDD library, like cache sizes and advanced 
-	variable reordering.</p>
-     ]]>
+	variable reordering.&lt;/p&gt;
+     
   </description>
-
   <url>http://javabdd.sourceforge.net/</url>
-  <issueTrackingUrl>
-    http://sourceforge.net/tracker/?group_id=72725
-  </issueTrackingUrl>
+  <issueTrackingUrl>http://sourceforge.net/tracker/?group_id=72725</issueTrackingUrl>
   <siteAddress>javabdd.sourceforge.net</siteAddress>
-  <siteDirectory>
-    /home/groups/j/ja/javabdd/htdocs/
-  </siteDirectory>
-  <distributionDirectory>
-    /home/groups/j/ja/javabdd/
-  </distributionDirectory>
-
+  <siteDirectory>/home/groups/j/ja/javabdd/htdocs/</siteDirectory>
+  <distributionDirectory>/home/groups/j/ja/javabdd/</distributionDirectory>
   <repository>
-    <connection>
-      scm:cvs:pserver:anonymous@cvs.sourceforge.net:/cvsroot/javabdd:JavaBDD
-    </connection>
-    <developerConnection>
-      scm:cvs:ext:joewhaley@cvs.sourceforge.net:/cvsroot/javabdd:JavaBDD
-    </developerConnection>
-    <url>
-      http://cvs.sourceforge.net/viewcvs.py/javabdd/
-    </url>
+    <connection>scm:cvs:pserver:anonymous@cvs.sourceforge.net:/cvsroot/javabdd:JavaBDD</connection>
+    <developerConnection>scm:cvs:ext:joewhaley@cvs.sourceforge.net:/cvsroot/javabdd:JavaBDD</developerConnection>
+    <url>http://cvs.sourceforge.net/viewcvs.py/javabdd/</url>
   </repository>
-
   <versions>
     <version>
       <id>0.3</id>
@@ -91,7 +76,6 @@
       <tag>v1_0b1</tag>
     </version>
   </versions>
-
   <mailingLists>
     <mailingList>
       <name>JavaBDD Announce List</name>
@@ -130,40 +114,24 @@
       </archive>
     </mailingList>
   </mailingLists>
-
   <developers>
-
     <developer>
       <name>John Whaley</name>
       <id>joewhaley</id>
       <email>joewhaley@users.sourceforge.net</email>
       <organization>Stanford University</organization>
-      <roles>
-        <role>Project Manager</role>
-      </roles>
       <timezone>-8</timezone>
     </developer>
-
   </developers>
-
   <dependencies>
-
     <dependency>
       <groupId>jdd</groupId>
       <artifactId>jdd</artifactId>
       <version>1.00</version>
-      <jar>jdd.jar</jar>
+      <jar>${basedir}/jdd.jar</jar>
       <url>http://javaddlib.sourceforge.net/</url>
     </dependency>
-
-    <dependency>
-      <groupId>statcvs</groupId>
-      <artifactId>maven-statcvs-plugin</artifactId>
-      <version>2.5</version>
-      <type>plugin</type>
-    </dependency>
-
-<!-- TODO
+    <!-- TODO
     <dependency>
       <groupId>maven</groupId>
       <artifactId>maven-native-plugin</artifactId>
@@ -178,19 +146,17 @@
       <url>http://buddy.sourceforge.net/</url>
     </dependency>
 -->
-
+    <dependency>
+      <groupId>statcvs</groupId>
+      <artifactId>maven-statcvs-plugin</artifactId>
+      <version>2.5</version>
+      <type>plugin</type>
+    </dependency>
   </dependencies>
-
   <build>
-
-    <nagEmailAddress>
-      joewhaley@users.sourceforge.net
-    </nagEmailAddress>
-
+    <nagEmailAddress>joewhaley@users.sourceforge.net</nagEmailAddress>
     <sourceDirectory>.</sourceDirectory>
     <unitTestSourceDirectory>../JavaBDD_tests</unitTestSourceDirectory>
-    <aspectSourceDirectory/>
-
     <!-- Unit test cases -->
     <unitTest>
       <includes>
@@ -198,41 +164,26 @@
         <include>**/*Tests.java</include>
         <include>regression/*.java</include>
       </includes>
-<!-- Not currently used.
+      <!-- Not currently used.
       <excludes>
         <exclude>**/RepositoryTest.java</exclude>
       </excludes>
 -->
     </unitTest>
-              
     <!-- J A R  R E S O U R C E S -->
     <!-- Resources that are packaged up inside the JAR file -->
-    <resources>
-
-<!-- TODO
-      <resource>
-        <directory>${basedir}/src/resources/misc</directory>
-        <includes>
-          <include>*.xsd</include>
-        </includes>
-      </resource>
-      <resource>
-        <directory>${basedir}/src/resources/logging</directory>
-        <includes>
-          <include>log4j.properties</include>
-        </includes>
-      </resource>
--->
-
-    </resources>
-
     <!-- Integration unit test cases -->
-    <integrationUnitTest/>
-
-    <jars>
-    </jars>
+    <sourceModifications>
+      <sourceModification>
+        <className>fakeClass</className>
+        <excludes>
+          <exclude>target/**</exclude>
+        </excludes>
+      </sourceModification>
+    </sourceModifications>
+    <integrationUnitTest />
+    <jars />
   </build>
-
   <reports>
     <report>
       maven-developer-activity-plugin
@@ -267,7 +218,7 @@
     <report>
       maven-changes-plugin
     </report>
-<!-- TOO EXPENSIVE
+    <!-- TOO EXPENSIVE
     <report>
       maven-checkstyle-plugin
     </report>
@@ -279,5 +230,5 @@
     </report>
 -->
   </reports>
-
 </project>
+
