@@ -3,6 +3,10 @@ package org.sf.javabdd;
 import java.util.Collection;
 
 /**
+ * Interface for the creation and manipulation of BDDs.
+ * 
+ * @see org.sf.javabdd.BDD
+ * 
  * @author John Whaley
  * @version $Id$
  */
