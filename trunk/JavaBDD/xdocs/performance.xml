@@ -24,25 +24,25 @@
           <td>Package        </td> <td>Time  </td> <td>Peak Memory Usage</td>
         </tr>
         <tr>
-          <td>buddy          </td> <td> 65s  </td> <td> 153mb </td>
+          <td>buddy          </td> <td> 41s  </td> <td> 152mb </td>
         </tr>
         <tr>
-          <td>cudd           </td> <td> 78s  </td> <td> 172mb </td>
+          <td>cudd           </td> <td> 46s  </td> <td> 171mb </td>
         </tr>
         <tr>
-          <td>cal            </td> <td> 114s </td> <td> 254mb </td>
+          <td>cal            </td> <td> 68s  </td> <td> 251mb </td>
         </tr>
         <tr>
-          <td>java (-server) </td> <td> 80s  </td> <td> 156mb </td>
+          <td>java (-server) </td> <td> 53s  </td> <td> 171mb </td>
         </tr>
         <tr>
-          <td>java (-client) </td> <td> 90s  </td> <td> 156mb </td>
+          <td>java (-client) </td> <td> 54s  </td> <td> 152mb </td>
         </tr>
         <tr>
-          <td>jdd (-server)  </td> <td> 78s  </td> <td> 216mb </td>
+          <td>jdd (-server)  </td> <td> 50s  </td> <td> 188mb </td>
         </tr>
         <tr>
-          <td>jdd (-client)  </td> <td> 83s  </td> <td> 200mb </td>
+          <td>jdd (-client)  </td> <td> 49s  </td> <td> 169mb </td>
         </tr>
       </table>
       <p>
