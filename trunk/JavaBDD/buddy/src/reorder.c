@@ -821,7 +821,7 @@ static void addref_rec(int r, char *dep)
    if (r < 2)
       return;
    
-   if (REF(r) == 0)
+   if (REF(r) == 0 && !MARKED(r))
    {
       bddfreenum--;
 
