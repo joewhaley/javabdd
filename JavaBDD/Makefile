@@ -69,7 +69,7 @@ else
   ifeq (${CC},icc)    # Intel Linux compiler
     CFLAGS = -O2 -Ob2 -ip $(EXTRA_CFLAGS)
     LINK = icc
-    LINKFLAGS = -shared $(EXTRA_CFLAGS)
+    LINKFLAGS = -static-libcxa -shared $(EXTRA_CFLAGS)
   endif
 endif
 
