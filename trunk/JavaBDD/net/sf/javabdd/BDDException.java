@@ -1,0 +1,19 @@
+// BDDException.java, created Jan 29, 2003 9:50:57 PM by jwhaley
+// Copyright (C) 2003 John Whaley
+// Licensed under the terms of the GNU LGPL; see COPYING for details.
+package net.sf.javabdd;
+
+/**
+ * An exception caused by an invalid BDD operation.
+ * 
+ * @author John Whaley
+ * @version $Id$
+ */
+public class BDDException extends RuntimeException {
+    public BDDException() {
+        super();
+    }
+    public BDDException(String s) {
+        super(s);
+    }
+}

@@ -11,7 +11,7 @@
     <logo>http://sourceforge.net/sflogo.php?group_id=72725&amp;type=5</logo>
   </organization>
   <inceptionYear>2003</inceptionYear>
-  <package>org.sf.javabdd</package>
+  <package>net.sf.javabdd</package>
 
   <shortDescription>Java Binary Decision Diagram library</shortDescription>
 

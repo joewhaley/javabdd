@@ -50,21 +50,21 @@ static void die(JNIEnv *env, char* msg)
 /**** START OF NATIVE METHOD IMPLEMENTATIONS ****/
 
 /*
- * Class:     org_sf_javabdd_CUDDFactory
+ * Class:     net_sf_javabdd_CUDDFactory
  * Method:    registerNatives
  * Signature: ()V
  */
-JNIEXPORT void JNICALL Java_org_sf_javabdd_CUDDFactory_registerNatives
+JNIEXPORT void JNICALL Java_net_sf_javabdd_CUDDFactory_registerNatives
   (JNIEnv *env, jclass cl)
 {
 }
 
 /*
- * Class:     org_sf_javabdd_CUDDFactory
+ * Class:     net_sf_javabdd_CUDDFactory
  * Method:    initialize0
  * Signature: (II)V
  */
-JNIEXPORT void JNICALL Java_org_sf_javabdd_CUDDFactory_initialize0
+JNIEXPORT void JNICALL Java_net_sf_javabdd_CUDDFactory_initialize0
   (JNIEnv *env, jclass cl, jint numSlots, jint cacheSize)
 {
     jfieldID one_fid;
@@ -102,22 +102,22 @@ JNIEXPORT void JNICALL Java_org_sf_javabdd_CUDDFactory_initialize0
 }
 
 /*
- * Class:     org_sf_javabdd_CUDDFactory
+ * Class:     net_sf_javabdd_CUDDFactory
  * Method:    isInitialized0
  * Signature: ()Z
  */
-JNIEXPORT jboolean JNICALL Java_org_sf_javabdd_CUDDFactory_isInitialized0
+JNIEXPORT jboolean JNICALL Java_net_sf_javabdd_CUDDFactory_isInitialized0
   (JNIEnv *env, jclass cl)
 {
     return manager != NULL;
 }
   
 /*
- * Class:     org_sf_javabdd_CUDDFactory
+ * Class:     net_sf_javabdd_CUDDFactory
  * Method:    done0
  * Signature: ()V
  */
-JNIEXPORT void JNICALL Java_org_sf_javabdd_CUDDFactory_done0
+JNIEXPORT void JNICALL Java_net_sf_javabdd_CUDDFactory_done0
   (JNIEnv *env, jclass cl)
 {
     int bdds;
@@ -137,22 +137,22 @@ JNIEXPORT void JNICALL Java_org_sf_javabdd_CUDDFactory_done0
 }
 
 /*
- * Class:     org_sf_javabdd_CUDDFactory
+ * Class:     net_sf_javabdd_CUDDFactory
  * Method:    varNum0
  * Signature: ()I
  */
-JNIEXPORT jint JNICALL Java_org_sf_javabdd_CUDDFactory_varNum0
+JNIEXPORT jint JNICALL Java_net_sf_javabdd_CUDDFactory_varNum0
   (JNIEnv *env, jclass cl)
 {
     return varnum;
 }
 
 /*
- * Class:     org_sf_javabdd_CUDDFactory
+ * Class:     net_sf_javabdd_CUDDFactory
  * Method:    setVarNum0
  * Signature: (I)I
  */
-JNIEXPORT jint JNICALL Java_org_sf_javabdd_CUDDFactory_setVarNum0
+JNIEXPORT jint JNICALL Java_net_sf_javabdd_CUDDFactory_setVarNum0
   (JNIEnv *env, jclass cl, jint x)
 {
     jint old = varnum;
@@ -161,11 +161,11 @@ JNIEXPORT jint JNICALL Java_org_sf_javabdd_CUDDFactory_setVarNum0
 }
 
 /*
- * Class:     org_sf_javabdd_CUDDFactory
+ * Class:     net_sf_javabdd_CUDDFactory
  * Method:    ithVar0
  * Signature: (I)J
  */
-JNIEXPORT jlong JNICALL Java_org_sf_javabdd_CUDDFactory_ithVar0
+JNIEXPORT jlong JNICALL Java_net_sf_javabdd_CUDDFactory_ithVar0
   (JNIEnv *env, jclass cl, jint i)
 {
   DdNode* d;
@@ -177,11 +177,11 @@ JNIEXPORT jlong JNICALL Java_org_sf_javabdd_CUDDFactory_ithVar0
 }
 
 /*
- * Class:     org_sf_javabdd_CUDDFactory
+ * Class:     net_sf_javabdd_CUDDFactory
  * Method:    level2Var0
  * Signature: (I)I
  */
-JNIEXPORT jint JNICALL Java_org_sf_javabdd_CUDDFactory_level2Var0
+JNIEXPORT jint JNICALL Java_net_sf_javabdd_CUDDFactory_level2Var0
   (JNIEnv *env, jclass cl, jint level)
 {
 	//return manager->invperm[level];
@@ -189,11 +189,11 @@ JNIEXPORT jint JNICALL Java_org_sf_javabdd_CUDDFactory_level2Var0
 }
 
 /*
- * Class:     org_sf_javabdd_CUDDFactory
+ * Class:     net_sf_javabdd_CUDDFactory
  * Method:    var2Level0
  * Signature: (I)I
  */
-JNIEXPORT jint JNICALL Java_org_sf_javabdd_CUDDFactory_var2Level0
+JNIEXPORT jint JNICALL Java_net_sf_javabdd_CUDDFactory_var2Level0
   (JNIEnv *env, jclass cl, jint v)
 {
 	//return (jint) cuddI(manager, v);
@@ -201,11 +201,11 @@ JNIEXPORT jint JNICALL Java_org_sf_javabdd_CUDDFactory_var2Level0
 }
 
 /*
- * Class:     org_sf_javabdd_CUDDFactory
+ * Class:     net_sf_javabdd_CUDDFactory
  * Method:    setVarOrder0
  * Signature: ([I)V
  */
-JNIEXPORT void JNICALL Java_org_sf_javabdd_CUDDFactory_setVarOrder0
+JNIEXPORT void JNICALL Java_net_sf_javabdd_CUDDFactory_setVarOrder0
   (JNIEnv *env, jclass cl, jintArray arr)
 {
   int *a;
@@ -223,35 +223,35 @@ JNIEXPORT void JNICALL Java_org_sf_javabdd_CUDDFactory_setVarOrder0
 }
 
 /*
- * Class:     org_sf_javabdd_CUDDFactory
+ * Class:     net_sf_javabdd_CUDDFactory
  * Method:    getAllocNum0
  * Signature: ()I
  */
-JNIEXPORT jint JNICALL Java_org_sf_javabdd_CUDDFactory_getAllocNum0
+JNIEXPORT jint JNICALL Java_net_sf_javabdd_CUDDFactory_getAllocNum0
   (JNIEnv *env, jclass cl)
 {
   return Cudd_ReadPeakNodeCount(manager);
 }
 
 /*
- * Class:     org_sf_javabdd_CUDDFactory
+ * Class:     net_sf_javabdd_CUDDFactory
  * Method:    getNodeNum0
  * Signature: ()I
  */
-JNIEXPORT jint JNICALL Java_org_sf_javabdd_CUDDFactory_getNodeNum0
+JNIEXPORT jint JNICALL Java_net_sf_javabdd_CUDDFactory_getNodeNum0
   (JNIEnv *env, jclass cl)
 {
   return Cudd_ReadNodeCount(manager);
 }
 
-/* class org_sf_javabdd_CUDDFactory_CUDDBDD */
+/* class net_sf_javabdd_CUDDFactory_CUDDBDD */
 
 /*
- * Class:     org_sf_javabdd_CUDDFactory_CUDDBDD
+ * Class:     net_sf_javabdd_CUDDFactory_CUDDBDD
  * Method:    var0
  * Signature: (J)I
  */
-JNIEXPORT jint JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_var0
+JNIEXPORT jint JNICALL Java_net_sf_javabdd_CUDDFactory_00024CUDDBDD_var0
   (JNIEnv *env, jclass cl, jlong b)
 {
     DdNode* d;
@@ -260,11 +260,11 @@ JNIEXPORT jint JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_var0
 }
 
 /*
- * Class:     org_sf_javabdd_CUDDFactory_CUDDBDD
+ * Class:     net_sf_javabdd_CUDDFactory_CUDDBDD
  * Method:    high0
  * Signature: (J)J
  */
-JNIEXPORT jlong JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_high0
+JNIEXPORT jlong JNICALL Java_net_sf_javabdd_CUDDFactory_00024CUDDBDD_high0
   (JNIEnv *env, jclass cl, jlong b)
 {
     DdNode* d;
@@ -281,11 +281,11 @@ JNIEXPORT jlong JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_high0
 }
 
 /*
- * Class:     org_sf_javabdd_CUDDFactory_CUDDBDD
+ * Class:     net_sf_javabdd_CUDDFactory_CUDDBDD
  * Method:    low0
  * Signature: (J)J
  */
-JNIEXPORT jlong JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_low0
+JNIEXPORT jlong JNICALL Java_net_sf_javabdd_CUDDFactory_00024CUDDBDD_low0
   (JNIEnv *env, jclass cl, jlong b)
 {
     DdNode* d;
@@ -302,11 +302,11 @@ JNIEXPORT jlong JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_low0
 }
 
 /*
- * Class:     org_sf_javabdd_CUDDFactory_CUDDBDD
+ * Class:     net_sf_javabdd_CUDDFactory_CUDDBDD
  * Method:    not0
  * Signature: (J)J
  */
-JNIEXPORT jlong JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_not0
+JNIEXPORT jlong JNICALL Java_net_sf_javabdd_CUDDFactory_00024CUDDBDD_not0
   (JNIEnv *env, jclass cl, jlong b)
 {
     DdNode* d;
@@ -318,11 +318,11 @@ JNIEXPORT jlong JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_not0
 }
 
 /*
- * Class:     org_sf_javabdd_CUDDFactory_CUDDBDD
+ * Class:     net_sf_javabdd_CUDDFactory_CUDDBDD
  * Method:    ite0
  * Signature: (JJJ)J
  */
-JNIEXPORT jlong JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_ite0
+JNIEXPORT jlong JNICALL Java_net_sf_javabdd_CUDDFactory_00024CUDDBDD_ite0
   (JNIEnv *env, jclass cl, jlong a, jlong b, jlong c)
 {
     DdNode* d;
@@ -339,11 +339,11 @@ JNIEXPORT jlong JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_ite0
 }
 
 /*
- * Class:     org_sf_javabdd_CUDDFactory_CUDDBDD
+ * Class:     net_sf_javabdd_CUDDFactory_CUDDBDD
  * Method:    relprod0
  * Signature: (JJJ)J
  */
-JNIEXPORT jlong JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_relprod0
+JNIEXPORT jlong JNICALL Java_net_sf_javabdd_CUDDFactory_00024CUDDBDD_relprod0
   (JNIEnv *env, jclass cl, jlong a, jlong b, jlong c)
 {
     DdNode* d;
@@ -360,11 +360,11 @@ JNIEXPORT jlong JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_relprod0
 }
 
 /*
- * Class:     org_sf_javabdd_CUDDFactory_CUDDBDD
+ * Class:     net_sf_javabdd_CUDDFactory_CUDDBDD
  * Method:    compose0
  * Signature: (JJI)J
  */
-JNIEXPORT jlong JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_compose0
+JNIEXPORT jlong JNICALL Java_net_sf_javabdd_CUDDFactory_00024CUDDBDD_compose0
   (JNIEnv *env, jclass cl, jlong a, jlong b, jint i)
 {
     DdNode* d;
@@ -379,11 +379,11 @@ JNIEXPORT jlong JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_compose0
 }
 
 /*
- * Class:     org_sf_javabdd_CUDDFactory_CUDDBDD
+ * Class:     net_sf_javabdd_CUDDFactory_CUDDBDD
  * Method:    exist0
  * Signature: (JJ)J
  */
-JNIEXPORT jlong JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_exist0
+JNIEXPORT jlong JNICALL Java_net_sf_javabdd_CUDDFactory_00024CUDDBDD_exist0
   (JNIEnv *env, jclass cl, jlong a, jlong b)
 {
     DdNode* d;
@@ -398,11 +398,11 @@ JNIEXPORT jlong JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_exist0
 }
 
 /*
- * Class:     org_sf_javabdd_CUDDFactory_CUDDBDD
+ * Class:     net_sf_javabdd_CUDDFactory_CUDDBDD
  * Method:    forAll0
  * Signature: (JJ)J
  */
-JNIEXPORT jlong JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_forAll0
+JNIEXPORT jlong JNICALL Java_net_sf_javabdd_CUDDFactory_00024CUDDBDD_forAll0
   (JNIEnv *env, jclass cl, jlong a, jlong b)
 {
     DdNode* d;
@@ -417,11 +417,11 @@ JNIEXPORT jlong JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_forAll0
 }
 
 /*
- * Class:     org_sf_javabdd_CUDDFactory_CUDDBDD
+ * Class:     net_sf_javabdd_CUDDFactory_CUDDBDD
  * Method:    restrict0
  * Signature: (JJ)J
  */
-JNIEXPORT jlong JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_restrict0
+JNIEXPORT jlong JNICALL Java_net_sf_javabdd_CUDDFactory_00024CUDDBDD_restrict0
   (JNIEnv *env, jclass cl, jlong a, jlong b)
 {
     DdNode* d;
@@ -436,11 +436,11 @@ JNIEXPORT jlong JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_restrict0
 }
 
 /*
- * Class:     org_sf_javabdd_CUDDFactory_CUDDBDD
+ * Class:     net_sf_javabdd_CUDDFactory_CUDDBDD
  * Method:    support0
  * Signature: (J)J
  */
-JNIEXPORT jlong JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_support0
+JNIEXPORT jlong JNICALL Java_net_sf_javabdd_CUDDFactory_00024CUDDBDD_support0
   (JNIEnv *env, jclass cl, jlong a)
 {
     DdNode *d;
@@ -453,11 +453,11 @@ JNIEXPORT jlong JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_support0
 }
 
 /*
- * Class:     org_sf_javabdd_CUDDFactory_CUDDBDD
+ * Class:     net_sf_javabdd_CUDDFactory_CUDDBDD
  * Method:    apply0
  * Signature: (JJI)J
  */
-JNIEXPORT jlong JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_apply0
+JNIEXPORT jlong JNICALL Java_net_sf_javabdd_CUDDFactory_00024CUDDBDD_apply0
   (JNIEnv *env, jclass cl, jlong a, jlong b, jint oper)
 {
     DdNode* d;
@@ -577,11 +577,11 @@ static DdNode* satone_rec(DdNode* f)
 }
 
 /*
- * Class:     org_sf_javabdd_CUDDFactory_CUDDBDD
+ * Class:     net_sf_javabdd_CUDDFactory_CUDDBDD
  * Method:    satOne0
  * Signature: (J)J
  */
-JNIEXPORT jlong JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_satOne0
+JNIEXPORT jlong JNICALL Java_net_sf_javabdd_CUDDFactory_00024CUDDBDD_satOne0
   (JNIEnv *env, jclass cl, jlong a)
 {
     DdNode* d;
@@ -600,11 +600,11 @@ JNIEXPORT jlong JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_satOne0
 }
 
 /*
- * Class:     org_sf_javabdd_CUDDFactory_CUDDBDD
+ * Class:     net_sf_javabdd_CUDDFactory_CUDDBDD
  * Method:    nodeCount0
  * Signature: (J)I
  */
-JNIEXPORT jint JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_nodeCount0
+JNIEXPORT jint JNICALL Java_net_sf_javabdd_CUDDFactory_00024CUDDBDD_nodeCount0
   (JNIEnv *env, jclass cl, jlong a)
 {
     DdNode* d;
@@ -613,11 +613,11 @@ JNIEXPORT jint JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_nodeCount0
 }
 
 /*
- * Class:     org_sf_javabdd_CUDDFactory_CUDDBDD
+ * Class:     net_sf_javabdd_CUDDFactory_CUDDBDD
  * Method:    pathCount0
  * Signature: (J)D
  */
-JNIEXPORT jdouble JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_pathCount0
+JNIEXPORT jdouble JNICALL Java_net_sf_javabdd_CUDDFactory_00024CUDDBDD_pathCount0
   (JNIEnv *env, jclass cl, jlong a)
 {
     DdNode* d;
@@ -626,11 +626,11 @@ JNIEXPORT jdouble JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_pathCount
 }
 
 /*
- * Class:     org_sf_javabdd_CUDDFactory_CUDDBDD
+ * Class:     net_sf_javabdd_CUDDFactory_CUDDBDD
  * Method:    satCount0
  * Signature: (J)D
  */
-JNIEXPORT jdouble JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_satCount0
+JNIEXPORT jdouble JNICALL Java_net_sf_javabdd_CUDDFactory_00024CUDDBDD_satCount0
   (JNIEnv *env, jclass cl, jlong a)
 {
     DdNode* d;
@@ -639,11 +639,11 @@ JNIEXPORT jdouble JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_satCount0
 }
 
 /*
- * Class:     org_sf_javabdd_CUDDFactory_CUDDBDD
+ * Class:     net_sf_javabdd_CUDDFactory_CUDDBDD
  * Method:    addRef
  * Signature: (J)V
  */
-JNIEXPORT void JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_addRef
+JNIEXPORT void JNICALL Java_net_sf_javabdd_CUDDFactory_00024CUDDBDD_addRef
   (JNIEnv *env, jclass cl, jlong a)
 {
     DdNode* d;
@@ -652,11 +652,11 @@ JNIEXPORT void JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_addRef
 }
 
 /*
- * Class:     org_sf_javabdd_CUDDFactory_CUDDBDD
+ * Class:     net_sf_javabdd_CUDDFactory_CUDDBDD
  * Method:    delRef
  * Signature: (J)V
  */
-JNIEXPORT void JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_delRef
+JNIEXPORT void JNICALL Java_net_sf_javabdd_CUDDFactory_00024CUDDBDD_delRef
   (JNIEnv *env, jclass cl, jlong a)
 {
     DdNode* d;
@@ -667,11 +667,11 @@ JNIEXPORT void JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_delRef
 }
 
 /*
- * Class:     org_sf_javabdd_CUDDFactory_CUDDBDD
+ * Class:     net_sf_javabdd_CUDDFactory_CUDDBDD
  * Method:    veccompose0
  * Signature: (JJ)J
  */
-JNIEXPORT jlong JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_veccompose0
+JNIEXPORT jlong JNICALL Java_net_sf_javabdd_CUDDFactory_00024CUDDBDD_veccompose0
   (JNIEnv *env, jclass cl, jlong a, jlong b)
 {
 	DdNode* d;
@@ -686,11 +686,11 @@ JNIEXPORT jlong JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_veccompose0
 }
 
 /*
- * Class:     org_sf_javabdd_CUDDFactory_CUDDBDD
+ * Class:     net_sf_javabdd_CUDDFactory_CUDDBDD
  * Method:    replace0
  * Signature: (JJ)J
  */
-JNIEXPORT jlong JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_replace0
+JNIEXPORT jlong JNICALL Java_net_sf_javabdd_CUDDFactory_00024CUDDBDD_replace0
   (JNIEnv *env, jclass cl, jlong a, jlong b)
 {
 	DdNode* d;
@@ -716,14 +716,14 @@ JNIEXPORT jlong JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_replace0
     return result;
 }
 
-/* class org_sf_javabdd_CUDDFactory_CUDDBDDPairing */
+/* class net_sf_javabdd_CUDDFactory_CUDDBDDPairing */
 
 /*
- * Class:     org_sf_javabdd_CUDDFactory_CUDDBDDPairing
+ * Class:     net_sf_javabdd_CUDDFactory_CUDDBDDPairing
  * Method:    alloc
  * Signature: ()J
  */
-JNIEXPORT jlong JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDDPairing_alloc
+JNIEXPORT jlong JNICALL Java_net_sf_javabdd_CUDDFactory_00024CUDDBDDPairing_alloc
   (JNIEnv *env, jclass cl)
 {
 	int n;
@@ -739,11 +739,11 @@ JNIEXPORT jlong JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDDPairing_allo
 }
 
 /*
- * Class:     org_sf_javabdd_CUDDFactory_CUDDBDDPairing
+ * Class:     net_sf_javabdd_CUDDFactory_CUDDBDDPairing
  * Method:    set0
  * Signature: (JII)V
  */
-JNIEXPORT void JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDDPairing_set0
+JNIEXPORT void JNICALL Java_net_sf_javabdd_CUDDFactory_00024CUDDBDDPairing_set0
   (JNIEnv *env, jclass cl, jlong p, jint var, jint b)
 {
 	DdNode **r = (DdNode**) (intptr_cast_type) p;
@@ -756,11 +756,11 @@ JNIEXPORT void JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDDPairing_set0
 }
 
 /*
- * Class:     org_sf_javabdd_CUDDFactory_CUDDBDDPairing
+ * Class:     net_sf_javabdd_CUDDFactory_CUDDBDDPairing
  * Method:    set2
  * Signature: (JIJ)V
  */
-JNIEXPORT void JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDDPairing_set2
+JNIEXPORT void JNICALL Java_net_sf_javabdd_CUDDFactory_00024CUDDBDDPairing_set2
   (JNIEnv *env, jclass cl, jlong p, jint var, jlong b)
 {
 	DdNode **r = (DdNode**) (intptr_cast_type) p;
@@ -773,11 +773,11 @@ JNIEXPORT void JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDDPairing_set2
 }
 
 /*
- * Class:     org_sf_javabdd_CUDDFactory_CUDDBDDPairing
+ * Class:     net_sf_javabdd_CUDDFactory_CUDDBDDPairing
  * Method:    reset0
  * Signature: (J)V
  */
-JNIEXPORT void JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDDPairing_reset0
+JNIEXPORT void JNICALL Java_net_sf_javabdd_CUDDFactory_00024CUDDBDDPairing_reset0
   (JNIEnv *env, jclass cl, jlong p)
 {
 	int n;
@@ -793,11 +793,11 @@ JNIEXPORT void JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDDPairing_reset
 }
 
 /*
- * Class:     org_sf_javabdd_CUDDFactory_CUDDBDDPairing
+ * Class:     net_sf_javabdd_CUDDFactory_CUDDBDDPairing
  * Method:    free0
  * Signature: (J)V
  */
-JNIEXPORT void JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDDPairing_free0
+JNIEXPORT void JNICALL Java_net_sf_javabdd_CUDDFactory_00024CUDDBDDPairing_free0
   (JNIEnv *env, jclass cl, jlong p)
 {
 	int n;

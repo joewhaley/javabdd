@@ -1,4 +1,4 @@
-import org.sf.javabdd.*;
+import net.sf.javabdd.*;
 
 /**
  * @author John Whaley

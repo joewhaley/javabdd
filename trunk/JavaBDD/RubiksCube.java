@@ -1,6 +1,6 @@
-/*
- * Created on Sep 10, 2003
- */
+// RubiksCube.java, created Jan 29, 2003 9:50:57 PM by jwhaley
+// Copyright (C) 2003 John Whaley
+// Licensed under the terms of the GNU LGPL; see COPYING for details.
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -8,12 +8,14 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
-import org.sf.javabdd.BDD;
-import org.sf.javabdd.BDDDomain;
-import org.sf.javabdd.BDDFactory;
-import org.sf.javabdd.BDDPairing;
+import net.sf.javabdd.BDD;
+import net.sf.javabdd.BDDDomain;
+import net.sf.javabdd.BDDFactory;
+import net.sf.javabdd.BDDPairing;
 
 /**
+ * RubiksCube
+ * 
  * @author jwhaley
  */
 public class RubiksCube {
@@ -220,7 +222,7 @@ public class RubiksCube {
 
     static void p(BDD b, int d) {
         BDDDomain dom = bdd.getDomain(d);
-        int v = (int) b.scanVar(dom);
+        int v = b.scanVar(dom).intValue();
         String s = Integer.toString(v);
         s = "   ".substring(s.length())+s;
         System.out.print(s);
