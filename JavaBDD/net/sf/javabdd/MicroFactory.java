@@ -717,6 +717,7 @@ public class MicroFactory extends BDDFactory {
                 return equals((PairOfInts) o);
             return false;
         }
+        public int hashCode() { return a ^ b; }
     }
     
     public static class TripleOfInts {
@@ -730,6 +731,7 @@ public class MicroFactory extends BDDFactory {
                 return equals((TripleOfInts) o);
             return false;
         }
+        public int hashCode() { return a ^ b ^ c; }
     }
     
     private class OpCache1 extends OpCache {
