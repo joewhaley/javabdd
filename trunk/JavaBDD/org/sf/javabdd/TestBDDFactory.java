@@ -58,7 +58,7 @@ public class TestBDDFactory extends BDDFactory {
         }
     }
     
-    public class TestBDD extends BDD {
+    class TestBDD extends BDD {
 
         BDD b1, b2;
 
@@ -862,7 +862,7 @@ public class TestBDDFactory extends BDDFactory {
         return new TestBDDBitVector(a);
     }
 
-    public static class TestBDDPairing extends BDDPairing {
+    static class TestBDDPairing extends BDDPairing {
         
         BDDPairing b1, b2;
         
