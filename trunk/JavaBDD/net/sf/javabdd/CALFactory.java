@@ -887,11 +887,13 @@ public class CALFactory extends BDDFactory {
         return 0;
     }
 
+    public static final String REVISION = "$Revision$";
+    
     /* (non-Javadoc)
      * @see net.sf.javabdd.BDDFactory#getVersion()
      */
     public String getVersion() {
-        return "CAL r$Revision$";
+        return "CAL "+REVISION.substring(11, REVISION.length()-2);
     }
     
 }

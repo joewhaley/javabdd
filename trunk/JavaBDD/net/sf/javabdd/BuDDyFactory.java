@@ -470,14 +470,6 @@ public class BuDDyFactory extends BDDFactory {
     private static native void printOrder0();
 
     /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#getVersion()
-     */
-    public String getVersion() {
-        return getVersion0();
-    }
-    private static native String getVersion0();
-    
-    /* (non-Javadoc)
      * @see net.sf.javabdd.BDDFactory#nodeCount(java.util.Collection)
      */
     public int nodeCount(Collection r) {
@@ -1084,5 +1076,15 @@ public class BuDDyFactory extends BDDFactory {
         public BDDFactory getFactory() { return INSTANCE; }
 
     }
+    
+    public static final String REVISION = "$Revision$";
+    
+    /* (non-Javadoc)
+     * @see net.sf.javabdd.BDDFactory#getVersion()
+     */
+    public String getVersion() {
+        return getVersion0()+" rev"+REVISION.substring(11, REVISION.length()-2);
+    }
+    private static native String getVersion0();
     
 }
