@@ -3,6 +3,10 @@ package org.sf.javabdd;
 /**
  * Represents a domain of BDD variables.  This is useful for finite state
  * machines, among other things.
+ *
+ * <p>BDDDomains are called "finite domain blocks" in Section 2.9
+ * of the buddy documentation.   A BDDDomain is a block of BDD variables 
+ * that can represent integer values as opposed to only true and false.</p>
  * 
  * @author John Whaley
  * @version $Id$
