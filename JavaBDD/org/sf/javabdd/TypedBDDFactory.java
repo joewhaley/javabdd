@@ -4,7 +4,6 @@
 package org.sf.javabdd;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -586,7 +585,7 @@ public class TypedBDDFactory extends BDDFactory {
             return null;
         }
 
-        void applyHelper(Set newDom, Set dom1, BDDOp opr) {
+        void applyHelper(Set newDom, TypedBDD bdd0, TypedBDD bdd1, BDDOp opr) {
             switch (opr.id) {
                 case 1: // xor
                 case 2: // or
@@ -596,13 +595,13 @@ public class TypedBDDFactory extends BDDFactory {
                 case 7: // diff
                 case 8: // less
                 case 9: // invimp
-                    if (!newDom.equals(dom1)) {
-                        System.err.println("Warning! Or'ing BDD with different domains: "+domainNames(dom1));
+                    if (!bdd0.isZero() && !bdd1.isZero() && !newDom.equals(bdd1.dom)) {
+                        System.err.println("Warning! Or'ing BDD with different domains: "+domainNames(newDom)+" != "+domainNames(bdd1.dom));
                     }
                     // fallthrough
                 case 0: // and
                 case 3: // nand
-                    newDom.addAll(dom1);
+                    newDom.addAll(bdd1.dom);
                     break;
                 default:
                     throw new BDDException();
@@ -616,7 +615,7 @@ public class TypedBDDFactory extends BDDFactory {
             TypedBDD bdd1 = (TypedBDD) that;
             Set newDom = makeSet();
             newDom.addAll(dom);
-            applyHelper(newDom, bdd1.dom, opr);
+            applyHelper(newDom, this, bdd1, opr);
             return new TypedBDD(bdd.apply(bdd1.bdd, opr), newDom);
         }
 
@@ -625,7 +624,7 @@ public class TypedBDDFactory extends BDDFactory {
          */
         public void applyWith(BDD that, BDDOp opr) {
             TypedBDD bdd1 = (TypedBDD) that;
-            applyHelper(dom, bdd1.dom, opr);
+            applyHelper(dom, this, bdd1, opr);
             bdd.applyWith(bdd1.bdd, opr);
         }
 
@@ -636,7 +635,7 @@ public class TypedBDDFactory extends BDDFactory {
             TypedBDD bdd1 = (TypedBDD) that;
             Set newDom = makeSet();
             newDom.addAll(dom);
-            applyHelper(newDom, bdd1.dom, opr);
+            applyHelper(newDom, this, bdd1, opr);
             TypedBDD bdd2 = (TypedBDD) var;
             if (!newDom.containsAll(bdd2.dom)) {
                 System.err.println("Warning! Quantifying domain that doesn't exist: "+domainNames(bdd2.dom));
@@ -652,7 +651,7 @@ public class TypedBDDFactory extends BDDFactory {
             TypedBDD bdd1 = (TypedBDD) that;
             Set newDom = makeSet();
             newDom.addAll(dom);
-            applyHelper(newDom, bdd1.dom, opr);
+            applyHelper(newDom, this, bdd1, opr);
             TypedBDD bdd2 = (TypedBDD) var;
             if (!newDom.containsAll(bdd2.dom)) {
                 System.err.println("Warning! Quantifying domain that doesn't exist: "+domainNames(bdd2.dom));
@@ -668,7 +667,7 @@ public class TypedBDDFactory extends BDDFactory {
             TypedBDD bdd1 = (TypedBDD) that;
             Set newDom = makeSet();
             newDom.addAll(dom);
-            applyHelper(newDom, bdd1.dom, opr);
+            applyHelper(newDom, this, bdd1, opr);
             TypedBDD bdd2 = (TypedBDD) var;
             if (!newDom.containsAll(bdd2.dom)) {
                 System.err.println("Warning! Quantifying domain that doesn't exist: "+domainNames(bdd2.dom));
@@ -725,15 +724,19 @@ public class TypedBDDFactory extends BDDFactory {
                 Map.Entry e = (Map.Entry) i.next();
                 BDDDomain d_from = (BDDDomain) e.getKey();
                 BDDDomain d_to = (BDDDomain) e.getValue();
+                System.out.println("Replace "+domainNames(dom)+", "+d_from+" -> "+d_to);
                 if (!dom.contains(d_from)) {
                     System.err.println("Warning! Replacing domain that doesn't exist: "+d_from.getName());
+                    new Exception().printStackTrace();
                 }
                 if (dom.contains(d_to) && !tpair.domMap.containsKey(d_to)) {
                     System.err.println("Warning! Overwriting domain that exists: "+d_to.getName());
+                    new Exception().printStackTrace();
                 }
             }
             newDom.removeAll(tpair.domMap.keySet());
             newDom.addAll(tpair.domMap.values());
+            System.out.println("Result = "+domainNames(newDom));
             return new TypedBDD(bdd.replace(tpair.pairing), newDom);
         }
 
@@ -848,6 +851,15 @@ public class TypedBDDFactory extends BDDFactory {
             return TypedBDDFactory.this;
         }
         
+        /* (non-Javadoc)
+         * @see org.sf.javabdd.BDDDomain#ithVar(long)
+         */
+        public BDD ithVar(long val) {
+            Set s = makeSet();
+            s.add(this);
+            return new TypedBDD(domain.ithVar(val), s);
+        }
+
     }
     
     public class TypedBDDPairing extends BDDPairing {
