@@ -10,12 +10,13 @@
      <section name="Performance Comparison">
       <p>
       Here are the timings of solving the 12x12 NQueens problem on
-      my laptop (1.6GHz P-M, WinXP, Sun JDK 1.5.0b2).  This test simply
+      an Opteron 150 (2.4GHz, RedHat Enterprise Linux 3 in 32 bit mode,
+      Sun JDK 1.5.0).  This test simply
       does simple logic operations.  It primarily tests the speed of node
       creation and BDD garbage collection.  The command line I used to test
       was:
       <br/>
-      <code>java -mx512m -Dbdd=<i>package</i> -jar javabdd_0.6.jar 12</code>
+      <code>java -mx512m -Dbdd=<i>package</i> -jar javabdd.jar 12</code>
       <br/>
       </p>
       <table border="2">
