@@ -974,11 +974,13 @@ public class TestBDDFactory extends BDDFactory {
         
     }
     
+    public static final String REVISION = "$Revision$";
 
     /* (non-Javadoc)
      * @see net.sf.javabdd.BDDFactory#getVersion()
      */
     public String getVersion() {
-        return "TestBDD $Revision$ of ("+f1.getVersion()+","+f1.getVersion()+")";
+        return "TestBDD "+REVISION.substring(11, REVISION.length()-2)+
+               " of ("+f1.getVersion()+","+f1.getVersion()+")";
     }
 }

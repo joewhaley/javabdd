@@ -28,10 +28,10 @@ import java.math.BigInteger;
 public class JFactory extends BDDFactory {
 
     static final boolean VERIFY_ASSERTIONS = false;
-    static final String VERSION = "JFactory $Revision$";
+    public static final String REVISION = "$Revision$";
     
     public String getVersion() {
-        return VERSION;
+        return "JFactory "+REVISION.substring(11, REVISION.length()-2);
     }
     
     private JFactory() { }

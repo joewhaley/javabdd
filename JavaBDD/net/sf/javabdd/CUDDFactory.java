@@ -929,11 +929,13 @@ public class CUDDFactory extends BDDFactory {
         c.printDot();
     }
 
+    public static final String REVISION = "$Revision$";
+    
     /* (non-Javadoc)
      * @see net.sf.javabdd.BDDFactory#getVersion()
      */
     public String getVersion() {
-        return "CUDD r$Revision$";
+        return "CUDD "+REVISION.substring(11, REVISION.length()-2);
     }
     
 }

@@ -1164,11 +1164,13 @@ public class TypedBDDFactory extends BDDFactory {
         
     }
     
+    public static final String REVISION = "$Revision$";
 
     /* (non-Javadoc)
      * @see net.sf.javabdd.BDDFactory#getVersion()
      */
     public String getVersion() {
-        return "TypedBDD $Revision$ with "+factory.getVersion();
+        return "TypedBDD "+REVISION.substring(11, REVISION.length()-2)+
+               " with "+factory.getVersion();
     }
 }
