@@ -10,31 +10,47 @@
      <section name="Performance Comparison">
       <p>
       Here are the timings of solving the 12x12 NQueens problem on
-      my home machine (2.4GHz P4, WinXP, Sun JDK 1.5.0b2).  This test simply
+      my laptop (1.6GHz P-M, WinXP, Sun JDK 1.5.0b2).  This test simply
       does simple logic operations.  It primarily tests the speed of node
       creation and BDD garbage collection.  The command line I used to test
       was:
       <br/>
-      <code>java -ms320m -mx320m -Dbdd=<i>package</i> -jar javabdd_0.6.jar 12</code>
+      <code>java -ms180m -mx180m -Dbdd=<i>package</i> -jar javabdd_0.6.jar 12</code>
       <br/>
       </p>
       <table border="2">
         <tr>
-          <td>Package      </td> <td>Time  </td> <td>Peak Memory Usage</td>
+          <td>Package        </td> <td>Time  </td> <td>Peak Memory Usage</td>
         </tr>
         <tr>
-          <td>buddy        </td> <td> 77s  </td> <td> 150mb </td>
+          <td>buddy          </td> <td> 65s  </td> <td> 153mb </td>
         </tr>
         <tr>
-          <td>cudd         </td> <td> 82s  </td> <td> 171mb </td>
+          <td>cudd           </td> <td> 78s  </td> <td> 172mb </td>
         </tr>
         <tr>
-          <td>java -server </td> <td> 90s  </td> <td> 155mb </td>
+          <td>cal            </td> <td> 114s </td> <td> 254mb </td>
         </tr>
         <tr>
-          <td>java -client </td> <td> 107s </td> <td> 155mb </td>
+          <td>java (-server) </td> <td> 80s  </td> <td> 156mb </td>
+        </tr>
+        <tr>
+          <td>java (-client) </td> <td> 90s  </td> <td> 156mb </td>
+        </tr>
+        <tr>
+          <td>jdd (-server)  </td> <td> 78s  </td> <td> 216mb </td>
+        </tr>
+        <tr>
+          <td>jdd (-client)  </td> <td> 83s  </td> <td> 200mb </td>
         </tr>
       </table>
+      <p>
+      As you can see, buddy seems to be the fastest of the native libraries.
+      However, the Java version is not far behind in performance and the
+      memory usage is comparable.  jdd looks promising here but it
+      currently has poor performance on other operations like relprod, which
+      the simple NQueens benchmark doesn't test.
+      </p>
       <p>
       Don't make any assumptions from these results about the relative
       efficiency of C and Java.  The Java source code is a direct translation
