@@ -43,14 +43,17 @@ DLL_EXP_DEF = buddy.def
 JAVA_SOURCES = org/sf/javabdd/BDD.java \
 	org/sf/javabdd/BDDException.java \
 	org/sf/javabdd/BDDFactory.java \
+	org/sf/javabdd/BDDDomain.java \
+	org/sf/javabdd/BDDPairing.java \
 	org/sf/javabdd/BuDDyFactory.java
 JAVA_CLASSFILES = org/sf/javabdd/*.class
 JAVA_PACKAGES = org.sf.javabdd
 JNI_CLASSFILE = org/sf/javabdd/BuDDyFactory.class
 JNI_CLASSNAMES = org.sf.javabdd.BuDDyFactory \
-	org.sf.javabdd.BuDDyFactory\$$BuDDyBDD
-JNI_INCLUDES = org_sf_javabdd_BuDDyFactory.h \
-	org_sf_javabdd_BuDDyFactory_BuDDyBDD.h 
+	org.sf.javabdd.BuDDyFactory\$$BuDDyBDD \
+	org.sf.javabdd.BuDDyFactory\$$BuDDyBDDDomain \
+	org.sf.javabdd.BuDDyFactory\$$BuDDyBDDPairing
+JNI_INCLUDES = buddy_jni.h
 EXAMPLE_SOURCES = NQueens.java
 EXAMPLE_CLASSFILES = $(EXAMPLE_SOURCES:%.java=%.class)
 
@@ -62,7 +65,7 @@ $(JNI_CLASSFILE): $(JAVA_SOURCES)
 	$(JAVAC) $(JAVA_SOURCES)
 
 $(JNI_INCLUDES): $(JNI_CLASSFILE)
-	$(JAVAH) -jni $(JNI_CLASSNAMES)
+	$(JAVAH) -jni -o $(JNI_INCLUDES) $(JNI_CLASSNAMES)
 
 examples: $(EXAMPLE_SOURCES)
 	$(JAVAC) $(EXAMPLE_SOURCES)

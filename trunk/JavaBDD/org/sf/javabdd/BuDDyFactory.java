@@ -521,6 +521,20 @@ public class BuDDyFactory extends BDDFactory {
          * @see org.sf.javabdd.BDD#printSetWithDomains()
          */
         public native void printSetWithDomains();
+        
+        /**
+         * @see org.sf.javabdd.BDD#equals(org.sf.javabdd.BDD)
+         */
+        public boolean equals(BDD that) {
+            return this._id == ((BuDDyBDD) that)._id;
+        }
+        
+        /**
+         * @see org.sf.javabdd.BDD#hashCode()
+         */
+        public int hashCode() {
+            return this._id;
+        }
 
     }
     

@@ -19,7 +19,7 @@ public abstract class BDDDomain {
      * Returns the size of the domain for this finite domain block.
      * 
      * Compare to fdd_domainsize.
-     */ 
+     */
     public abstract int size();
     
     /**
