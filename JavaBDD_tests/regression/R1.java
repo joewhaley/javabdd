@@ -4,9 +4,9 @@
 package regression;
 
 import junit.framework.Assert;
-import org.sf.javabdd.BDD;
-import org.sf.javabdd.BDDDomain;
-import org.sf.javabdd.BDDFactory;
+import net.sf.javabdd.BDD;
+import net.sf.javabdd.BDDDomain;
+import net.sf.javabdd.BDDFactory;
 import bdd.BDDTestCase;
 
 /**
