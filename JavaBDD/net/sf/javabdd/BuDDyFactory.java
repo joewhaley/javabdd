@@ -234,7 +234,7 @@ public class BuDDyFactory extends BDDFactory {
     private static native int setMaxNodeNum0(int size);
 
     /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#setMinFreeNodes(int)
+     * @see net.sf.javabdd.BDDFactory#setMinFreeNodes(double)
      */
     public double setMinFreeNodes(double x) {
         return setMinFreeNodes0((int)(x * 100.)) / 100.;
