@@ -138,6 +138,7 @@
       <roles>
         <role>Project Manager</role>
       </roles>
+      <timezone>-8</timezone>
     </developer>
 
   </developers>
