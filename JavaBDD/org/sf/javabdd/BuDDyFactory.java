@@ -34,11 +34,12 @@ public class BuDDyFactory extends BDDFactory {
     private static BuDDyFactory INSTANCE;
     
     static {
+        String libname = "buddy";
         try {
-            System.loadLibrary("buddy");
+            System.loadLibrary(libname);
         } catch (java.lang.UnsatisfiedLinkError x) {
-            // No "buddy" library, try loading it from the current directory...
-            String libname = System.mapLibraryName("buddy");
+            // Cannot find library, try loading it from the current directory...
+            libname = System.mapLibraryName(libname);
             String currentdir = System.getProperty("user.dir");
             String sep = System.getProperty("file.separator");
             System.load(currentdir+sep+libname);
