@@ -61,14 +61,9 @@ public abstract class BDDPairing {
      * Compare to fdd_setpair.
      */
     public void set(BDDDomain p1, BDDDomain p2) {
-        if (p1.varNum() != p2.varNum())
-            throw new BDDException();
-
         int[] ivar1 = p1.vars();
         int[] ivar2 = p2.vars();
-        for (int n = 0; n < ivar1.length; n++) {
-            this.set(ivar1[n], ivar2[n]);
-        }
+        this.set(ivar1, ivar2);
     }
 
     /**
