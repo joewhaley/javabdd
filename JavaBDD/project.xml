@@ -6,8 +6,8 @@
   <currentVersion>0.6</currentVersion>
   <logo>/images/logo2_mid.jpg</logo> 
   <organization>
-    <name>Sourceforge</name>
-    <url>http://sourceforge.net</url>
+    <name>John Whaley</name>
+    <url>http://www.stanford.edu/~jwhaley</url>
     <logo>http://sourceforge.net/sflogo.php?group_id=72725&amp;type=5</logo>
   </organization>
   <inceptionYear>2003</inceptionYear>
@@ -237,13 +237,19 @@
       maven-jdepend-plugin
     </report>
     <report>
-      maven-tasklist-plugin
+      maven-dashboard-plugin
     </report>
     <report>
       maven-javadoc-plugin
     </report>
     <report>
       maven-jxr-plugin
+    </report>
+    <report>
+      maven-findbugs-plugin
+    </report>
+    <report>
+      maven-linkcheck-plugin
     </report>
 <!-- TOO EXPENSIVE
     <report>
