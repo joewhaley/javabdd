@@ -61,11 +61,6 @@ public class BuDDyFactory extends BDDFactory {
      */
     public BDD one() { return new BuDDyBDD(1); }
     
-    protected BDD makeNode(int level, BDD low, BDD high) {
-        return makeNode0(level, (BuDDyBDD) low, (BuDDyBDD) high);
-    }
-    protected native BuDDyBDD makeNode0(int level, BuDDyBDD low, BuDDyBDD high);
-    
     /**
      * @see org.sf.javabdd.BDDFactory#buildCube(int, java.util.Collection)
      */
