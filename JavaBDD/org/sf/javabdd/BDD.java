@@ -210,6 +210,23 @@ public abstract class BDD {
     public abstract BDD compose(BDD that, int var);
 
     /**
+     * Simultaneous functional composition.  Uses the pairs of variables and
+     * BDDs in pair to make the simultaneous substitution: f [g1/V1, ... gn/Vn].
+     * In this way one or more BDDs may be substituted in one step. The BDDs in
+     * pair may depend on the variables they are substituting.  BDD.compose()
+     * may be used instead of BDD.replace() but is not as efficient when gi is a
+     * single variable, the same applies to BDD.restrict().  Note that
+     * simultaneous substitution is not necessarily the same as repeated
+     * substitution.
+     * 
+     * Compare to bdd_veccompose.
+     * 
+     * @param pair
+     * @return BDD
+     */
+    public abstract BDD veccompose(BDDPairing pair);
+
+    /**
      * Generalized cofactor.  Computes the generalized cofactor of this BDD with
      * respect to the given BDD.
      * 
@@ -377,11 +394,64 @@ public abstract class BDD {
     public abstract Iterator allsat();
 
     /**
+     * Scans this BDD to find all occurrences of FDD variables and returns an
+     * array that contains the indices of the possible found FDD variables.
+     * 
+     * Compare to fdd_scanset.
+     * 
+     * @return int[]
+     */
+    public abstract int[] scanSet();
+
+    /**
+     * Finds one satisfying assignment of the FDD variable var in this BDD and
+     * returns that value.
+     * 
+     * Compare to fdd_scanvar.
+     * 
+     * @param var
+     * @return int
+     */
+    public abstract int scanVar(int var);
+    
+    /**
+     * Finds one satisfying assignment in this BDD of all the defined FDD
+     * variables.  Each value is stored in an array which is returned.  The size
+     * of this array is exactly the number of FDD variables defined.
+     * 
+     * Compare to fdd_scanallvar.
+     * 
+     * @return int[]
+     */
+    public abstract int[] scanAllVar();
+
+    /**
+     * Replaces all variables in this BDD with the variables defined by pair.
+     * Each entry in pair consists of a old and a new variable.  Whenever the
+     * old variable is found in this BDD then a new node with the new variable
+     * is inserted instead.
+     * 
+     * Compare to bdd_replace.
+     * 
+     * @param pair
+     * @return BDD
+     */
+    public abstract BDD replace(BDDPairing pair);
+
+    /**
      * Prints the set of truth assignments specified by this BDD.
      * 
      * Compare to bdd_printset.
      */
     public abstract void printSet();
+    
+    /**
+     * Prints this BDD using a set notation as in printSet() but with the index
+     * of the finite domain blocks included instead of the BDD variables.
+     * 
+     * Compare to fdd_printset.
+     */
+    public abstract void printSetWithDomains();
     
     /**
      * Compare to bdd_printdot.
@@ -463,12 +533,4 @@ public abstract class BDD {
     
     protected BDD() { }
     
-    /**
-     * @see java.lang.Object#finalize()
-     */
-    protected void finalize() throws Throwable {
-        super.finalize();
-        this.delRef();
-    }
-
 }

@@ -225,7 +225,7 @@ public abstract class BDDFactory {
     // TODO: error code from bdd_save
     
     // TODO: bdd_strm_hook, bdd_file_hook, bdd_blockfile_hook
-    // TODO: bdd_varprofile|
+    // TODO: bdd_varprofile
     // TODO: bdd_versionnum, bdd_versionstr
     
     
@@ -426,14 +426,63 @@ public abstract class BDDFactory {
     // TODO: bdd_reorder_probe
     // TODO: bdd_error_hook, bdd_clear_error, bdd_errstring
     
-    // TODO: fdd_extdomain
-    // TODO: fdd_ithvar, fdd_equals, fdd_printset, fdd_setpair
-    // TODO: fdd_ithset, fdd_makeset
-
     // TODO: bvec functions
-    
-    // TODO: bddPair, bdd_replace
 
+
+    /**** FINITE DOMAINS ****/
+    
+    /**
+     * Extends the set of finite domain blocks with domains of the given sizes.
+     * Each entry in domainSizes is the size of a new finite domain which later
+     * on can be used for finite state machine traversal and other operations on
+     * finite domains.  Each domain allocates log 2 (|domainSizes[i]|) BDD
+     * variables to be used later.  The ordering is interleaved for the domains
+     * defined in each call to extDomain. This means that assuming domain D0
+     * needs 2 BDD variables x1 and x2 , and another domain D1 needs 4 BDD
+     * variables y1, y2, y3 and y4, then the order then will be x1, y1, x2, y2,
+     * y3, y4.  The new domains are returned in order.  The BDD variables needed
+     * to encode the domain are created for the purpose and do not interfere
+     * with the BDD variables already in use.
+     * 
+     * Compare to fdd_extdomain.
+     */
+    public abstract BDDDomain[] extDomain(int[] domainSizes);
+    
+    /**
+     * This function takes two finit blocks and merges them into a new one, such
+     * that the new one is encoded using both sets of BDD variables.
+     * 
+     * Compare to fdd_overlapdomain.
+     */
+    public abstract BDDDomain overlapDomain(BDDDomain d1, BDDDomain d2);
+    
+    /**
+     * Returns a BDD defining all the variable sets used to define the variable
+     * blocks in the given array.
+     * 
+     * Compare to fdd_makeset.
+     */
+    public abstract BDD makeSet(BDDDomain[] v);
+    
+    /**
+     * Clear all allocated finite domain blocks that were defined by extDomain()
+     * or overlapDomain().
+     * 
+     * Compare to fdd_clearall.
+     */
+    public abstract void clearAllDomains();
+    
+    /**
+     * Returns the number of finite domain blocks defined by calls to
+     * extDomain().
+     * 
+     * Compare to fdd_domainnum.
+     */
+    public abstract int numberOfDomains();
+    
+    // TODO: fdd_file_hook, fdd_strm_hook
+    // TODO: fdd_intaddvarblock
+    
     /**
      * @see java.lang.Object#finalize()
      */

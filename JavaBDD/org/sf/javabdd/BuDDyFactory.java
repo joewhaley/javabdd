@@ -264,6 +264,40 @@ public class BuDDyFactory extends BDDFactory {
      */
     public native void printStat();
 
+    /**
+     * @see org.sf.javabdd.BDDFactory#extDomain(int[])
+     */
+    public BDDDomain[] extDomain(int[] domainSizes) {
+        return null;
+    }
+    
+    /**
+     * @see org.sf.javabdd.BDDFactory#overlapDomain(org.sf.javabdd.BDDDomain, org.sf.javabdd.BDDDomain)
+     */
+    public BDDDomain overlapDomain(BDDDomain d1, BDDDomain d2) {
+        return null;
+    }
+    
+    /**
+     * @see org.sf.javabdd.BDDFactory#makeSet(org.sf.javabdd.BDDDomain[])
+     */
+    public BDD makeSet(BDDDomain[] v) {
+        return null;
+    }
+    
+    /**
+     * @see org.sf.javabdd.BDDFactory#clearAllDomains()
+     */
+    public void clearAllDomains() {
+    }
+    
+    /**
+     * @see org.sf.javabdd.BDDFactory#numberOfDomains()
+     */
+    public int numberOfDomains() {
+        return 0;
+    }
+
     public static class BuDDyBDD extends BDD {
     
         private int _id;
@@ -445,6 +479,133 @@ public class BuDDyFactory extends BDDFactory {
          */
         protected native void delRef();
         
-    }
+        /**
+         * @see java.lang.Object#finalize()
+         */
+        protected void finalize() throws Throwable {
+            super.finalize();
+            this.delRef();
+        }
+        
+        /**
+         * @see org.sf.javabdd.BDD#veccompose(org.sf.javabdd.BDDPairing)
+         */
+        public native BDD veccompose(BDDPairing pair);
+        
+        /**
+         * @see org.sf.javabdd.BDD#scanSet()
+         */
+        public native int[] scanSet();
+        
+        /**
+         * @see org.sf.javabdd.BDD#scanVar(int)
+         */
+        public native int scanVar(int var);
+        
+        /**
+         * @see org.sf.javabdd.BDD#scanAllVar()
+         */
+        public native int[] scanAllVar();
+        
+        /**
+         * @see org.sf.javabdd.BDD#replace(org.sf.javabdd.BDDPairing)
+         */
+        public native BDD replace(BDDPairing pair);
+        
+        /**
+         * @see org.sf.javabdd.BDD#printSetWithDomains()
+         */
+        public native void printSetWithDomains();
 
+    }
+    
+    public static class BuDDyBDDDomain extends BDDDomain {
+        private int _id;
+        
+        private BuDDyBDDDomain(int id) {
+            this._id = id;
+        }
+            
+        /**
+         * @see org.sf.javabdd.BDDDomain#domain()
+         */
+        public native BDD domain();
+        
+        /**
+         * @see org.sf.javabdd.BDDDomain#size()
+         */
+        public native int size();
+        
+        /**
+         * @see org.sf.javabdd.BDDDomain#buildEquals(org.sf.javabdd.BDDDomain)
+         */
+        public native BDD buildEquals(BDDDomain that);
+        
+        /**
+         * @see org.sf.javabdd.BDDDomain#set()
+         */
+        public native BDD set();
+        
+        /**
+         * @see org.sf.javabdd.BDDDomain#ithVar(int)
+         */
+        public native BDD ithVar(int val);
+        
+        /**
+         * @see org.sf.javabdd.BDDDomain#varNum()
+         */
+        public native int varNum();
+        
+        /**
+         * @see org.sf.javabdd.BDDDomain#vars()
+         */
+        public native int[] vars();
+        
+    }
+    
+    public static class BuDDyBDDPairing extends BDDPairing {
+        
+        private long _ptr;
+        
+        private BuDDyBDDPairing(long ptr) {
+                this._ptr = ptr;
+        }
+        
+        /**
+         * @see org.sf.javabdd.BDDPairing#set(int, int)
+         */
+        public native void set(int oldvar, int newvar);
+        
+        /**
+         * @see org.sf.javabdd.BDDPairing#set(int[], int[])
+         */
+        public native void set(int[] oldvar, int[] newvar);
+        
+        /**
+         * @see org.sf.javabdd.BDDPairing#set(org.sf.javabdd.BDD, org.sf.javabdd.BDD)
+         */
+        public native void set(BDD oldvar, BDD newvar);
+        
+        /**
+         * @see org.sf.javabdd.BDDPairing#set(org.sf.javabdd.BDD[], org.sf.javabdd.BDD[])
+         */
+        public native void set(BDD[] oldvar, BDD[] newvar);
+        
+        /**
+         * @see org.sf.javabdd.BDDPairing#set(org.sf.javabdd.BDDDomain, org.sf.javabdd.BDDDomain)
+         */
+        public native void set(BDDDomain p1, BDDDomain p2);
+        
+        /**
+         * @see org.sf.javabdd.BDDPairing#set(org.sf.javabdd.BDDDomain[], org.sf.javabdd.BDDDomain[])
+         */
+        public native void set(BDDDomain[] p1, BDDDomain[] p2);
+        
+        /**
+         * @see org.sf.javabdd.BDDPairing#reset()
+         */
+        public native void reset();
+        
+    }
+    
 }
