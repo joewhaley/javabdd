@@ -298,41 +298,8 @@ public class BuDDyFactory extends BDDFactory {
      */
     public native void printStat();
 
-    /**
-     * @see org.sf.javabdd.BDDFactory#extDomain(int[])
-     */
-    public native BDDDomain[] extDomain(int[] domainSizes);
-    
-    /**
-     * @see org.sf.javabdd.BDDFactory#overlapDomain(org.sf.javabdd.BDDDomain, org.sf.javabdd.BDDDomain)
-     */
-    public BDDDomain overlapDomain(BDDDomain d1, BDDDomain d2) {
-        return overlapDomain((BuDDyBDDDomain) d1, (BuDDyBDDDomain) d2);
-    }
-    private native BuDDyBDDDomain overlapDomain(BuDDyBDDDomain d1, BuDDyBDDDomain d2);
-    
-    /**
-     * @see org.sf.javabdd.BDDFactory#makeSet(org.sf.javabdd.BDDDomain[])
-     */
-    public native BDD makeSet(BDDDomain[] v);
-    
-    /**
-     * @see org.sf.javabdd.BDDFactory#clearAllDomains()
-     */
-    public native void clearAllDomains();
-    
-    /**
-     * @see org.sf.javabdd.BDDFactory#numberOfDomains()
-     */
-    public native int numberOfDomains();
-
-    /**
-     * @see org.sf.javabdd.BDDFactory#getDomain(int)
-     */
-    public BDDDomain getDomain(int i) {
-        if (i < 0 || i >= numberOfDomains())
-            throw new IndexOutOfBoundsException(i+" is out of range");
-        return new BuDDyBDDDomain(i);
+    protected BDDDomain createDomain(int a, long b) {
+        return new BuDDyBDDDomain(a, b);
     }
 
     /**
@@ -611,10 +578,15 @@ public class BuDDyFactory extends BDDFactory {
         /**
          * @see java.lang.Object#finalize()
          */
+        /*
         protected void finalize() throws Throwable {
             super.finalize();
+            if (false && _id >= 0) {
+                System.out.println("BDD not freed! "+System.identityHashCode(this));
+            }
             this.delRef();
         }
+        */
         
         /**
          * @see org.sf.javabdd.BDD#veccompose(org.sf.javabdd.BDDPairing)
@@ -623,29 +595,6 @@ public class BuDDyFactory extends BDDFactory {
             return veccompose0((BuDDyBDDPairing) pair);
         }
         protected native BuDDyBDD veccompose0(BuDDyBDDPairing pair);
-        
-        /**
-         * @see org.sf.javabdd.BDD#scanSet()
-         */
-        public native int[] scanSet();
-        
-        /**
-         * @see org.sf.javabdd.BDD#scanSetDomains()
-         */
-        public native int[] scanSetDomains();
-        
-        /**
-         * @see org.sf.javabdd.BDD#scanVar(org.sf.javabdd.BDDDomain)
-         */
-        public int scanVar(BDDDomain var) {
-            return scanVar0((BuDDyBDDDomain) var);
-        }
-        protected native int scanVar0(BuDDyBDDDomain var);
-        
-        /**
-         * @see org.sf.javabdd.BDD#scanAllVar()
-         */
-        public native int[] scanAllVar();
         
         /**
          * @see org.sf.javabdd.BDD#replace(org.sf.javabdd.BDDPairing)
@@ -662,11 +611,6 @@ public class BuDDyFactory extends BDDFactory {
             replaceWith0((BuDDyBDDPairing) pair); 
         }
         protected native void replaceWith0(BuDDyBDDPairing pair);
-        
-        /**
-         * @see org.sf.javabdd.BDD#printSetWithDomains()
-         */
-        public native void printSetWithDomains();
         
         /**
          * @see org.sf.javabdd.BDD#equals(org.sf.javabdd.BDD)
@@ -688,83 +632,13 @@ public class BuDDyFactory extends BDDFactory {
      * An implementation of a BDDDomain, used by the BuDDy interface.
      */
     public static class BuDDyBDDDomain extends BDDDomain {
-        private int _id;
-        
-        private BuDDyBDDDomain(int id) {
-            this._id = id;
+
+        private BuDDyBDDDomain(int a, long b) {
+            super(a, b);
         }
-        
+
         public BDDFactory getFactory() { return INSTANCE; }
-        
-        /**
-         * @see org.sf.javabdd.BDDDomain#getIndex()
-         */
-        public int getIndex() { return _id; }
-        
-        /**
-         * @see org.sf.javabdd.BDDDomain#domain()
-         */
-        public native BDD domain();
-        
-        /**
-         * @see org.sf.javabdd.BDDDomain#size()
-         */
-        public native int size();
-        
-        /**
-         * @see org.sf.javabdd.BDDDomain#buildEquals(org.sf.javabdd.BDDDomain)
-         */
-        public BDD buildEquals(BDDDomain that) {
-            return buildEquals0((BuDDyBDDDomain) that);
-        }
-        protected native BuDDyBDD buildEquals0(BuDDyBDDDomain that);
-        
-        public BDD buildAdd(BDDDomain that, int value) {
-            return buildAdd0((BuDDyBDDDomain) that, value);
-        }
-        protected native BuDDyBDD buildAdd0(BuDDyBDDDomain that, int value);
-        
-        /**
-         * @see org.sf.javabdd.BDDDomain#set()
-         */
-        public native BDD set();
-        
-        /**
-         * @see org.sf.javabdd.BDDDomain#ithVar(int)
-         */
-        public native BDD ithVar(int val);
-        
-        /**
-         * @see org.sf.javabdd.BDDDomain#varNum()
-         */
-        public native int varNum();
-        
-        /**
-         * @see org.sf.javabdd.BDDDomain#vars()
-         */
-        public native int[] vars();
-        
-        /**
-         * @see java.lang.Object#equals(java.lang.Object)
-         */
-        public boolean equals(Object o) {
-            try {
-                return equals((BuDDyBDDDomain) o);
-            } catch (ClassCastException _) {
-                return false;
-            }
-        }
-        
-        public boolean equals(BuDDyBDDDomain that) {
-            return this._id == that._id;
-        }
-        
-        /**
-         * @see java.lang.Object#hashCode()
-         */
-        public int hashCode() {
-            return this._id;
-        }
+
     }
     
     /**
@@ -811,22 +685,6 @@ public class BuDDyFactory extends BDDFactory {
         protected native void set3(int[] oldvar, BDD[] newvar);
         
         /**
-         * @see org.sf.javabdd.BDDPairing#set(org.sf.javabdd.BDDDomain, org.sf.javabdd.BDDDomain)
-         */
-        public void set(BDDDomain p1, BDDDomain p2) {
-            set4((BuDDyBDDDomain) p1, (BuDDyBDDDomain) p2);
-        }
-        protected native void set4(BuDDyBDDDomain p1, BuDDyBDDDomain p2);
-        
-        /**
-         * @see org.sf.javabdd.BDDPairing#set(org.sf.javabdd.BDDDomain[], org.sf.javabdd.BDDDomain[])
-         */
-        public void set(BDDDomain[] p1, BDDDomain[] p2) {
-            set5(p1, p2);
-        }
-        protected native void set5(BDDDomain[] p1, BDDDomain[] p2);
-        
-        /**
          * @see org.sf.javabdd.BDDPairing#reset()
          */
         public native void reset();
@@ -844,6 +702,23 @@ public class BuDDyFactory extends BDDFactory {
          */
         protected native void free();
         
+    }
+    
+    protected BDDBitVector createBitVector(int a) {
+        return new BuDDyBDDBitVector(a);
+    }
+    
+    /**
+     * An implementation of a BDDDomain, used by the BuDDy interface.
+     */
+    public static class BuDDyBDDBitVector extends BDDBitVector {
+
+        private BuDDyBDDBitVector(int a) {
+            super(a);
+        }
+
+        public BDDFactory getFactory() { return INSTANCE; }
+
     }
     
 }

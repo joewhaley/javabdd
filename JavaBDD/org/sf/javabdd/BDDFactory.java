@@ -537,6 +537,16 @@ public abstract class BDDFactory {
 
     /**** FINITE DOMAINS ****/
     
+    protected BDDDomain[] domain;
+    protected int fdvarnum;
+    protected int firstbddvar;
+    
+    /**
+     * Implementors must implement this factory method to create BDDDomain
+     * objects of the correct type.
+     */
+    protected abstract BDDDomain createDomain(int a, long b);
+    
     /**
      * Extends the set of finite domain blocks with domains of the given sizes.
      * Each entry in domainSizes is the size of a new finite domain which later
@@ -552,7 +562,69 @@ public abstract class BDDFactory {
      * 
      * Compare to fdd_extdomain.
      */
-    public abstract BDDDomain[] extDomain(int[] domainSizes);
+    public BDDDomain[] extDomain(int[] dom) {
+        long[] a = new long[dom.length];
+        for (int i=0; i<a.length; ++i) {
+            a[i] = (long) dom[i];
+        }
+        return extDomain(a);
+    }
+    public BDDDomain[] extDomain(long[] domainSizes) {
+        int offset = fdvarnum;
+        int binoffset;
+        int extravars = 0;
+        int n, bn;
+        boolean more;
+        int num = domainSizes.length;
+
+        /* Build domain table */
+        if (domain == null) /* First time */ {
+            domain = new BDDDomain[num];
+        } else /* Allocated before */ {
+            if (fdvarnum + num > domain.length) {
+                int fdvaralloc = domain.length + Math.max(num, domain.length);
+                BDDDomain[] d2 = new BDDDomain[fdvaralloc];
+                System.arraycopy(domain, 0, d2, 0, domain.length);
+                domain = d2;
+            }
+        }
+
+        /* Create bdd variable tables */
+        for (n = 0; n < num; n++) {
+            domain[n + fdvarnum] = createDomain(n + fdvarnum, domainSizes[n]);
+            extravars += domain[n + fdvarnum].varNum();
+        }
+
+        binoffset = firstbddvar;
+        int bddvarnum = varNum();
+        if (firstbddvar + extravars > bddvarnum) {
+            setVarNum(firstbddvar + extravars);
+        }
+
+        /* Set correct variable sequence (interleaved) */
+        for (bn = 0, more = true; more; bn++) {
+            more = false;
+
+            for (n = 0; n < num; n++) {
+                if (bn < domain[n + fdvarnum].varNum()) {
+                    more = true;
+                    domain[n + fdvarnum].ivar[bn] = binoffset++;
+                }
+            }
+        }
+
+        for (n = 0; n < num; n++) {
+            domain[n + fdvarnum].var =
+                makeSet(domain[n + fdvarnum].ivar);
+        }
+
+        fdvarnum += num;
+        firstbddvar += extravars;
+
+        BDDDomain[] r = new BDDDomain[num];
+        System.arraycopy(domain, offset, r, 0, num);
+        return r;
+    }
     
     /**
      * This function takes two finit blocks and merges them into a new one, such
@@ -560,7 +632,33 @@ public abstract class BDDFactory {
      * 
      * Compare to fdd_overlapdomain.
      */
-    public abstract BDDDomain overlapDomain(BDDDomain d1, BDDDomain d2);
+    public BDDDomain overlapDomain(BDDDomain d1, BDDDomain d2) {
+        BDDDomain d;
+        int n;
+
+        int fdvaralloc = domain.length;
+        if (fdvarnum + 1 > fdvaralloc) {
+            fdvaralloc += fdvaralloc;
+            BDDDomain[] domain2 = new BDDDomain[fdvaralloc];
+            System.arraycopy(domain, 0, domain2, 0, domain.length);
+            domain = domain2;
+        }
+
+        d = domain[fdvarnum];
+        d.realsize = d1.realsize * d2.realsize;
+        d.ivar = new int[d1.varNum() + d2.varNum()];
+
+        for (n = 0; n < d1.varNum(); n++)
+            d.ivar[n] = d1.ivar[n];
+        for (n = 0; n < d2.varNum(); n++)
+            d.ivar[d1.varNum() + n] = d2.ivar[n];
+
+        d.var = makeSet(d.ivar);
+        //bdd_addref(d.var);
+
+        fdvarnum++;
+        return d;
+    }
     
     /**
      * Returns a BDD defining all the variable sets used to define the variable
@@ -585,7 +683,11 @@ public abstract class BDDFactory {
      * 
      * Compare to fdd_clearall.
      */
-    public abstract void clearAllDomains();
+    public void clearAllDomains() {
+        domain = null;
+        fdvarnum = 0;
+        firstbddvar = 0;
+    }
     
     /**
      * Returns the number of finite domain blocks defined by calls to
@@ -593,13 +695,19 @@ public abstract class BDDFactory {
      * 
      * Compare to fdd_domainnum.
      */
-    public abstract int numberOfDomains();
+    public int numberOfDomains() {
+        return fdvarnum;
+    }
     
     /**
      * Returns the ith finite domain block, as defined by calls to
      * extDomain().
      */
-    public abstract BDDDomain getDomain(int i);
+    public BDDDomain getDomain(int i) {
+        if (i < 0 || i >= fdvarnum)
+            throw new IndexOutOfBoundsException();
+        return domain[i];
+    }
     
     // TODO: fdd_file_hook, fdd_strm_hook
     
@@ -664,4 +772,47 @@ public abstract class BDDFactory {
             return name;
         }
     }
+    
+    protected abstract BDDBitVector createBitVector(int a);
+    
+    // compare to bvec_true, bvec_false
+    public BDDBitVector buildVector(int bitnum, boolean b) {
+        BDDBitVector v = createBitVector(bitnum);
+        v.initialize(b);
+        return v;
+    }
+    
+    // compare to bvec_con
+    public BDDBitVector constantVector(int bitnum, int val) {
+        BDDBitVector v = createBitVector(bitnum);
+        v.initialize(val);
+        return v;
+    }
+    public BDDBitVector constantVector(int bitnum, long val) {
+        BDDBitVector v = createBitVector(bitnum);
+        v.initialize(val);
+        return v;
+    }
+    
+    // compare to bvec_var
+    public BDDBitVector buildVector(int bitnum, int offset, int step) {
+        BDDBitVector v = createBitVector(bitnum);
+        v.initialize(offset, step);
+        return v;
+    }
+    
+    // compare to bvec_varfdd
+    public BDDBitVector buildVector(BDDDomain d) {
+        BDDBitVector v = createBitVector(d.varNum());
+        v.initialize(d);
+        return v;
+    }
+    
+    // compare to bvec_varvec
+    public BDDBitVector buildVector(int[] var) {
+        BDDBitVector v = createBitVector(var.length);
+        v.initialize(var);
+        return v;
+    }
+    
 }

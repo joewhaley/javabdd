@@ -800,24 +800,19 @@ public abstract class BDD {
                     
                     var = domain_n_ivar;
                     
-                    for (m=0 ; m<(1<<domain_n_varnum) ; m++) {
-                        binval = fdddec2bin(bdd, n, m);
-                        ok = true;
-                        
-                        for (i=0 ; i<domain_n_varnum && ok ; i++)
-                            if (set[var[i]] == 1  &&  binval[i] != false)
-                                ok = false;
-                            else if (set[var[i]] == 2  &&  binval[i] != true)
-                                ok = false;
-                        
-                        if (ok) {
-                            if (!firstval)
-                                sb.append('/');
-                            sb.append(ts.elementName(n, m));
-                            firstval = false;
-                        }
-                        
-                        //free(binval);
+                    long pos = 0L;
+                    long dontcare = 0L;
+                    for (i=domain_n_varnum-1; i>=0; i--) {
+                        dontcare <<= 1;
+                        pos <<= 1;
+                        int val = set[var[i]];
+                        if (val == 0) dontcare |= 1L;
+                        else if (val == 2) pos |= 1L;
+                    }
+                    if (dontcare == 0L) {
+                        sb.append(ts.elementName(n, pos));
+                    } else {
+                        sb.append(ts.elementNames(n, pos, pos | dontcare));
                     }
                 }
             }
@@ -834,7 +829,7 @@ public abstract class BDD {
         }
     }
     
-    static boolean[] fdddec2bin(BDDFactory bdd, int var, int val) {
+    static boolean[] fdddec2bin(BDDFactory bdd, int var, long val) {
         boolean[] res;
         int n = 0;
         
@@ -854,7 +849,8 @@ public abstract class BDD {
         public static final BDDToString INSTANCE = new BDDToString();
         protected BDDToString() { }
         public String domainName(int i) { return Integer.toString(i); }
-        public String elementName(int i, int j) { return Integer.toString(j); }
+        public String elementName(int i, long j) { return Long.toString(j); }
+        public String elementNames(int i, long lo, long hi) { return lo+"-"+hi; }
     }
     
     /**

@@ -235,11 +235,15 @@ JNIEXPORT void JNICALL Java_org_sf_javabdd_BuDDyFactory_registerNatives
   }
   (*env)->DeleteLocalRef(env, cls);
 
+#if 0
   cls = (*env)->FindClass(env, "org/sf/javabdd/BuDDyFactory$BuDDyBDDDomain");
   if (cls != NULL) {
     domain_fid = (*env)->GetFieldID(env, cls, "_id", "I");
   }
   (*env)->DeleteLocalRef(env, cls);
+#else
+  domain_fid = -1;
+#endif
 
   if (!bdd_cls || !bdd_fid || !bdd_mid || !reorder_fid || !op_fid || !pair_fid || !domain_fid) {
     cls = (*env)->FindClass(env, "java/lang/InternalError");

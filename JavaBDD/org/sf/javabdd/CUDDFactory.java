@@ -351,129 +351,10 @@ public class CUDDFactory extends BDDFactory {
         throw new UnsupportedOperationException();
     }
 
-    protected CUDDBDDDomain[] domain;
-    protected int fdvarnum;
-    protected int firstbddvar;
-
-    /* (non-Javadoc)
-     * @see org.sf.javabdd.BDDFactory#extDomain(int[])
-     */
-    public BDDDomain[] extDomain(int[] dom) {
-        int offset = fdvarnum;
-        int binoffset;
-        int extravars = 0;
-        int n, bn;
-        boolean more;
-        int num = dom.length;
-
-        /* Build domain table */
-        if (domain == null) /* First time */ {
-            domain = new CUDDBDDDomain[num];
-        } else /* Allocated before */ {
-            if (fdvarnum + num > domain.length) {
-                int fdvaralloc = domain.length + Math.max(num, domain.length);
-                CUDDBDDDomain[] d2 = new CUDDBDDDomain[fdvaralloc];
-                System.arraycopy(domain, 0, d2, 0, domain.length);
-                domain = d2;
-            }
-        }
-
-        /* Create bdd variable tables */
-        for (n = 0; n < num; n++) {
-            domain[n + fdvarnum] = new CUDDBDDDomain(n + fdvarnum, dom[n]);
-            extravars += domain[n + fdvarnum].varNum();
-        }
-
-        binoffset = firstbddvar;
-        int bddvarnum = INSTANCE.varNum();
-        if (firstbddvar + extravars > bddvarnum)
-            INSTANCE.setVarNum(firstbddvar + extravars);
-
-        /* Set correct variable sequence (interleaved) */
-        for (bn = 0, more = true; more; bn++) {
-            more = false;
-
-            for (n = 0; n < num; n++) {
-                if (bn < domain[n + fdvarnum].varNum()) {
-                    more = true;
-                    domain[n + fdvarnum].ivar[bn] = binoffset++;
-                }
-            }
-        }
-
-        for (n = 0; n < num; n++) {
-            domain[n + fdvarnum].var =
-                INSTANCE.makeSet(domain[n + fdvarnum].ivar);
-            //domain[n+fdvarnum].var.addRef();
-        }
-
-        fdvarnum += num;
-        firstbddvar += extravars;
-
-        BDDDomain[] r = new BDDDomain[num];
-        System.arraycopy(domain, offset, r, 0, num);
-        return r;
+    protected BDDDomain createDomain(int a, long b) {
+        return new CUDDBDDDomain(a, b);
     }
 
-    /* (non-Javadoc)
-     * @see org.sf.javabdd.BDDFactory#overlapDomain(org.sf.javabdd.BDDDomain, org.sf.javabdd.BDDDomain)
-     */
-    public BDDDomain overlapDomain(BDDDomain d1, BDDDomain d2) {
-        CUDDBDDDomain d;
-        int n;
-
-        CUDDBDDDomain cd1 = (CUDDBDDDomain) d1;
-        CUDDBDDDomain cd2 = (CUDDBDDDomain) d2;
-
-        int fdvaralloc = domain.length;
-        if (fdvarnum + 1 > fdvaralloc) {
-            fdvaralloc += fdvaralloc;
-            CUDDBDDDomain[] domain2 = new CUDDBDDDomain[fdvaralloc];
-            System.arraycopy(domain, 0, domain2, 0, domain.length);
-            domain = domain2;
-        }
-
-        d = domain[fdvarnum];
-        d.realsize = cd1.realsize * cd2.realsize;
-        d.ivar = new int[cd1.varNum() + cd2.varNum()];
-
-        for (n = 0; n < cd1.varNum(); n++)
-            d.ivar[n] = cd1.ivar[n];
-        for (n = 0; n < cd2.varNum(); n++)
-            d.ivar[cd1.varNum() + n] = cd2.ivar[n];
-
-        d.var = INSTANCE.makeSet(d.ivar);
-        //bdd_addref(d.var);
-
-        fdvarnum++;
-        return d;
-    }
-
-    /* (non-Javadoc)
-     * @see org.sf.javabdd.BDDFactory#clearAllDomains()
-     */
-    public void clearAllDomains() {
-        domain = null;
-        fdvarnum = 0;
-        firstbddvar = 0;
-    }
-
-    /* (non-Javadoc)
-     * @see org.sf.javabdd.BDDFactory#numberOfDomains()
-     */
-    public int numberOfDomains() {
-        return fdvarnum;
-    }
-
-    /* (non-Javadoc)
-     * @see org.sf.javabdd.BDDFactory#getDomain(int)
-     */
-    public BDDDomain getDomain(int i) {
-        if (i < 0 || i >= fdvarnum)
-            throw new IndexOutOfBoundsException();
-        return domain[i];
-    }
-    
     /**
      * CUDDBDD
      * 
@@ -805,79 +686,17 @@ public class CUDDFactory extends BDDFactory {
      */
     public static class CUDDBDDDomain extends BDDDomain {
 
-        /* The index of this domain. */
-        int index;
-
-        /* The specified domain (0...N-1) */
-        int realsize;
-        /* Variable indices for the variable set */
-        int[] ivar;
-        /* The BDD variable set */
-        BDD var;
-
-        private CUDDBDDDomain(int index, int range) {
-            
-            int calcsize = 2;
-            
-            if (range <= 0  || range > Integer.MAX_VALUE/2)
-                throw new InternalError();
-
-            this.index = index;
-            
-            this.realsize = range;
-            int binsize = 1;
-
-            while (calcsize < range)
-            {
-               binsize++;
-               calcsize <<= 1;
-            }
-
-            this.ivar = new int[binsize];
-            this.var = INSTANCE.one();
-            
-        }
-
-        public BDDFactory getFactory() { return INSTANCE; }
-
-        /* (non-Javadoc)
-         * @see org.sf.javabdd.BDDDomain#getIndex()
-         */
-        public int getIndex() {
-            return index;
+        private CUDDBDDDomain(int index, long range) {
+            super(index, range);
         }
 
         /* (non-Javadoc)
-         * @see org.sf.javabdd.BDDDomain#size()
+         * @see org.sf.javabdd.BDDDomain#getFactory()
          */
-        public int size() {
-            return this.realsize;
-        }
-
-        public BDD buildAdd(BDDDomain that, int value) {
-            throw new BDDException("not implemented");
+        public BDDFactory getFactory() {
+            return INSTANCE;
         }
         
-        /* (non-Javadoc)
-         * @see org.sf.javabdd.BDDDomain#set()
-         */
-        public BDD set() {
-            return var.id();
-        }
-
-        /* (non-Javadoc)
-         * @see org.sf.javabdd.BDDDomain#varNum()
-         */
-        public int varNum() {
-            return this.ivar.length;
-        }
-
-        /* (non-Javadoc)
-         * @see org.sf.javabdd.BDDDomain#vars()
-         */
-        public int[] vars() {
-            return this.ivar;
-        }
     }
 
     /**
@@ -985,4 +804,22 @@ public class CUDDFactory extends BDDFactory {
         System.out.println("After replace(): "+c);
     }
 
+    
+    protected BDDBitVector createBitVector(int a) {
+        return new CUDDBDDBitVector(a);
+    }
+    
+    /**
+     * An implementation of a BDDDomain, used by the BuDDy interface.
+     */
+    public static class CUDDBDDBitVector extends BDDBitVector {
+
+        private CUDDBDDBitVector(int a) {
+            super(a);
+        }
+
+        public BDDFactory getFactory() { return INSTANCE; }
+
+    }
+    
 }
