@@ -65,12 +65,12 @@ public class BuDDyFactory extends BDDFactory {
     private native BDD buildCube(int value, int width, BDD[] var);
 
     /**
-     * @see org.sf.javabdd.BDDFactory#buildCube(int, int, int)
+     * @see org.sf.javabdd.BDDFactory#buildCube(int, int, int[])
      */
     public native BDD buildCube(int value, int width, int[] var);
 
     /**
-     * @see org.sf.javabdd.BDDFactory#makeSet(int)
+     * @see org.sf.javabdd.BDDFactory#makeSet(int[])
      */
     public native BDD makeSet(int[] v);
     
@@ -160,7 +160,7 @@ public class BuDDyFactory extends BDDFactory {
     public native BDD load(String filename);
 
     /**
-     * @see org.sf.javabdd.BDDFactory#save(java.lang.String)
+     * @see org.sf.javabdd.BDDFactory#save(java.lang.String, org.sf.javabdd.BDD)
      */
     public native void save(String filename, BDD v);
 
@@ -263,11 +263,6 @@ public class BuDDyFactory extends BDDFactory {
      * @see org.sf.javabdd.BDDFactory#printStat()
      */
     public native void printStat();
-
-    /**
-     * @see org.sf.javabdd.BDDFactory#extDomain()
-     */
-    public native void extDomain();
 
     public static class BuDDyBDD extends BDD {
     
@@ -406,7 +401,7 @@ public class BuDDyFactory extends BDDFactory {
         public native void printSet();
         
         /**
-         * @see org.sf.javabdd.BDDFactory#printDot()
+         * @see org.sf.javabdd.BDD#printDot()
          */
         public native void printDot();
 
