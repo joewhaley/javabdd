@@ -11,7 +11,7 @@
 #
 
 BUDDY_SRC = buddy22/src
-JDK_ROOT = c:/j2sdk1.4.1_01
+JDK_ROOT = c:/j2sdk1.4.1_02
 MINGW_EXTRA = c:/mingw-extra
 
 CC = gcc 
