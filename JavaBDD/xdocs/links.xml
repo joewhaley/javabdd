@@ -24,6 +24,21 @@
        </li>
       </ul>
     </section>
+    <section name="Projects using JavaBDD">
+     <ul>
+      <li>
+       <a href="http://bddbddb.sourceforge.net/">bddbddb</a>, BDD-Based Deductive DataBase.
+      </li>
+      <li>
+       <a href="http://joeq.sourceforge.net">Joeq</a> virtual machine and compiler infrastructure.
+      </li>
+      <li>
+       <a href="http://www.sable.mcgill.ca/jedd/">Jedd</a>, a Java language extension adding BDDs as a primitive data type.
+      </li>
+      <li>
+       <a href="http://staff.aist.go.jp/tanabe.yoshinori/04/09/4D-2.pdf">Checking Satisfiability of Guarded Fragments</a>.
+      </li>
+     </ul>
     <section name="Related Links">
      <ul>
       <li>
