@@ -27,6 +27,8 @@ import java.io.PrintStream;
  */
 public class JavaFactory extends BDDFactory {
 
+    static final boolean VERIFY_ASSERTIONS = false;
+    
     /* (non-Javadoc)
      * @see org.sf.javabdd.BDDFactory#init(int, int)
      */
@@ -420,6 +422,16 @@ public class JavaFactory extends BDDFactory {
         int hash;
         int next;
 
+        BddNode copy() {
+            BddNode that = new BddNode();
+            that.refcou_and_level = this.refcou_and_level;
+            that.low = this.low;
+            that.high = this.high;
+            that.hash = this.hash;
+            that.next = this.next;
+            return that;
+        }
+        
         static final int REF_MASK = 0xFFC00000;
         static final int MARK_MASK = 0x00200000;
         static final int LEV_MASK = 0x001FFFFF;
@@ -475,13 +487,13 @@ public class JavaFactory extends BDDFactory {
         }
 
         void setLevel(int val) {
-            _assert(val == (val & LEV_MASK));
+            if (VERIFY_ASSERTIONS) _assert(val == (val & LEV_MASK));
             refcou_and_level &= ~LEV_MASK;
             refcou_and_level |= val;
         }
 
         void setLevelAndMarked(int val) {
-            _assert(val == (val & (LEV_MASK | MARK_MASK)));
+            if (VERIFY_ASSERTIONS) _assert(val == (val & (LEV_MASK | MARK_MASK)));
             refcou_and_level &= ~(LEV_MASK | MARK_MASK);
             refcou_and_level |= val;
         }
@@ -504,19 +516,40 @@ public class JavaFactory extends BDDFactory {
 
     abstract static class BddCacheData {
         int a, b, c;
+        abstract BddCacheData copy();
     }
 
     static class BddCacheDataI extends BddCacheData {
         int res;
+        BddCacheData copy() {
+            BddCacheDataI that = new BddCacheDataI();
+            that.res = this.res;
+            return that;
+        }
     }
 
     static class BddCacheDataD extends BddCacheData {
         double dres;
+        BddCacheData copy() {
+            BddCacheDataD that = new BddCacheDataD();
+            that.dres = this.dres;
+            return that;
+        }
     }
 
     static class BddCache {
         BddCacheData table[];
         int tablesize;
+        
+        BddCache copy() {
+            BddCache that = new BddCache();
+            that.table = new BddCacheData[this.table.length];
+            that.tablesize = this.tablesize;
+            for (int i = 0; i < table.length; ++i) {
+                that.table[i] = this.table[i].copy();
+            }
+            return that;
+        }
     }
 
     static class bddCacheStat {
@@ -527,6 +560,18 @@ public class JavaFactory extends BDDFactory {
         int opHit;
         int opMiss;
         int swapCount;
+        
+        bddCacheStat copy() {
+            bddCacheStat that = new bddCacheStat();
+            that.uniqueAccess = this.uniqueAccess;
+            that.uniqueChain = this.uniqueChain;
+            that.uniqueHit = this.uniqueHit;
+            that.uniqueMiss = this.uniqueMiss;
+            that.opHit = this.opHit;
+            that.opMiss = this.opMiss;
+            that.swapCount = this.swapCount;
+            return that;
+        }
     }
 
     static class JavaBDDException extends BDDException {
@@ -5822,9 +5867,9 @@ public class JavaFactory extends BDDFactory {
 
     //// Prime stuff below.
 
-    static Random rng = new Random();
+    Random rng = new Random();
 
-    static final int Random(int i) {
+    final int Random(int i) {
         return rng.nextInt(i) + 1;
     }
 
@@ -5883,7 +5928,7 @@ public class JavaFactory extends BDDFactory {
         return d != 1;
     }
 
-    static boolean isMillerRabinPrime(int src) {
+    boolean isMillerRabinPrime(int src) {
         int n;
 
         for (n = 0; n < CHECKTIMES; ++n) {
@@ -5908,7 +5953,7 @@ public class JavaFactory extends BDDFactory {
             || hasFactor(src, 13);
     }
 
-    static boolean isPrime(int src) {
+    boolean isPrime(int src) {
         if (hasEasyFactors(src))
             return false;
 
@@ -5939,15 +5984,68 @@ public class JavaFactory extends BDDFactory {
         return src;
     }
 
-    public static void main(String[] a) throws IOException {
-        BDDFactory bdd = init(1000, 1000);
-        BDD b = bdd.load(a[0]);
-        b.printSet();
-
-        bdd.printTable(b);
-
-        bdd.save("testfile2", b);
+    public JavaFactory cloneFactory() {
+        JavaFactory INSTANCE = new JavaFactory();
+        INSTANCE.applycache = this.applycache.copy();
+        INSTANCE.itecache = this.itecache.copy();
+        INSTANCE.quantcache = this.quantcache.copy();
+        INSTANCE.appexcache = this.appexcache.copy();
+        INSTANCE.replacecache = this.replacecache.copy();
+        INSTANCE.misccache = this.misccache.copy();
+        INSTANCE.countcache = this.countcache.copy();
+        // TODO: potential difference here (!)
+        INSTANCE.rng = new Random();
+        INSTANCE.verbose = this.verbose;
+        INSTANCE.bddcachestats = this.bddcachestats.copy();
         
-        bdd.printStat();
+        INSTANCE.bddrunning = this.bddrunning;
+        INSTANCE.bdderrorcond = this.bdderrorcond;
+        INSTANCE.bddnodesize = this.bddnodesize;
+        INSTANCE.bddmaxnodesize = this.bddmaxnodesize;
+        INSTANCE.bddmaxnodeincrease = this.bddmaxnodeincrease;
+        INSTANCE.bddfreepos = this.bddfreepos;
+        INSTANCE.bddfreenum = this.bddfreenum;
+        INSTANCE.bddproduced = this.bddproduced;
+        INSTANCE.bddvarnum = this.bddvarnum;
+
+        INSTANCE.gbcollectnum = this.gbcollectnum;
+        INSTANCE.cachesize = this.cachesize;
+        INSTANCE.gbcclock = this.gbcclock;
+        INSTANCE.usednodes_nextreorder = this.usednodes_nextreorder;
+        
+        INSTANCE.bddrefstacktop = this.bddrefstacktop;
+        INSTANCE.bddresized = this.bddresized;
+        INSTANCE.minfreenodes = this.minfreenodes;
+        INSTANCE.bddnodes = new BddNode[this.bddnodes.length];
+        for (int i = 0; i < INSTANCE.bddnodes.length; ++i) {
+            INSTANCE.bddnodes[i] = this.bddnodes[i].copy();
+        }
+        INSTANCE.bddrefstack = new int[this.bddrefstack.length];
+        System.arraycopy(this.bddrefstack, 0, INSTANCE.bddrefstack, 0, this.bddrefstack.length);
+        INSTANCE.bddvar2level = new int[this.bddvar2level.length];
+        System.arraycopy(this.bddvar2level, 0, INSTANCE.bddvar2level, 0, this.bddvar2level.length);
+        INSTANCE.bddlevel2var = new int[this.bddlevel2var.length];
+        System.arraycopy(this.bddlevel2var, 0, INSTANCE.bddlevel2var, 0, this.bddlevel2var.length);
+        INSTANCE.bddvarset = new int[this.bddvarset.length];
+        System.arraycopy(this.bddvarset, 0, INSTANCE.bddvarset, 0, this.bddvarset.length);
+        
+        INSTANCE.domain = new BDDDomain[this.domain.length];
+        for (int i = 0; i < INSTANCE.domain.length; ++i) {
+            INSTANCE.domain[i] = INSTANCE.createDomain(i, this.domain[i].realsize);
+        }
+        return INSTANCE;
+    }
+    
+    /**
+     * Use this function to translate BDD's from a JavaFactory into its clone.
+     * This will only work immediately after cloneFactory() is called, and
+     * before any other BDD operations are performed. 
+     * 
+     * @param that BDD in old factory
+     * @return a BDD in the new factory
+     */
+    public BDD copyNode(BDD that) {
+        bdd b = (bdd) that;
+        return new bdd(b._index);
     }
 }
