@@ -203,13 +203,20 @@ JNIEXPORT jboolean JNICALL Java_org_sf_javabdd_CUDDFactory_isInitialized
   
 /*
  * Class:     org_sf_javabdd_CUDDFactory
- * Method:    done
+ * Method:    done0
  * Signature: ()V
  */
-JNIEXPORT void JNICALL Java_org_sf_javabdd_CUDDFactory_done
+JNIEXPORT void JNICALL Java_org_sf_javabdd_CUDDFactory_done0
   (JNIEnv *env, jobject o)
 {
     int bdds;
+    
+    Cudd_Deref((DdNode *)(intptr_cast_type) bdd_one);
+    Cudd_Deref((DdNode *)(intptr_cast_type) bdd_zero);
+    
+    fprintf(stderr, "Garbage collections: %d  Time spent: %f\n",
+    	Cudd_ReadGarbageCollections(manager), Cudd_ReadGarbageCollectionTime(manager)/1000.);
+    
     bdds = Cudd_CheckZeroRef(manager);
     if (bdds > 0) fprintf(stderr, "Note: %d BDDs still in memory when terminating\n", bdds);
     DdManager* m = manager;
@@ -660,9 +667,6 @@ static DdNode* satone_rec(DdNode* f)
   	    r = Cudd_Not(r);
   	    cuddDeref(res);
     }
-    cuddRef(r);
-    
-	//if (Cudd_DebugCheck(manager)) printf("Inconsistent state!\n");
 	
     return r;
 }
@@ -680,15 +684,11 @@ JNIEXPORT jobject JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_satOne
     
     d = BDD_JavaToC(env, o);
     
-	//if (Cudd_DebugCheck(manager)) printf("Inconsistent state before call.\n");
-	
     do {
 		manager->reordered = 0;
 		res = satone_rec(d);
     } while (manager->reordered == 1);
     
-	//if (Cudd_DebugCheck(manager)) printf("Inconsistent state after call.\n");
-	
     jobject result = BDD_CToJava(env, res);
     return result;
 }

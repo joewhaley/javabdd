@@ -22,7 +22,7 @@ public class CUDDFactory extends BDDFactory {
             throw new InternalError("Error: CUDDFactory already initialized.");
         }
         INSTANCE = new CUDDFactory();
-        INSTANCE.initialize(nodenum/8, cachesize);
+        INSTANCE.initialize(nodenum/256, cachesize);
         return INSTANCE;
     }
     
@@ -88,7 +88,11 @@ public class CUDDFactory extends BDDFactory {
     /* (non-Javadoc)
      * @see org.sf.javabdd.BDDFactory#done()
      */
-    public native void done();
+    public void done() {
+        done0();
+        INSTANCE = null;
+    }
+    private native void done0();
 
     /* (non-Javadoc)
      * @see org.sf.javabdd.BDDFactory#setMaxNodeNum(int)
@@ -687,10 +691,14 @@ public class CUDDFactory extends BDDFactory {
                 System.out.print('>');
             } else {
                 set[f.var2Level(r.var())] = 1;
-                bdd_printset_rec(f, r.low(), set);
+                BDD rl = r.low();
+                bdd_printset_rec(f, rl, set);
+                rl.free();
 
                 set[f.var2Level(r.var())] = 2;
-                bdd_printset_rec(f, r.high(), set);
+                BDD rh = r.high();
+                bdd_printset_rec(f, rh, set);
+                rh.free();
 
                 set[f.var2Level(r.var())] = 0;
             }

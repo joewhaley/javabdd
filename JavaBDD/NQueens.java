@@ -68,16 +68,19 @@ public class NQueens {
         solution.printSet();
         System.out.println();
 
-        queen.free();
         solution.free();
-        for (i = 0; i < N; i++)
-            for (j = 0; j < N; j++)
-                X[i][j].free();
-
+        freeAll();
         B.done();
 
 	time = System.currentTimeMillis() - time;
 	System.out.println("Time: "+time/1000.+" seconds");
+    }
+
+    static void freeAll() {
+        queen.free();
+        for (int i = 0; i < N; i++)
+            for (int j = 0; j < N; j++)
+                X[i][j].free();
     }
 
     static void build(int i, int j) {
@@ -87,9 +90,7 @@ public class NQueens {
         /* No one in the same column */
         for (l = 0; l < N; l++) {
             if (l != j) {
-		BDD t = X[i][l].not();
-		BDD u = X[i][j].imp(t);
-		t.free();
+                BDD u = X[i][l].apply(X[i][j], BDDFactory.nand);
                 a.andWith(u);
             }
         }
@@ -97,9 +98,7 @@ public class NQueens {
         /* No one in the same row */
         for (k = 0; k < N; k++) {
             if (k != i) {
-		BDD t = X[k][j].not();
-		BDD u = X[i][j].imp(t);
-		t.free();
+                BDD u = X[i][j].apply(X[k][j], BDDFactory.nand);
                 b.andWith(u);
             }
         }
@@ -109,9 +108,7 @@ public class NQueens {
             int ll = k - i + j;
             if (ll >= 0 && ll < N) {
                 if (k != i) {
-		    BDD t = X[k][ll].not();
-		    BDD u = X[i][j].imp(t);
-		    t.free();
+                    BDD u = X[i][j].apply(X[k][ll], BDDFactory.nand);
                     c.andWith(u);
                 }
             }
@@ -122,9 +119,7 @@ public class NQueens {
             int ll = i + j - k;
             if (ll >= 0 && ll < N) {
                 if (k != i) {
-		    BDD t = X[k][ll].not();
-		    BDD u = X[i][j].imp(t);
-		    t.free();
+                    BDD u = X[i][j].apply(X[k][ll], BDDFactory.nand);
                     d.andWith(u);
                 }
             }
