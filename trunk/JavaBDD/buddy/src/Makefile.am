@@ -20,7 +20,8 @@ libbdd_la_SOURCES = \
  prime.c \
  prime.h \
  reorder.c \
- tree.c
+ tree.c \
+ trace.c
 
 # See the `Updating version info' node of the Libtool manual before
 # changing this.
