@@ -26,7 +26,8 @@ public class TryVarOrder {
     static Object bdd = null;
 
     static ClassLoader makeClassLoader() {
-        return HijackingClassLoader.makeClassLoader();
+        //return HijackingClassLoader.makeClassLoader();
+        return ClassLoader.getSystemClassLoader();
     }
     
     /**
@@ -80,6 +81,17 @@ public class TryVarOrder {
                 x.printStackTrace();
             }
             bdd = null;
+        }
+    }
+    
+    void setBDDError(int code) {
+        Class c = bdd.getClass();
+        try {
+            Method m = c.getMethod("setError", new Class[] { int.class });
+            m.invoke(bdd, new Object[] { Integer.valueOf(code) });
+        } catch (Exception x) {
+            System.err.println("Exception occurred while setting error for BDD factory: "+x.getLocalizedMessage());
+            x.printStackTrace();
         }
     }
     
@@ -351,8 +363,11 @@ public class TryVarOrder {
         } catch (InterruptedException x) {
         }
         if (t.isAlive()) {
-            t.stop();
-            Thread.yield(); // Help ThreadDeath exception to propagate.
+            setBDDError(1);
+            try {
+                t.join();
+            } catch (InterruptedException x) {
+            }
             System.out.print("Free memory: "+Runtime.getRuntime().freeMemory());
             destroyBDDFactory();
             System.gc();
