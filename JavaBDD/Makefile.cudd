@@ -87,7 +87,7 @@ JNI_CLASSNAMES = org.sf.javabdd.CUDDFactory \
 JNI_INCLUDE = cudd_jni.h
 EXAMPLE_SOURCES = NQueens.java
 EXAMPLE_CLASSFILES = $(EXAMPLE_SOURCES:%.java=%.class)
-JAR_NAME = javabdd_0.5.jar
+JAR_NAME = javabdd_0.6.jar
 
 DLL_SRCS  = cudd_jni.c \
 	  $(CUDD_SRC)/cudd/cuddAPI.c $(CUDD_SRC)/cudd/cuddAddAbs.c $(CUDD_SRC)/cudd/cuddAddApply.c $(CUDD_SRC)/cudd/cuddAddFind.c $(CUDD_SRC)/cudd/cuddAddIte.c \
@@ -145,15 +145,15 @@ $(JAR_NAME): $(JNI_CLASSFILE) $(EXAMPLE_CLASSFILES)
 
 pdo:
 	icl -Qprof_gen $(INCLUDES) $(CFLAGS) $(DLL_OUTPUT_OPTION)cudd.dll $(DLL_SRCS) -LD /link /libpath:$(JDK_ROOT)/lib 
-	$(JAVA) -Dbdd=cudd -Djava.library.path=. NQueens 12
+	$(JAVA) -Dbdd=cudd NQueens 12
 	icl -Qprof_use $(INCLUDES) $(CFLAGS) $(DLL_OUTPUT_OPTION)cudd.dll $(DLL_SRCS) -LD /link /libpath:$(JDK_ROOT)/lib 
-	$(JAVA) -Dbdd=cudd -Djava.library.path=. NQueens 12
+	$(JAVA) -Dbdd=cudd NQueens 12
 
 opt_report:
 	icl -Qopt_report -Qopt_report_phase all $(INCLUDES) $(CFLAGS) $(DLL_OUTPUT_OPTION)cudd.dll $(DLL_SRCS) -LD /link /libpath:$(JDK_ROOT)/lib 
 
 test:	$(DLL_NAME) $(EXAMPLE_CLASSFILES)
-	$(JAVA) -Dbdd=cudd -Djava.library.path=. NQueens 8
+	$(JAVA) -Dbdd=cudd NQueens 8
 
 clean:
 	$(RM) -f $(JAVA_CLASSFILES) $(JNI_INCLUDE) $(DLL_OBJS) $(DLL_NAME) $(EXAMPLE_CLASSFILES) $(JAR_NAME)
