@@ -158,6 +158,7 @@ static BDD    or_rec(BDD, BDD);
 #endif
 #if defined(SPECIALIZE_AND)
 static BDD    and_rec(BDD, BDD);
+static BDD    and_itr(BDD, BDD);
 #endif
 #if defined(SPECIALIZE_RELPROD)
 static int    relprod_rec(int, int);
@@ -773,7 +774,10 @@ static BDD and_rec(BDD l, BDD r)
    if (ISONE(r))
      return l;
 
+   /* Prefetch nodes to get some concurrency between cache lookup
+      and node table lookup. */
    _mm_prefetch(&bddnodes[l], 0);
+   _mm_prefetch(&bddnodes[r], 0);
 
    entry = BddCache_lookup(&andcache, ANDHASH(l,r));
    
@@ -816,6 +820,108 @@ static BDD and_rec(BDD l, BDD r)
 
    return res;
 }
+
+static BDD and_itr(BDD l0, BDD r0)
+{
+  BDD res;
+  int* s_top;
+  int* s_ptr;
+  s_top = s_ptr = alloca(bddvarnum * sizeof(int) * 9);
+  *s_ptr++ = l0;
+  *s_ptr++ = r0;
+  
+  while (s_top != s_ptr) {
+    int hash, lev;
+    BDD l1, r1, res1;
+    BddCacheData3 *entry;
+  outer:
+    r1 = *(--s_ptr);
+    l1 = *(--s_ptr);
+    if (l1 == r1  ||  ISONE(r1)) {
+      res1 = l1;
+    } else if (ISZERO(l1)  ||  ISZERO(r1)) {
+      res1 = 0;
+    } else if (ISONE(l1)) {
+      res1 = r1;
+    } else {
+
+      /* Prefetch nodes to get some concurrency between cache lookup
+	 and node table lookup. */
+      _mm_prefetch(&bddnodes[l1], 0);
+      _mm_prefetch(&bddnodes[r1], 0);
+
+      entry = BddCache_lookup(&andcache, ANDHASH(l1,r1));
+      if (entry->a == l1  &&  entry->b == r1) {
+#ifdef CACHESTATS
+	bddcachestats.opHit++;
+#endif
+	res1 = entry->res;
+      } else {
+#ifdef CACHESTATS
+	bddcachestats.opMiss++;
+#endif
+	*s_ptr++ = l1;
+	*s_ptr++ = r1;
+	*s_ptr++ = (int)(entry - andcache.table);
+	if (LEVEL(l1) == LEVEL(r1)) {
+	  *s_ptr++ = LEVEL(l1);
+	  *s_ptr++ = HIGH(l1);
+	  *s_ptr++ = HIGH(r1);
+	  *s_ptr++ = -1;
+	  *s_ptr++ = LOW(l1);
+	  *s_ptr++ = LOW(r1);
+	  continue;
+	} else if (LEVEL(l1) < LEVEL(r1)) {
+	  *s_ptr++ = LEVEL(l1);
+	  *s_ptr++ = HIGH(l1);
+	  *s_ptr++ = r1;
+	  *s_ptr++ = -1;
+	  *s_ptr++ = LOW(l1);
+	  *s_ptr++ = r1;
+	  continue;
+	} else {
+	  *s_ptr++ = LEVEL(r1);
+	  *s_ptr++ = l1;
+	  *s_ptr++ = HIGH(r1);
+	  *s_ptr++ = -1;
+	  *s_ptr++ = l1;
+	  *s_ptr++ = LOW(r1);
+	  continue;
+	}
+      }
+    }
+    if (s_top == s_ptr) {
+      res = res1;
+      goto end;
+    }
+    PUSHREF(res1);
+    for (;;) {
+      lev = *(--s_ptr);
+      if (lev < 0) {
+        goto outer;
+      }
+      hash =  *(--s_ptr);
+      r1 =  *(--s_ptr);
+      l1 =  *(--s_ptr);
+      entry = &andcache.table[hash];
+      res1 = bdd_makenode(lev, READREF(2), READREF(1));
+      POPREF(2);
+      
+      entry->a = l1;
+      entry->b = r1;
+      entry->res = res1;
+      
+      if (s_top == s_ptr) {
+        res = res1;
+        goto end;
+      }
+      
+      PUSHREF(res1);
+    }
+  }
+ end:
+  return res;
+}
 #endif
 
 #if defined(SPECIALIZE_OR)
@@ -833,6 +939,11 @@ static BDD or_rec(BDD l, BDD r)
      return r;
    if (ISZERO(r))
      return l;
+
+   /* Prefetch nodes to get some concurrency between cache lookup
+      and node table lookup. */
+   _mm_prefetch(&bddnodes[l], 0);
+   _mm_prefetch(&bddnodes[r], 0);
 
    entry = BddCache_lookup(&orcache, ORHASH(l,r));
    
@@ -2313,7 +2424,7 @@ static int appquant_rec(int l, int r)
     if (orcache.table == NULL && BddCache3_init(&orcache,cachesize) < 0)
        return bdd_error(BDD_MEMORY);
 #endif
-    return relprod_itr(l, r);
+    return relprod_rec(l, r);
   }
 #endif
 
@@ -2444,6 +2555,9 @@ static int relprod_rec(int l, int r)
    if (l == 1)
      return quant_rec(r);
    
+   /* Prefetch LOW(l) to get some concurrency between cache lookup
+      and node table lookup.  LOW(l) is not that expensive because we
+      need to load LEVEL(l) right after this anyway. */
    _mm_prefetch(&bddnodes[LOW(l)], 0);
 
    if (LEVEL(l) > quantlast  &&  LEVEL(r) > quantlast)
@@ -2531,51 +2645,61 @@ static int relprod_itr(int l0, int r0)
       res1 = quant_rec(l1);
     } else if (l1 == 1) {
       res1 = quant_rec(r1);
-    } else if (LEVEL(l1) > quantlast  &&  LEVEL(r1) > quantlast) {
-      applyop = bddop_and;
-#if defined(SPECIALIZE_AND)
-      res1 = and_rec(l1,r1);
-#else
-      res1 = apply_rec(l1,r1);
-#endif
-      applyop = bddop_or;
     } else {
-      entry = BddCache_lookup(&appexcache, APPEXHASH(l1,r1,bddop_and));
-      if (entry->a == l1  &&  entry->b == r1  &&  entry->r.c == appexid) {
-        res1 = entry->r.res;
-      } else if (LEVEL(l1) == LEVEL(r1)) {
-        *s_ptr++ = l1;
-        *s_ptr++ = r1;
-        *s_ptr++ = (int)(entry - appexcache.table);
-        *s_ptr++ = LEVEL(l1);
-        *s_ptr++ = HIGH(l1);
-        *s_ptr++ = HIGH(r1);
-        *s_ptr++ = -1;
-        *s_ptr++ = LOW(l1);
-        *s_ptr++ = LOW(r1);
-        continue;
-      } else if (LEVEL(l1) < LEVEL(r1)) {
-        *s_ptr++ = l1;
-        *s_ptr++ = r1;
-        *s_ptr++ = (int)(entry - appexcache.table);
-        *s_ptr++ = LEVEL(l1);
-        *s_ptr++ = HIGH(l1);
-        *s_ptr++ = r1;
-        *s_ptr++ = -1;
-        *s_ptr++ = LOW(l1);
-        *s_ptr++ = r1;
-        continue;
+
+      /* Prefetch LOW(l1) to get some concurrency between cache lookup
+	 and node table lookup.  LOW(l1) is not that expensive because we
+	 need to load LEVEL(l1) right after this anyway. */
+      _mm_prefetch(&bddnodes[LOW(l1)], 0);
+
+      if (LEVEL(l1) > quantlast  &&  LEVEL(r1) > quantlast) {
+	applyop = bddop_and;
+#if defined(SPECIALIZE_AND)
+	res1 = and_rec(l1,r1);
+#else
+	res1 = apply_rec(l1,r1);
+#endif
+	applyop = bddop_or;
       } else {
-        *s_ptr++ = l1;
-        *s_ptr++ = r1;
-        *s_ptr++ = (int)(entry - appexcache.table);
-        *s_ptr++ = LEVEL(r1);
-        *s_ptr++ = l1;
-        *s_ptr++ = HIGH(r1);
-        *s_ptr++ = -1;
-        *s_ptr++ = l1;
-        *s_ptr++ = LOW(r1);
-        continue;
+	entry = BddCache_lookup(&appexcache, APPEXHASH(l1,r1,bddop_and));
+	if (entry->a == l1  &&  entry->b == r1  &&  entry->r.c == appexid) {
+#ifdef CACHESTATS
+	  bddcachestats.opHit++;
+#endif
+	  res1 = entry->r.res;
+	} else {
+#ifdef CACHESTATS
+	  bddcachestats.opMiss++;
+#endif
+	  *s_ptr++ = l1;
+	  *s_ptr++ = r1;
+	  *s_ptr++ = (int)(entry - appexcache.table);
+	  if (LEVEL(l1) == LEVEL(r1)) {
+	    *s_ptr++ = LEVEL(l1);
+	    *s_ptr++ = HIGH(l1);
+	    *s_ptr++ = HIGH(r1);
+	    *s_ptr++ = -1;
+	    *s_ptr++ = LOW(l1);
+	    *s_ptr++ = LOW(r1);
+	    continue;
+	  } else if (LEVEL(l1) < LEVEL(r1)) {
+	    *s_ptr++ = LEVEL(l1);
+	    *s_ptr++ = HIGH(l1);
+	    *s_ptr++ = r1;
+	    *s_ptr++ = -1;
+	    *s_ptr++ = LOW(l1);
+	    *s_ptr++ = r1;
+	    continue;
+	  } else {
+	    *s_ptr++ = LEVEL(r1);
+	    *s_ptr++ = l1;
+	    *s_ptr++ = HIGH(r1);
+	    *s_ptr++ = -1;
+	    *s_ptr++ = l1;
+	    *s_ptr++ = LOW(r1);
+	    continue;
+	  }
+	}
       }
     }
     if (s_top == s_ptr) {
