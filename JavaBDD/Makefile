@@ -108,7 +108,7 @@ CAL_CLASSNAMES = org.sf.javabdd.CALFactory \
 	org.sf.javabdd.CALFactory\$$CALBDD \
 	org.sf.javabdd.CALFactory\$$CALBDDDomain \
 	org.sf.javabdd.CALFactory\$$CALBDDPairing
-EXAMPLE_SOURCES = NQueens.java
+EXAMPLE_SOURCES = NQueens.java RubiksCube.java
 EXAMPLE_CLASSFILES = $(EXAMPLE_SOURCES:%.java=%.class)
 JAR_NAME = javabdd.jar
 
@@ -158,9 +158,9 @@ CAL_OBJS = $(CAL_SRCS:.c=.o)
 
 default: jar $(BUDDY_DLL_NAME)
 
-all: $(BUDDY_DLL_NAME) $(CUDD_DLL_NAME) $(CAL_DLL_NAME)
+all: jar dlls
 
-dll: $(DLL_NAME)
+dlls: $(BUDDY_DLL_NAME) $(CUDD_DLL_NAME) $(CAL_DLL_NAME)
 
 $(BUDDY_DLL_NAME): $(BUDDY_OBJS)
 	$(LINK) $(DLL_OUTPUT_OPTION)$@ $(BUDDY_OBJS) $(LINKFLAGS)
@@ -193,13 +193,7 @@ $(CUDD_INCLUDE): $(CUDD_CLASSFILE)
 $(CAL_INCLUDE): $(CAL_CLASSFILE)
 	$(JAVAH) -jni -o $(CAL_INCLUDE) $(CAL_CLASSNAMES)
 
-$(BUDDY_CLASSFILE): $(JAVA_SOURCES)
-	$(JAVAC) -classpath $(CLASSPATH) $(JAVA_SOURCES)
-
-$(CUDD_CLASSFILE): $(JAVA_SOURCES)
-	$(JAVAC) -classpath $(CLASSPATH) $(JAVA_SOURCES)
-
-$(CAL_CLASSFILE): $(JAVA_SOURCES)
+%.class: %.java
 	$(JAVAC) -classpath $(CLASSPATH) $(JAVA_SOURCES)
 
 $(EXAMPLE_CLASSFILES): $(EXAMPLE_SOURCES)
