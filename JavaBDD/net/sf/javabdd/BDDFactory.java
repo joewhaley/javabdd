@@ -159,8 +159,10 @@ public abstract class BDDFactory {
      */
     protected BDDFactory() {
         String s = this.getClass().toString();
-        s = s.substring(s.lastIndexOf('.')+1);
-        System.out.println("Using BDD package: "+s);
+        if (false) {
+            s = s.substring(s.lastIndexOf('.')+1);
+            System.out.println("Using BDD package: "+s);
+        }
     }
     
     /**
@@ -256,8 +258,21 @@ public abstract class BDDFactory {
     public abstract boolean isInitialized();
 
     /**
-     * <p>Resets the BDD package.  This function frees all memory used by the BDD
-     * package and resets the package to its initial state.</p>
+     * <p>Reset the BDD factory to its initial state.  Everything
+     * is reallocated from scratch.  This is like calling done()
+     * followed by initialize().</p>
+     */
+    public void reset() {
+        int nodes = getNodeTableSize();
+        int cache = getCacheSize();
+        done();
+        initialize(nodes, cache);
+    }
+    
+    /**
+     * <p>This function frees all memory used by the BDD
+     * package and resets the package to its uninitialized state.
+     * The BDD package is no longer usable after this call.</p>
      * 
      * <p>Compare to bdd_done.</p>
      */
@@ -975,6 +990,13 @@ public abstract class BDDFactory {
      */
     public abstract int getNodeNum();
 
+    /**
+     * <p>Get the current size of the cache, in entries.</p>
+     * 
+     * @return  size of cache
+     */
+    public abstract int getCacheSize();
+    
     /**
      * <p>Calculate the gain in size after a reordering.  The value returned is
      * (100*(A-B))/A, where A is previous number of used nodes and B is current

@@ -363,6 +363,13 @@ public class TypedBDDFactory extends BDDFactory {
     }
 
     /* (non-Javadoc)
+     * @see net.sf.javabdd.BDDFactory#getCacheSize()
+     */
+    public int getCacheSize() {
+        return factory.getCacheSize();
+    }
+    
+    /* (non-Javadoc)
      * @see net.sf.javabdd.BDDFactory#reorderGain()
      */
     public int reorderGain() {

@@ -7,6 +7,10 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.math.BigInteger;
 
 /**
@@ -35,14 +39,14 @@ import java.math.BigInteger;
 public class BuDDyFactory extends BDDFactory {
 
     public static BDDFactory init(int nodenum, int cachesize) {
-        if (INSTANCE != null) {
-            throw new InternalError("Error: BDDFactory already initialized.");
-        }
-        INSTANCE = new BuDDyFactory();
-        INSTANCE.initialize(nodenum, cachesize);
-        return INSTANCE;
+        BuDDyFactory f = new BuDDyFactory();
+        f.initialize(nodenum, cachesize);
+        return f;
     }
     
+    /**
+     * Single factory instance.  Only one factory object is enabled at a time.
+     */
     private static BuDDyFactory INSTANCE;
     
     static {
@@ -54,16 +58,44 @@ public class BuDDyFactory extends BDDFactory {
             libname = System.mapLibraryName(libname);
             String currentdir = System.getProperty("user.dir");
             String sep = System.getProperty("file.separator");
-            System.load(currentdir+sep+libname);
+            String filename = currentdir+sep+libname;
+            try {
+                System.load(filename);
+            } catch (java.lang.UnsatisfiedLinkError y) {
+                File f = new File(filename);
+                if (!f.exists()) throw y;
+                // Try to make a copy and use that.
+                try {
+                    File f2 = File.createTempFile("buddy", ".dll");
+                    copyFile(f, f2);
+                    f2.deleteOnExit();
+                    System.out.println("buddy.dll is in use, linking temporary copy "+f2);
+                    System.load(f2.getAbsolutePath());
+                } catch (IOException z) {
+                    throw y;
+                }
+            }
         }
         registerNatives();
+    }
+    
+    private static void copyFile(File in, File out) throws IOException {
+        FileInputStream fis = new FileInputStream(in);
+        FileOutputStream fos = new FileOutputStream(out);
+        byte[] buf = new byte[1024];
+        int i = 0;
+        while ((i = fis.read(buf)) != -1) {
+            fos.write(buf, 0, i);
+        }
+        fis.close();
+        fos.close();
     }
     
     private static native void registerNatives();
     
     private BuDDyFactory() {}
 
-    static final boolean USE_FINALIZER = false;
+    private static final boolean USE_FINALIZER = false;
     
     private static BuDDyBDD makeBDD(int id) {
         BuDDyBDD b;
@@ -138,6 +170,9 @@ public class BuDDyFactory extends BDDFactory {
      * @see net.sf.javabdd.BDDFactory#initialize(int, int)
      */
     protected void initialize(int nodenum, int cachesize) {
+        if (INSTANCE != null)
+            throw new InternalError("Error: BDDFactory already initialized.");
+        INSTANCE = this;
         initialize0(nodenum, cachesize);
     }
     private static native void initialize0(int nodenum, int cachesize);
@@ -163,6 +198,17 @@ public class BuDDyFactory extends BDDFactory {
     }
     private static native void done0();
 
+    /* (non-Javadoc)
+     * @see net.sf.javabdd.BDDFactory#reset()
+     */
+    public void reset() {
+        if (USE_FINALIZER) {
+            System.gc();
+            System.runFinalization();
+        }
+        super.reset();
+    }
+    
     /* (non-Javadoc)
      * @see net.sf.javabdd.BDDFactory#setError(int)
      */
@@ -486,6 +532,14 @@ public class BuDDyFactory extends BDDFactory {
     }
     private static native int getAllocNum0();
 
+    /* (non-Javadoc)
+     * @see net.sf.javabdd.BDDFactory#getCacheSize()
+     */
+    public int getCacheSize() {
+        return getCacheSize0();
+    }
+    private static native int getCacheSize0();
+    
     /* (non-Javadoc)
      * @see net.sf.javabdd.BDDFactory#getNodeNum()
      */

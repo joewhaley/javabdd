@@ -40,9 +40,9 @@ public class JFactory extends BDDFactory {
      * @see net.sf.javabdd.BDDFactory#init(int, int)
      */
     public static BDDFactory init(int nodenum, int cachesize) {
-        BDDFactory INSTANCE = new JFactory();
-        INSTANCE.initialize(nodenum, cachesize);
-        return INSTANCE;
+        BDDFactory f = new JFactory();
+        f.initialize(nodenum, cachesize);
+        return f;
     }
 
     static final boolean USE_FINALIZER = false;
@@ -2980,8 +2980,6 @@ public class JFactory extends BDDFactory {
                 newsize = bddmaxnodesize;
         }
 
-        newsize = bdd_prime_lte(newsize);
-
         return doResize(doRehash, oldsize, newsize);
     }
     
@@ -2996,9 +2994,9 @@ public class JFactory extends BDDFactory {
     
     int doResize(boolean doRehash, int oldsize, int newsize) {
         
-        if (oldsize > newsize) {
-            return bdd_error(BDD_RANGE);
-        }
+        newsize = bdd_prime_lte(newsize);
+
+        if (oldsize > newsize) return 0;
         
         bddnodesize = newsize;
         resize_handler(oldsize, bddnodesize);
@@ -5451,6 +5449,13 @@ public class JFactory extends BDDFactory {
         return bdd_getnodenum();
     }
 
+    /* (non-Javadoc)
+     * @see net.sf.javabdd.BDDFactory#getCacheSize()
+     */
+    public int getCacheSize() {
+        return cachesize;
+    }
+    
     /* (non-Javadoc)
      * @see net.sf.javabdd.BDDFactory#reorderGain()
      */

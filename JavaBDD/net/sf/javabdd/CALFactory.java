@@ -38,12 +38,9 @@ import java.math.BigInteger;
 public class CALFactory extends BDDFactory {
 
     public static BDDFactory init(int nodenum, int cachesize) {
-        if (INSTANCE != null) {
-            throw new InternalError("Error: CALFactory already initialized.");
-        }
-        INSTANCE = new CALFactory();
-        INSTANCE.initialize(nodenum/256, cachesize);
-        return INSTANCE;
+        CALFactory f = new CALFactory();
+        f.initialize(nodenum/256, cachesize);
+        return f;
     }
     
     private static CALFactory INSTANCE;
@@ -87,6 +84,10 @@ public class CALFactory extends BDDFactory {
      * @see net.sf.javabdd.BDDFactory#initialize(int, int)
      */
     protected void initialize(int nodenum, int cachesize) {
+        if (INSTANCE != null) {
+            throw new InternalError("Error: CALFactory already initialized.");
+        }
+        INSTANCE = this;
         initialize0(nodenum, cachesize);
     }
     private static native void initialize0(int nodenum, int cachesize);
@@ -367,6 +368,14 @@ public class CALFactory extends BDDFactory {
         throw new UnsupportedOperationException();
     }
 
+    /* (non-Javadoc)
+     * @see net.sf.javabdd.BDDFactory#getCacheSize()
+     */
+    public int getCacheSize() {
+        // TODO Implement this.
+        throw new UnsupportedOperationException();
+    }
+    
     /* (non-Javadoc)
      * @see net.sf.javabdd.BDDFactory#getNodeNum()
      */

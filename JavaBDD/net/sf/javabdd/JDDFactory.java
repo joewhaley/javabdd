@@ -30,8 +30,8 @@ public class JDDFactory extends BDDFactory {
      * @see net.sf.javabdd.BDDFactory#init(int, int)
      */
     public static BDDFactory init(int nodenum, int cachesize) {
-        BDDFactory INSTANCE = new JDDFactory(nodenum, cachesize);
-        return INSTANCE;
+        BDDFactory f = new JDDFactory(nodenum, cachesize);
+        return f;
     }
 
     /**
@@ -601,6 +601,14 @@ public class JDDFactory extends BDDFactory {
     public int setCacheSize(int x) {
         // TODO.
         return 0;
+    }
+    
+    /* (non-Javadoc)
+     * @see net.sf.javabdd.BDDFactory#getCacheSize()
+     */
+    public int getCacheSize() {
+        // TODO Implement this.
+        throw new UnsupportedOperationException();
     }
     
     /* (non-Javadoc)
