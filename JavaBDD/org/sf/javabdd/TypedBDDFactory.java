@@ -373,19 +373,19 @@ public class TypedBDDFactory extends BDDFactory {
         return super.extDomain(domainSizes);
     }
     
-    static Set makeSet() {
+    public static Set makeSet() {
         //return SortedArraySet.FACTORY.makeSet(domain_comparator);
         return new TreeSet(domain_comparator);
     }
     
-    static Set makeSet(Set s) {
+    public static Set makeSet(Set s) {
         //Set r = SortedArraySet.FACTORY.makeSet(domain_comparator);
         Set r = new TreeSet(domain_comparator);
         r.addAll(s);
         return r;
     }
     
-    Set allDomains() {
+    public Set allDomains() {
         Set r = makeSet();
         for (int i = 0; i < factory.numberOfDomains(); ++i) {
             r.add(factory.getDomain(i));
@@ -393,11 +393,11 @@ public class TypedBDDFactory extends BDDFactory {
         return r;
     }
     
-    static Map makeMap() {
+    public static Map makeMap() {
         return new TreeMap(domain_comparator);
     }
     
-    static String domainNames(Set dom) {
+    public static String domainNames(Set dom) {
         StringBuffer sb = new StringBuffer();
         for (Iterator i = dom.iterator(); i.hasNext(); ) {
             BDDDomain d = (BDDDomain) i.next();
@@ -905,9 +905,11 @@ public class TypedBDDFactory extends BDDFactory {
                 BDDDomain d_to = (BDDDomain) e.getValue();
                 if (!dom.contains(d_from)) {
                     out.println("Warning! Replacing domain that doesn't exist: "+d_from.getName());
+                    new Exception().printStackTrace();
                 }
                 if (dom.contains(d_to) && !tpair.domMap.containsKey(d_to)) {
                     out.println("Warning! Overwriting domain that exists: "+d_to.getName());
+                    new Exception().printStackTrace();
                 }
             }
             dom.removeAll(tpair.domMap.keySet());
