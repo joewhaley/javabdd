@@ -1135,9 +1135,7 @@ public abstract class BDD {
     /**
      * <p>Frees this BDD.  Further use of this BDD will result in an exception being thrown.</p>
      */
-    public void free() {
-        this.delRef();
-    }
+    public abstract void free();
     
     /**
      * <p>Protected constructor.</p>
