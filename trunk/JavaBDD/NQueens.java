@@ -27,7 +27,7 @@ public class NQueens {
         String numOfNodes = System.getProperty("bddnodes");
         int numberOfNodes;
         if (numOfNodes == null)
-            numberOfNodes = (int) (Math.pow(4.4, N-6))*1000;
+            numberOfNodes = (int) (Math.pow(4.42, N-6))*1000;
         else
             numberOfNodes = Integer.parseInt(numOfNodes);
         String cache = System.getProperty("bddcache");
