@@ -4,7 +4,20 @@ import java.util.Collection;
 import java.util.Iterator;
 
 /**
+ * An implementation of BDDFactory that relies on the BuDDy library through a
+ * native interface.  You can use this by calling the "BuDDyFactory.init()"
+ * method with the desired arguments.  This will return you an instance of the
+ * BDDFactory class that you can use.  Call "done()" on that instance when you
+ * are finished.
+ * 
+ * This class (and the BuDDy library) do NOT support multithreading.
+ * Furthermore, there can be only one instance active at a time.  You can only
+ * call "init()" again after you have called "done()" on the original instance.
+ * 
+ * @see org.sf.javabdd.BDDFactory
+ * 
  * @author John Whaley
+ * @version $Id$
  */
 public class BuDDyFactory extends BDDFactory {
 
@@ -18,7 +31,7 @@ public class BuDDyFactory extends BDDFactory {
     }
     
     private static BuDDyFactory INSTANCE;
-
+    
     static {
         System.loadLibrary("buddy");
         registerNatives();
@@ -45,7 +58,11 @@ public class BuDDyFactory extends BDDFactory {
     /**
      * @see org.sf.javabdd.BDDFactory#buildCube(int, int, java.util.Collection)
      */
-    public native BDD buildCube(int value, int width, Collection var);
+    public BDD buildCube(int value, int width, Collection var) {
+        return this.buildCube(value, width, (BDD[]) var.toArray(new BDD[var.size()]));
+    }
+    
+    private native BDD buildCube(int value, int width, BDD[] var);
 
     /**
      * @see org.sf.javabdd.BDDFactory#buildCube(int, int, int)
