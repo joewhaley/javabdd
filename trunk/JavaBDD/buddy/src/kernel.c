@@ -1365,6 +1365,24 @@ int bdd_makenode(unsigned int level, int low, int high)
    hash = NODEHASH(level, low, high);
    res = HASH(hash);
 
+#if defined(SMALL_NODES)
+   if (res != 0) {
+       int m1 = (level << LEV_LPOS) | low;
+       int m2 = ((level << (LEV_HPOS-LEV_LBITS)) & LEV_HMASK) | high;
+       do {
+           if (bddnodes[res].low_llev == m1 && bddnodes[res].high_hlev == m2) {
+#ifdef CACHESTATS
+               bddcachestats.uniqueHit++;
+#endif
+               return res;
+           }
+           res = NEXT(res);
+#ifdef CACHESTATS
+           bddcachestats.uniqueChain++;
+#endif
+       } while (res != 0);
+   }
+#else // SMALL_NODES
    while(res != 0)
    {
       if (LEVEL(res) == level  &&  LOW(res) == low  &&  HIGH(res) == high)
@@ -1380,6 +1398,7 @@ int bdd_makenode(unsigned int level, int low, int high)
       bddcachestats.uniqueChain++;
 #endif
    }
+#endif // SMALL_NODES
    
       /* No existing node -> build one */
 #ifdef CACHESTATS
