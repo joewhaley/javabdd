@@ -16,7 +16,7 @@
       was:
       <br/>
       <code>java -ms320m -mx320m -Dbdd=<i>package</i> -jar javabdd_0.6.jar 12</code>
-      <br/
+      <br/>
       <table border="2">
         <tr>
           <td>Package      </td> <td>Time  </td> <td>Peak Memory Usage</td>
