@@ -3,8 +3,10 @@ package org.sf.javabdd;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.StringTokenizer;
 
 /**
  * Interface for the creation and manipulation of BDDs.
@@ -511,7 +513,6 @@ public abstract class BDDFactory {
     public abstract void printOrder();
 
 
-
     /**** BDD STATS ****/
     
     /**
@@ -767,6 +768,108 @@ public abstract class BDDFactory {
     }
     
     // TODO: fdd_file_hook, fdd_strm_hook
+    
+    public int[] makeVarOrdering(boolean reverseLocal, String ordering) {
+        
+        int varnum = varNum();
+        
+        int nDomains = numberOfDomains();
+        int[][] localOrders = new int[nDomains][];
+        for (int i=0; i<localOrders.length; ++i) {
+            localOrders[i] = new int[getDomain(i).varNum()];
+        }
+        
+        for (int i=0; i<nDomains; ++i) {
+            BDDDomain d = getDomain(i);
+            int nVars = d.varNum();
+            for (int j=0; j<nVars; ++j) {
+                if (reverseLocal) {
+                    localOrders[i][j] = nVars - j - 1;
+                } else {
+                    localOrders[i][j] = j;
+                }
+            }
+        }
+        
+        BDDDomain[] doms = new BDDDomain[nDomains];
+        
+        int[] varorder = new int[varnum];
+        
+        //System.out.println("Ordering: "+ordering);
+        StringTokenizer st = new StringTokenizer(ordering, "x_", true);
+        int numberOfDomains = 0, bitIndex = 0;
+        boolean[] done = new boolean[nDomains];
+        for (int i=0; ; ++i) {
+            String s = st.nextToken();
+            BDDDomain d;
+            for (int j=0; ; ++j) {
+                if (j == numberOfDomains())
+                    throw new BDDException("bad domain: "+s);
+                d = getDomain(j);
+                if (s.equals(d.getName())) break;
+            }
+            if (done[d.getIndex()])
+                throw new BDDException("duplicate domain: "+s);
+            done[d.getIndex()] = true;
+            doms[i] = d;
+            if (st.hasMoreTokens()) {
+                s = st.nextToken();
+                if (s.equals("x")) {
+                    ++numberOfDomains;
+                    continue;
+                }
+            }
+            bitIndex = fillInVarIndices(doms, i-numberOfDomains, numberOfDomains+1,
+                                        localOrders, bitIndex, varorder);
+            if (!st.hasMoreTokens()) {
+                break;
+            }
+            if (s.equals("_"))
+                numberOfDomains = 0;
+            else
+                throw new BDDException("bad token: "+s);
+        }
+        
+        for (int i=0; i<doms.length; ++i) {
+            if (!done[i]) {
+                throw new BDDException("missing domain #"+i);
+            }
+            doms[i] = getDomain(i);
+        }
+        
+        int[] test = new int[varorder.length];
+        System.arraycopy(varorder, 0, test, 0, varorder.length);
+        Arrays.sort(test);
+        for (int i=0; i<test.length; ++i) {
+            if (test[i] != i) 
+                throw new BDDException(test[i]+" != "+i);
+        }
+        
+        return varorder;
+    }
+    
+    static int fillInVarIndices(
+                         BDDDomain[] doms, int domainIndex, int numDomains,
+                         int[][] localOrders, int bitIndex, int[] varorder) {
+        // calculate size of largest domain to interleave
+        int maxBits = 0;
+        for (int i=0; i<numDomains; ++i) {
+            BDDDomain d = doms[domainIndex+i];
+            maxBits = Math.max(maxBits, d.varNum());
+        }
+        // interleave the domains
+        for (int bitNumber=0; bitNumber<maxBits; ++bitNumber) {
+            for (int i=0; i<numDomains; ++i) {
+                BDDDomain d = doms[domainIndex+i];
+                if (bitNumber < d.varNum()) {
+                    int di = d.getIndex();
+                    int local = localOrders[di][bitNumber];
+                    varorder[bitIndex++] = d.vars()[local];
+                }
+            }
+        }
+        return bitIndex;
+    }
     
     /**
      * @see java.lang.Object#finalize()

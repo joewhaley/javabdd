@@ -236,7 +236,6 @@ public abstract class BDDBitVector {
     }
 
     public void replaceWith(BDDBitVector that) {
-        BDDFactory bdd = getFactory();
         if (bitvec.length != that.bitvec.length)
             throw new BDDException();
         free();
