@@ -60,10 +60,9 @@ public class BuDDyFactory extends BDDFactory {
      * @see org.sf.javabdd.BDDFactory#buildCube(int, int, java.util.Collection)
      */
     public BDD buildCube(int value, int width, Collection var) {
-        return this.buildCube(value, width, (BDD[]) var.toArray(new BDD[var.size()]));
+        return this.buildCube(value, width, (BuDDyBDD[]) var.toArray(new BuDDyBDD[var.size()]));
     }
-    
-    private native BDD buildCube(int value, int width, BDD[] var);
+    private native BuDDyBDD buildCube(int value, int width, BuDDyBDD[] var);
 
     /**
      * @see org.sf.javabdd.BDDFactory#buildCube(int, int, int[])
@@ -653,7 +652,9 @@ public class BuDDyFactory extends BDDFactory {
         /**
          * @see org.sf.javabdd.BDDDomain#buildEquals(org.sf.javabdd.BDDDomain)
          */
-        public native BDD buildEquals(BDDDomain that);
+        public BDD buildEquals(BDDDomain that) {
+            return buildEquals((BuDDyBDDDomain) that);
+        }
         public native BuDDyBDD buildEquals(BuDDyBDDDomain that);
         
         /**
@@ -723,7 +724,9 @@ public class BuDDyFactory extends BDDFactory {
         /**
          * @see org.sf.javabdd.BDDPairing#set(org.sf.javabdd.BDD, org.sf.javabdd.BDD)
          */
-        public native void set(BDD oldvar, BDD newvar);
+        public void set(BDD oldvar, BDD newvar) {
+            set((BuDDyBDD) oldvar, (BuDDyBDD) newvar);
+        }
         public native void set(BuDDyBDD oldvar, BuDDyBDD newvar);
         
         /**
@@ -734,7 +737,9 @@ public class BuDDyFactory extends BDDFactory {
         /**
          * @see org.sf.javabdd.BDDPairing#set(org.sf.javabdd.BDDDomain, org.sf.javabdd.BDDDomain)
          */
-        public native void set(BDDDomain p1, BDDDomain p2);
+        public void set(BDDDomain p1, BDDDomain p2) {
+            set((BuDDyBDDDomain) p1, (BuDDyBDDDomain) p2);
+        }
         public native void set(BuDDyBDDDomain p1, BuDDyBDDDomain p2);
         
         /**
