@@ -116,6 +116,42 @@ public abstract class BDDDomain {
     }
     
     /**
+     * Returns the BDD that defines the given range of values, inclusive,
+     * for this finite domain block.
+     * 
+     * @return BDD
+     */
+    public BDD varRange(int lo, int hi) {
+        if (lo < 0 || hi >= this.size() || lo > hi) {
+            throw new BDDException("range <"+lo+", "+hi+"> is invalid");
+        }
+
+        BDDFactory factory = getFactory();
+        BDD result = factory.zero();
+        int[] ivar = this.vars();
+        while (lo <= hi) {
+            int bitmask = 1 << (ivar.length - 1);
+            BDD v = factory.one();
+            for (int n = ivar.length - 1; ; n--) {
+                int bit = lo & bitmask;
+                if (bit != 0) {
+                    v.andWith(factory.ithVar(ivar[n]));
+                } else {
+                    v.andWith(factory.nithVar(ivar[n]));
+                }
+                int mask = bitmask - 1;
+                if ((lo & mask) == 0 && (lo | mask) <= hi) {
+                    lo = (lo | mask) + 1;
+                    break;
+                }
+                bitmask >>= 1;
+            }
+            result.orWith(v);
+        }
+        return result;
+    }
+    
+    /**
      * Returns the number of BDD variables used for this finite domain block.
      * 
      * Compare to fdd_varnum.
