@@ -539,6 +539,9 @@ public class JFactory extends BDDFactory {
         int res;
         BddCacheData copy() {
             BddCacheDataI that = new BddCacheDataI();
+            that.a = this.a;
+            that.b = this.b;
+            that.c = this.c;
             that.res = this.res;
             return that;
         }
@@ -548,6 +551,9 @@ public class JFactory extends BDDFactory {
         double dres;
         BddCacheData copy() {
             BddCacheDataD that = new BddCacheDataD();
+            that.a = this.a;
+            that.b = this.b;
+            that.c = this.c;
             that.dres = this.dres;
             return that;
         }
