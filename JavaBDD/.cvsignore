@@ -4,5 +4,7 @@ cudd_jni.h
 *.dll
 *.ext
 *.lib
+*.o
 buddy22
 cudd-2.3.1
+cudd-2.4.0
