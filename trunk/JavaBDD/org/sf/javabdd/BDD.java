@@ -17,6 +17,13 @@ import java.util.List;
 public abstract class BDD {
 
     /**
+     * Returns the factory that created this BDD.
+     * 
+     * @return factory that created this BDD
+     */
+    public abstract BDDFactory getFactory();
+
+    /**
      * Returns true if this BDD is the zero (false) BDD.
      * 
      * @return true if this BDD is the zero (false) BDD

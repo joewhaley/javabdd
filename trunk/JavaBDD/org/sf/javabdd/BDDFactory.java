@@ -140,6 +140,7 @@ public abstract class BDDFactory {
      * Set the maximum available number of BDD nodes.
      * 
      * Compare to bdd_setmaxnodenum.
+     * @param size
      */
     public abstract int setMaxNodeNum(int size);
 
@@ -270,7 +271,7 @@ public abstract class BDDFactory {
     /**
      * Compare to bdd_var2level.
      */
-    public abstract int var2level(int var);
+    public abstract int var2Level(int var);
     
     
     /**** REORDERING ****/
