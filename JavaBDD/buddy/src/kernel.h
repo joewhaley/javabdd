@@ -78,8 +78,12 @@
 
 typedef struct s_BddNode /* Node table entry */
 {
+#if defined(USE_BITFIELDS)
    unsigned int refcou : 10;
    unsigned int level  : 22;
+#else
+   unsigned int refcou_and_level;
+#endif
    int low;
    int high;
    int hash;
@@ -121,22 +125,44 @@ extern bddCacheStat bddcachestats;
 #define SRAND48SEED 0xbeef
 
    /* Reference counting */
-#define DECREF(n) if (bddnodes[n].refcou!=MAXREF && bddnodes[n].refcou>0) bddnodes[n].refcou--
-#define INCREF(n) if (bddnodes[n].refcou<MAXREF) bddnodes[n].refcou++
-#define DECREFp(n) if (n->refcou!=MAXREF && n->refcou>0) n->refcou--
-#define INCREFp(n) if (n->refcou<MAXREF) n->refcou++
-#define HASREF(n) (bddnodes[n].refcou > 0)
+#if defined(USE_BITFIELDS)
+#define DECREF(n) if (REF(n)!=MAXREF && REF(n)>0) bddnodes[n].refcou--
+#define INCREF(n) if (REF(n)<MAXREF) bddnodes[n].refcou++
+#define DECREFp(n) if (REFp(n)!=MAXREF && REFp(n)>0) n->refcou--
+#define INCREFp(n) if (REFp(n)<MAXREF) n->refcou++
+#define HASREF(n) (REF(n) > 0)
+#else
+#define DECREF(n) if (REF(n)!=MAXREF && REF(n)>0) bddnodes[n].refcou_and_level--
+#define INCREF(n) if (REF(n)<MAXREF) bddnodes[n].refcou_and_level++
+#define DECREFp(n) if (REFp(n)!=MAXREF && REFp(n)>0) n->refcou_and_level--
+#define INCREFp(n) if (REFp(n)<MAXREF) n->refcou_and_level++
+#define HASREF(n) (REF(n) > 0)
+#endif
 
    /* Marking BDD nodes */
-#define MARKON   0x200000    /* Bit used to mark a node (1) */
-#define MARKOFF  0x1FFFFF    /* - unmark */
+
+#if defined(USE_BITFIELDS)
+#define MARKON1   0x200000    /* Bit used to mark a node (1) */
+#define MARKOFF1  0x1FFFFF    /* - unmark */
 #define MARKHIDE 0x1FFFFF
-#define SETMARK(n)  (bddnodes[n].level |= MARKON)
-#define UNMARK(n)   (bddnodes[n].level &= MARKOFF)
-#define MARKED(n)   (bddnodes[n].level & MARKON)
-#define SETMARKp(p) (node->level |= MARKON)
-#define UNMARKp(p)  (node->level &= MARKOFF)
-#define MARKEDp(p)  (node->level & MARKON)
+#define SETMARK(n)  (LEVEL(n) |= MARKON1)
+#define UNMARK(n)   (LEVEL(n) &= MARKOFF1)
+#define MARKED(n)   (LEVEL(n) & MARKON1)
+#define SETMARKp(p) (LEVELp(p) |= MARKON1)
+#define UNMARKp(p)  (LEVELp(p) &= MARKOFF1)
+#define MARKEDp(p)  (LEVELp(p) & MARKON1)
+#else
+#define MARKON2   0x80000000    /* Bit used to mark a node (1) */
+#define MARKOFF2  0x7FFFFFFF    /* - unmark */
+#define MARKHIDE  0x1FFFFF
+#define SETMARK(n)  (bddnodes[n].refcou_and_level |= MARKON2)
+#define UNMARK(n)   (bddnodes[n].refcou_and_level &= MARKOFF2)
+#define MARKED(n)   (bddnodes[n].refcou_and_level & MARKON2)
+#define SETMARKp(p) ((p)->refcou_and_level |= MARKON2)
+#define UNMARKp(p)  ((p)->refcou_and_level &= MARKOFF2)
+#define MARKEDp(p)  ((p)->refcou_and_level & MARKON2)
+#endif
+
 
    /* Hashfunctions */
 
@@ -149,12 +175,31 @@ extern bddCacheStat bddcachestats;
 #define ISNONCONST(a) ((a) >= 2)
 #define ISONE(a)   ((a) == 1)
 #define ISZERO(a)  ((a) == 0)
-#define LEVEL(a)   (bddnodes[a].level)
 #define LOW(a)     (bddnodes[a].low)
 #define HIGH(a)    (bddnodes[a].high)
-#define LEVELp(p)   ((p)->level)
 #define LOWp(p)     ((p)->low)
 #define HIGHp(p)    ((p)->high)
+#if defined(USE_BITFIELDS)
+#define REF(n) (bddnodes[n].refcou)
+#define REFp(n) ((n)->refcou)
+#define SETREF(n,v) (bddnodes[n].refcou = (v))
+#define SETREFp(n,v) ((n)->refcou = (v))
+#define LEVEL(n) (bddnodes[n].level)
+#define LEVELp(p)   ((p)->level)
+#define SETLEVEL(n,v) (LEVEL(n) = (v))
+#define SETLEVELp(p,v) (LEVELp(p) = (v))
+#define CLRLEVELREF(n) (bddnodes[n].refcou = bddnodes[n].level = 0)
+#else
+#define REF(n) (bddnodes[n].refcou_and_level & MAXREF)
+#define REFp(n) ((n)->refcou_and_level & MAXREF)
+#define SETREF(n,v) (bddnodes[n].refcou_and_level = (bddnodes[n].refcou_and_level & ~MAXREF) | (v))
+#define SETREFp(p,v) ((p)->refcou_and_level = ((p)->refcou_and_level & ~MAXREF) | (v))
+#define LEVEL(n) (bddnodes[n].refcou_and_level >> 10)
+#define LEVELp(p) ((p)->refcou_and_level >> 10)
+#define SETLEVEL(n,v) (bddnodes[n].refcou_and_level = (bddnodes[n].refcou_and_level & MAXREF) | (v << 10))
+#define SETLEVELp(p,v) ((p)->refcou_and_level = ((p)->refcou_and_level & MAXREF) | (v << 10))
+#define CLRLEVELREF(n) (bddnodes[n].refcou_and_level = 0)
+#endif
 
    /* Stacking for garbage collector */
 #define INITREF    bddrefstacktop = bddrefstack
@@ -180,10 +225,11 @@ extern bddCacheStat bddcachestats;
 #define MAX(a,b) ((a) > (b) ? (a) : (b))
 #define NEW(t,n) ( (t*)malloc(sizeof(t)*(n)) )
 
-
-#ifdef _MSC_VER
+  /* Compatibility with Windows */
+#if defined(_MSC_VER) || defined(WIN32)
 #define srand48(x) srand(x)
 #define lrand48(x) rand(x)
+#define alloca(x) _alloca(x)
 #endif
 
 

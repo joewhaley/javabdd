@@ -132,7 +132,7 @@ void bdd_fprintall(FILE *ofile)
    {
       if (LOW(n) != -1)
       {
-	 fprintf(ofile, "[%5d - %2d] ", n, bddnodes[n].refcou);
+	 fprintf(ofile, "[%5d - %2d] ", n, REF(n));
 	 if (filehandler)
 	    filehandler(ofile, bddlevel2var[LEVEL(n)]);
 	 else
@@ -184,11 +184,11 @@ void bdd_fprinttable(FILE *ofile, BDD r)
    
    for (n=0 ; n<bddnodesize ; n++)
    {
-      if (LEVEL(n) & MARKON)
+      if (MARKED(n))
       {
 	 node = &bddnodes[n];
 	 
-	 LEVELp(node) &= MARKOFF;
+	 UNMARKp(node);
 
 	 fprintf(ofile, "[%5d] ", n);
 	 if (filehandler)
@@ -440,9 +440,9 @@ static int bdd_save_rec(FILE *ofile, int root)
    if (root < 2)
       return 0;
 
-   if (LEVELp(node) & MARKON)
+   if (MARKEDp(node))
       return 0;
-   LEVELp(node) |= MARKON;
+   SETMARKp(node);
    
    if ((err=bdd_save_rec(ofile, LOWp(node))) < 0)
       return err;

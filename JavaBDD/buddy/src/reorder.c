@@ -52,12 +52,21 @@
  */
 
    /* Change macros to reflect the above idea */
+#if defined(USE_BITFIELDS)
 #define VAR(n) (bddnodes[n].level)
-#define VARp(p) (p->level)
+#define VARp(p) ((p)->level)
+#define SETVARp(p,v) (VARp(p) = (v))
+#else
+#define VAR(n) (bddnodes[n].refcou_and_level >> 10)
+#define VARp(p) ((p)->refcou_and_level >> 10)
+#define SETVARp(p,v) ((p)->refcou_and_level = ((p)->refcou_and_level & MAXREF) | (v << 10))
+#endif
 
    /* Avoid these - they are misleading! */
 #undef LEVEL
 #undef LEVELp
+#undef SETLEVEL
+#undef SETLEVELp
 
 
 #define __USERESIZE /* FIXME */
@@ -812,7 +821,7 @@ static void addref_rec(int r, char *dep)
    if (r < 2)
       return;
    
-   if (bddnodes[r].refcou == 0)
+   if (REF(r) == 0)
    {
       bddfreenum--;
 
@@ -870,9 +879,13 @@ static int mark_roots(void)
    {
          /* This is where we go from .level to .var!
 	  * - Do NOT use the LEVEL macro here. */
+#if defined(USE_BITFIELDS)
       bddnodes[n].level = bddlevel2var[bddnodes[n].level];
+#else
+      bddnodes[n].refcou_and_level = (bddlevel2var[bddnodes[n].refcou_and_level >> 10] << 10) | REF(n);
+#endif
       
-      if (bddnodes[n].refcou > 0)
+      if (REF(n) > 0)
       {
 	 SETMARK(n);
 	 extrootsize++;
@@ -933,7 +946,7 @@ static void reorder_gbc(void)
    {
       register BddNode *node = &bddnodes[n];
 
-      if (node->refcou > 0)
+      if (REFp(node) > 0)
       {
 	 register unsigned int hash;
 	 
@@ -994,7 +1007,7 @@ static void reorder_rehashAll(void)
    {
       register BddNode *node = &bddnodes[n];
 
-      if (node->refcou > 0)
+      if (REFp(node) > 0)
       {
 	 register unsigned int hash;
 	 
@@ -1092,7 +1105,7 @@ static int reorder_makenode(int var, int low, int high)
    bddfreenum--;
    
    node = &bddnodes[res];
-   VARp(node) = var;
+   SETVARp(node, var);
    LOWp(node) = low;
    HIGHp(node) = high;
 
@@ -1101,7 +1114,7 @@ static int reorder_makenode(int var, int low, int high)
    bddnodes[hash].hash = res;
 
       /* Make sure it is reference counted */
-   node->refcou = 1;
+   SETREFp(node, 1);
    INCREF(LOWp(node));
    INCREF(HIGHp(node));
    
@@ -1211,7 +1224,7 @@ static void reorder_swap(int toBeProcessed, int var0)
       DECREF(HIGHp(node));
       
          /* Update in-place */
-      VARp(node) = var1;
+      SETVARp(node, var1);
       LOWp(node) = f0;
       HIGHp(node) = f1;
 	    
@@ -1249,7 +1262,7 @@ static void reorder_localGbc(int var0)
 	 BddNode *node = &bddnodes[r];
 	 int next = node->next;
 
-	 if (node->refcou > 0)
+	 if (REFp(node) > 0)
 	 {
 	    node->next = bddnodes[hash].hash;
 	    bddnodes[hash].hash = r;
@@ -1351,7 +1364,7 @@ static void reorder_localGbcResize(int toBeProcessed, int var0)
 	 BddNode *node = &bddnodes[r];
 	 int next = node->next;
 
-	 if (node->refcou > 0)
+	 if (REFp(node) > 0)
 	 {
 	    node->next = toBeProcessed;
 	    toBeProcessed = r;
@@ -1436,7 +1449,7 @@ static void sanitycheck(void)
 
    for (n=2 ; n<bddnodesize ; n++)
    {
-      if (bddnodes[n].refcou > 0)
+      if (REF(n) > 0)
       {
 	 assert(LEVEL(n) < LEVEL(LOW(n)));
 	 assert(LEVEL(n) < LEVEL(HIGH(n)));
@@ -1688,11 +1701,15 @@ static void reorder_done(void)
       if (MARKED(n))
 	 UNMARK(n);
       else
-	 bddnodes[n].refcou = 0;
+	 SETREF(n, 0);
 
          /* This is where we go from .var to .level again!
 	  * - Do NOT use the LEVEL macro here. */
+#if defined(USE_BITFIELDS)
       bddnodes[n].level = bddvar2level[bddnodes[n].level];
+#else
+      bddnodes[n].refcou_and_level = (bddvar2level[bddnodes[n].refcou_and_level >> 10] << 10) | REF(n);
+#endif
    }
 
 #if 0
