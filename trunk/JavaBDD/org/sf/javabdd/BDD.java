@@ -980,6 +980,7 @@ public abstract class BDD {
             this.ts = ts;
             this.sb = sb;
             this.lastHigh = -2L;
+            this.domain = domain;
         }
         
         void append(long low, long high) {
