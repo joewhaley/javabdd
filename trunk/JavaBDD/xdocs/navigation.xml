@@ -14,7 +14,7 @@
             href="index.html"/>
     </menu>
     <menu name="Documentation">
-      <item name="Javadoc"
+      <item name="API (Javadoc)"
             href="apidocs/index.html" />
       <item name="Build Instructions"
             href="compiling.html"/>
