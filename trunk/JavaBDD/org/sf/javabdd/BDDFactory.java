@@ -415,8 +415,30 @@ public abstract class BDDFactory {
 
     // TODO: bdd_cachestats, bdd_stats
     
+    
+    /**
+     * Compare to bdd_newpair.
+     */
+    public abstract BDDPairing makePair();
 
+    public BDDPairing makePair(int oldvar, int newvar) {
+        BDDPairing p = makePair();
+        p.set(oldvar, newvar);
+        return p;
+    }
 
+    public BDDPairing makePair(BDD oldvar, BDD newvar) {
+        BDDPairing p = makePair();
+        p.set(oldvar, newvar);
+        return p;
+    }
+    
+    public BDDPairing makePair(BDDDomain oldvar, BDDDomain newvar) {
+        BDDPairing p = makePair();
+        p.set(oldvar, newvar);
+        return p;
+    }
+    
     /**
      * Compare to bdd_swapvar.
      */

@@ -145,6 +145,11 @@ public class BuDDyFactory extends BDDFactory {
     public native void swapVar(int v1, int v2);
 
     /**
+     * @see org.sf.javabdd.BDDFactory#makePair()
+     */
+    public native BDDPairing makePair();
+    
+    /**
      * @see org.sf.javabdd.BDDFactory#printAll()
      */
     public native void printAll();
