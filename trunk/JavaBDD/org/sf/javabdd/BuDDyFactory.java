@@ -591,6 +591,7 @@ public class BuDDyFactory extends BDDFactory {
         /**
          * @see java.lang.Object#finalize()
          */
+        /*
         protected void finalize() throws Throwable {
             super.finalize();
             if (USE_FINALIZER) {
@@ -600,6 +601,7 @@ public class BuDDyFactory extends BDDFactory {
                 this.free();
             }
         }
+        */
         
         /**
          * @see org.sf.javabdd.BDD#free()
@@ -713,10 +715,12 @@ public class BuDDyFactory extends BDDFactory {
         /**
          * @see java.lang.Object#finalize()
          */
+        /*
         protected void finalize() throws Throwable {
             super.finalize();
             this.free();
         }
+        */
 
         /**
          * Free the memory allocated for this pair.
