@@ -47,6 +47,8 @@ public abstract class BDDDomain {
      */
     public abstract int size();
     
+    public abstract BDD buildAdd(BDDDomain that, int value);
+    
     /**
      * Builds a BDD which is true for all the possible assignments to the
      * variable blocks that makes the blocks equal.

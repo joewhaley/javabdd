@@ -719,6 +719,11 @@ public class BuDDyFactory extends BDDFactory {
         }
         protected native BuDDyBDD buildEquals0(BuDDyBDDDomain that);
         
+        public BDD buildAdd(BDDDomain that, int value) {
+            return buildAdd0((BuDDyBDDDomain) that, value);
+        }
+        protected native BuDDyBDD buildAdd0(BuDDyBDDDomain that, int value);
+        
         /**
          * @see org.sf.javabdd.BDDDomain#set()
          */
