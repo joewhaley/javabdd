@@ -229,7 +229,7 @@ pdouse: buddy_jni.h
 	icc -D_REENTRANT -D_GNU_SOURCE -O2 -Ob2 -prof_use -ipo $(INCLUDES) -shared -static $(DLL_OUTPUT_OPTION)libbuddy.so $(BUDDY_SRCS)
 
 opt_report:
-	icl -Qopt_report -Qopt_report_phase all $(INCLUDES) $(CFLAGS) $(DLL_OUTPUT_OPTION)buddy.dll $(BUDDY_SRCS) -LD /link /libpath:$(JDK_ROOT)/lib 
+	icl -fast -Qopt_report_fileOPTREPORT.txt -Qopt_report_phase all -Qopt_report_levelmax -Qvec_report3 -Qpar_report3 $(INCLUDES) $(CFLAGS) /obuddy.dll $(BUDDY_SRCS) -LD /link /libpath:$(JDK_ROOT)/lib 
 
 test:	$(EXAMPLE_CLASSFILES)
 	$(JAVA) NQueens 8
