@@ -1,6 +1,6 @@
 package org.sf.javabdd;
 
-import java.util.Iterator;
+import java.util.List;
 
 /**
  * Binary Decision Diagrams (BDDs) are used for efficient computation of many
@@ -391,18 +391,29 @@ public abstract class BDD {
      * 
      * @return all satisfying variable assignments
      */
-    public abstract Iterator allsat();
+    public abstract List allsat();
 
     /**
      * Scans this BDD to find all occurrences of FDD variables and returns an
      * array that contains the indices of the possible found FDD variables.
      * 
-     * Compare to fdd_scanset.
+     * Compare to bdd_scanset.
      * 
      * @return int[]
      */
     public abstract int[] scanSet();
 
+    /**
+     * Scans this BDD and copies the stored variables into an integer array of
+     * variable numbes.  The numbers returned are guaranteed to be in
+     * ascending order.
+     * 
+     * Compare to fdd_scanset.
+     * 
+     * @return int[]
+     */
+    public abstract int[] scanSetDomains();
+    
     /**
      * Finds one satisfying assignment of the FDD variable var in this BDD and
      * returns that value.

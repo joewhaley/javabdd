@@ -505,6 +505,7 @@ JNIEXPORT void JNICALL Java_org_sf_javabdd_BuDDyFactory_printAll
   (JNIEnv *env, jobject o)
 {
   bdd_printall();
+  fflush(stdout);
   check_error(env);
 }
 
@@ -518,6 +519,7 @@ JNIEXPORT void JNICALL Java_org_sf_javabdd_BuDDyFactory_printTable
 {
   BDD bdd = BDD_JavaToC(env, r);
   bdd_printtable(bdd);
+  fflush(stdout);
   check_error(env);
 }
 
@@ -772,6 +774,7 @@ JNIEXPORT void JNICALL Java_org_sf_javabdd_BuDDyFactory_printOrder
   (JNIEnv *env, jobject o)
 {
   bdd_printorder();
+  fflush(stdout);
   check_error(env);
 }
 
@@ -837,6 +840,7 @@ JNIEXPORT void JNICALL Java_org_sf_javabdd_BuDDyFactory_printStat
   (JNIEnv *env, jobject o)
 {
   bdd_printstat();
+  fflush(stdout);
   check_error(env);
 }
 
@@ -937,17 +941,11 @@ JNIEXPORT void JNICALL Java_org_sf_javabdd_BuDDyFactory_clearAllDomains
 }
 
 /*
-
  * Class:     org_sf_javabdd_BuDDyFactory
-
  * Method:    numberOfDomains
-
  * Signature: ()I
-
  */
-
 JNIEXPORT jint JNICALL Java_org_sf_javabdd_BuDDyFactory_numberOfDomains
-
   (JNIEnv *env, jobject o)
 {
   jint result = fdd_domainnum();
@@ -1052,7 +1050,7 @@ JNIEXPORT jobject JNICALL Java_org_sf_javabdd_BuDDyFactory_00024BuDDyBDD_relprod
   BDD b = BDD_JavaToC(env, o);
   BDD c = BDD_JavaToC(env, that1);
   BDD d = BDD_JavaToC(env, that2);
-  jobject result = BDD_CToJava(env, bdd_ite(b, c, d));
+  jobject result = BDD_CToJava(env, bdd_relprod(b, c, d));
   check_error(env);
   return result;
 }
@@ -1310,6 +1308,44 @@ JNIEXPORT jobject JNICALL Java_org_sf_javabdd_BuDDyFactory_00024BuDDyBDD_satOneS
   return result;
 }
 
+static JNIEnv *allsat_env;
+static jobjectArray allsat_result;
+static int allsat_index;
+static void allsatHandler(char* varset, int size)
+{
+  jbyteArray result = (*allsat_env)->NewByteArray(allsat_env, size);
+  (*allsat_env)->SetByteArrayRegion(allsat_env, result, 0, size, (jbyte*) varset);
+  (*allsat_env)->SetObjectArrayElement(allsat_env, allsat_result, allsat_index, result);
+  (*allsat_env)->DeleteLocalRef(allsat_env, result);
+  allsat_index++;
+}
+
+/*
+ * Class:     org_sf_javabdd_BuDDyFactory_BuDDyBDD
+ * Method:    _allsat
+ * Signature: ()[[B
+ */
+JNIEXPORT jobjectArray JNICALL Java_org_sf_javabdd_BuDDyFactory_00024BuDDyBDD__1allsat
+  (JNIEnv *env, jobject o)
+{
+  jobjectArray result;
+  BDD b = BDD_JavaToC(env, o);
+  jclass c = (*env)->FindClass(env, "[B");
+  int size = bdd_varnum();
+  check_error(env);
+  allsat_result = (*env)->NewObjectArray(env, size, c, NULL);
+  if (allsat_result == NULL) return NULL;
+  allsat_env = env;
+  allsat_index = 0;
+  bdd_allsat(b, allsatHandler);
+  allsat_env = NULL;
+  result = allsat_result;
+  allsat_result = NULL;
+  check_error(env);
+  return result;
+}
+
+
 /*
  * Class:     org_sf_javabdd_BuDDyFactory_BuDDyBDD
  * Method:    printSet
@@ -1320,6 +1356,7 @@ JNIEXPORT void JNICALL Java_org_sf_javabdd_BuDDyFactory_00024BuDDyBDD_printSet
 {
   BDD b = BDD_JavaToC(env, o);
   bdd_printset(b);
+  fflush(stdout);
   check_error(env);
 }
 
@@ -1333,6 +1370,7 @@ JNIEXPORT void JNICALL Java_org_sf_javabdd_BuDDyFactory_00024BuDDyBDD_printDot
 {
   BDD b = BDD_JavaToC(env, o);
   bdd_printdot(b);
+  fflush(stdout);
   check_error(env);
 }
 
@@ -1513,6 +1551,29 @@ JNIEXPORT jintArray JNICALL Java_org_sf_javabdd_BuDDyFactory_00024BuDDyBDD_scanS
 
 /*
  * Class:     org_sf_javabdd_BuDDyFactory_BuDDyBDD
+ * Method:    scanSetDomains
+ * Signature: ()[I
+ */
+JNIEXPORT jintArray JNICALL Java_org_sf_javabdd_BuDDyFactory_00024BuDDyBDD_scanSetDomains
+  (JNIEnv *env, jobject o)
+{
+  BDD b = BDD_JavaToC(env, o);
+  int size;
+  int *arr;
+  jintArray result;
+
+  fdd_scanset(b, &arr, &size);
+  if (check_error(env)) return NULL;
+  if (arr == NULL) return NULL;
+  result = (*env)->NewIntArray(env, size);
+  if (result == NULL) return NULL;
+  (*env)->SetIntArrayRegion(env, result, 0, size, (jint*) arr);
+  free(arr);
+  return result;
+}
+
+/*
+ * Class:     org_sf_javabdd_BuDDyFactory_BuDDyBDD
  * Method:    scanVar
  * Signature: (I)I
  */
@@ -1572,6 +1633,7 @@ JNIEXPORT void JNICALL Java_org_sf_javabdd_BuDDyFactory_00024BuDDyBDD_printSetWi
 {
   BDD b = BDD_JavaToC(env, o);
   fdd_printset(b);
+  fflush(stdout);
   check_error(env);
 }
 

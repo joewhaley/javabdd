@@ -1,7 +1,8 @@
 package org.sf.javabdd;
 
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.Iterator;
+import java.util.List;
 
 /**
  * An implementation of BDDFactory that relies on the BuDDy library through a
@@ -429,9 +430,11 @@ public class BuDDyFactory extends BDDFactory {
         /**
          * @see org.sf.javabdd.BDD#allsat()
          */
-        public Iterator allsat() {
-            return null;
+        public List allsat() {
+            return Arrays.asList(_allsat());
         }
+        
+        protected native byte[][] _allsat();
         
         /**
          * @see org.sf.javabdd.BDD#printSet()
@@ -505,6 +508,11 @@ public class BuDDyFactory extends BDDFactory {
          * @see org.sf.javabdd.BDD#scanSet()
          */
         public native int[] scanSet();
+        
+        /**
+         * @see org.sf.javabdd.BDD#scanSet()
+         */
+        public native int[] scanSetDomains();
         
         /**
          * @see org.sf.javabdd.BDD#scanVar(int)
