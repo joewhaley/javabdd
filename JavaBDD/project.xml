@@ -172,7 +172,7 @@
       joewhaley@users.sourceforge.net
     </nagEmailAddress>
 
-    <sourceDirectory>JavaBDD</sourceDirectory>
+    <sourceDirectory>.</sourceDirectory>
 <!-- TODO
     <unitTestSourceDirectory>src/test</unitTestSourceDirectory>
     <aspectSourceDirectory/>
