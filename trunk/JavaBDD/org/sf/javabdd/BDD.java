@@ -853,6 +853,7 @@ public abstract class BDD {
         }
         
         public boolean isDontCare(int var) {
+            if (nodes == null) return false;
             if (levels == null)
                 throw new BDDException(); 
             int level = factory.var2Level(var);
@@ -863,6 +864,7 @@ public abstract class BDD {
         }
         
         public boolean isDontCare(BDDDomain d) {
+            if (nodes == null) return false;
             int[] vars = d.vars();
             for (int i = 0; i < vars.length; ++i) {
                 if (!isDontCare(vars[i])) return false;
