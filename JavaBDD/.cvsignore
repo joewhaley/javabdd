@@ -6,6 +6,7 @@ cal_jni.h
 *.ext
 *.lib
 *.o
+*.class
 buddy22
 cudd-2.3.1
 cudd-2.4.0
