@@ -14,6 +14,7 @@ BUDDY_SRC = buddy22/src
 JAVAC=$(JAVA_HOME)/bin/javac
 JAVA=$(JAVA_HOME)/bin/java
 JAVAH=$(JAVA_HOME)/bin/javah
+JAVADOC=$(JAVA_HOME)/bin/javadoc
 JAR=$(JAVA_HOME)/bin/jar
 
 INCLUDES=-I$(JAVA_HOME)/include -I$(JAVA_HOME)/include/linux -I$(BUDDY_SRC)
@@ -25,15 +26,19 @@ CFLAGS=-D_REENTRANT -D_GNU_SOURCE
 JAVA_SOURCES = org/sf/javabdd/BDD.java \
 	org/sf/javabdd/BDDException.java \
 	org/sf/javabdd/BDDFactory.java \
+	org/sf/javabdd/BDDDomain.java \
+	org/sf/javabdd/BDDPairing.java \
 	org/sf/javabdd/BuDDyFactory.java
 JAVA_CLASSFILES = org/sf/javabdd/*.class
 JNI_CLASSFILE = org/sf/javabdd/BuDDyFactory.class
 JNI_CLASSNAMES = org.sf.javabdd.BuDDyFactory \
-	org.sf.javabdd.BuDDyFactory\$$BuDDyBDD
-JNI_INCLUDES = org_sf_javabdd_BuDDyFactory.h \
-	org_sf_javabdd_BuDDyFactory_BuDDyBDD.h 
+	org.sf.javabdd.BuDDyFactory\$$BuDDyBDD \
+	org.sf.javabdd.BuDDyFactory\$$BuDDyBDDDomain \
+	org.sf.javabdd.BuDDyFactory\$$BuDDyBDDPairing
+JNI_INCLUDE = buddy_jni.h
 EXAMPLE_SOURCES = NQueens.java
 EXAMPLE_CLASSFILES = $(EXAMPLE_SOURCES:%.java=%.class)
+JAR_NAME = javabdd_0.2.jar
 
 DLL_NAME = libbuddy.so
 DLL_SRCS  = buddy_jni.c \
@@ -49,14 +54,14 @@ all: $(DLL_NAME)
 $(DLL_NAME): $(DLL_OBJS)
 	$(CC) -shared -o $@ $?
 
-buddy_jni.o: buddy_jni.c $(JNI_INCLUDES)
+buddy_jni.o: buddy_jni.c $(JNI_INCLUDE)
 	$(CC) $(CFLAGS) $(INCLUDES) -c -o $@ $<
 
 .c.o:
 	$(CC) $(CFLAGS) $(INCLUDES) -c -o $@ $<
 
-$(JNI_INCLUDES): $(JNI_CLASSFILE)
-	$(JAVAH) -jni $(JNI_CLASSNAMES)
+$(JNI_INCLUDE): $(JNI_CLASSFILE)
+	$(JAVAH) -jni -o $(JNI_INCLUDE) $(JNI_CLASSNAMES)
 
 $(JNI_CLASSFILE): $(JAVA_SOURCES)
 	$(JAVAC) $(JAVA_SOURCES)
@@ -66,11 +71,18 @@ $(EXAMPLE_CLASSFILES): $(EXAMPLE_SOURCES)
 
 examples: $(EXAMPLE_CLASSFILES)
 
-jar: $(JNI_CLASSFILE) $(EXAMPLE_CLASSFILES)
-	$(JAR) cvfm javabdd_0.1.jar javabddManifest $(JAVA_CLASSFILES) $(EXAMPLE_CLASSFILES)
+javadoc: $(JAVA_SOURCES)
+	$(JAVAC) $(JAVA_SOURCES)
+	$(JAVADOC) -d javadoc -breakiterator $(JAVA_PACKAGES)
+
+jar: $(JAR_NAME)
+
+$(JAR_NAME): $(JNI_CLASSFILE) $(EXAMPLE_CLASSFILES)
+	$(JAR) cvfm $(JAR_NAME) javabddManifest $(JAVA_CLASSFILES) $(EXAMPLE_CLASSFILES)
 
 # For 1.2.2 the recommended way is:
 # $(JAVA) -Djava.library.path=. NQueens 8
 
 clean:
-	$(RM) $(JAVA_CLASSFILES) $(JNI_INCLUDES) $(DLL_OBJS) $(DLL_NAME) $(EXAMPLE_CLASSFILES)
+	$(RM) $(JAVA_CLASSFILES) $(JNI_INCLUDE) $(DLL_OBJS) $(DLL_NAME) $(EXAMPLE_CLASSFILES) $(JAR_NAME)
+	$(RM) -r javadoc

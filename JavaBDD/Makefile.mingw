@@ -30,6 +30,7 @@ MINGW_LIBDIR = $(MINGW_EXTRA)/lib
 JAVAC = $(JDK_ROOT)/bin/javac
 JAVAH = $(JDK_ROOT)/bin/javah
 JAVADOC = $(JDK_ROOT)/bin/javadoc
+JAR = $(JDK_ROOT)/bin/jar
 
 AS = as
 DLLTOOL = dlltool
@@ -53,9 +54,10 @@ JNI_CLASSNAMES = org.sf.javabdd.BuDDyFactory \
 	org.sf.javabdd.BuDDyFactory\$$BuDDyBDD \
 	org.sf.javabdd.BuDDyFactory\$$BuDDyBDDDomain \
 	org.sf.javabdd.BuDDyFactory\$$BuDDyBDDPairing
-JNI_INCLUDES = buddy_jni.h
+JNI_INCLUDE = buddy_jni.h
 EXAMPLE_SOURCES = NQueens.java
 EXAMPLE_CLASSFILES = $(EXAMPLE_SOURCES:%.java=%.class)
+JAR_NAME = javabdd_0.2.jar
 
 all: $(DLL_NAME)
 
@@ -64,15 +66,22 @@ all: $(DLL_NAME)
 $(JNI_CLASSFILE): $(JAVA_SOURCES)
 	$(JAVAC) $(JAVA_SOURCES)
 
-$(JNI_INCLUDES): $(JNI_CLASSFILE)
-	$(JAVAH) -jni -o $(JNI_INCLUDES) $(JNI_CLASSNAMES)
+$(JNI_INCLUDE): $(JNI_CLASSFILE)
+	$(JAVAH) -jni -o $(JNI_INCLUDE) $(JNI_CLASSNAMES)
 
-examples: $(EXAMPLE_SOURCES)
+examples: $(EXAMPLE_CLASSFILES)
+
+$(EXAMPLE_CLASSFILES): $(EXAMPLE_SOURCES)
 	$(JAVAC) $(EXAMPLE_SOURCES)
 
 javadoc: $(JAVA_SOURCES)
 	$(JAVAC) $(JAVA_SOURCES)
 	$(JAVADOC) -d javadoc -breakiterator $(JAVA_PACKAGES)
+	
+jar: $(JAR_NAME)
+
+$(JAR_NAME): $(JNI_CLASSFILE) $(EXAMPLE_CLASSFILES)
+	$(JAR) cvfm $(JAR_NAME) javabddManifest $(JAVA_CLASSFILES) $(EXAMPLE_CLASSFILES)
 
 #
 # DLL related variables. These are used when building the DLL. See later.
@@ -115,7 +124,7 @@ DLLWRAP_FLAGS = --output-def $(DLL_EXP_DEF) \
 	-mwindows --target=i386-mingw32 \
 	$(IMAGE_BASE) 
 
-$(DLL_NAME): $(JNI_INCLUDES) $(DLL_OBJS)
+$(DLL_NAME): $(JNI_INCLUDE) $(DLL_OBJS)
 	$(DLLWRAP) $(DLLWRAP_FLAGS) -o $(DLL_NAME) \
 	    $(DLL_OBJS) $(DLL_LDFLAGS) $(DLL_LDLIBS)
 
@@ -138,5 +147,5 @@ usedll.o: %o: %c
 	$(CC) -c $(CPPFLAGS) $(CFLAGS) -o $@ $<
 
 clean:
-	-rm -f $(JAVA_CLASSFILES) $(JNI_INCLUDES) $(OBJS) $(DLL_OBJS) $(DLL_NAME) $(DLL_EXP_LIB) $(DLL_EXP_DEF) $(EXAMPLE_CLASSFILES)
+	-rm -f $(JAVA_CLASSFILES) $(JNI_INCLUDE) $(OBJS) $(DLL_OBJS) $(DLL_NAME) $(DLL_EXP_LIB) $(DLL_EXP_DEF) $(EXAMPLE_CLASSFILES) $(JAR_NAME)
 	-rm -rf javadoc
