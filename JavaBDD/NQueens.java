@@ -27,7 +27,11 @@ public class NQueens {
 	int numberOfNodes = (int) (Math.pow(4.4, N-6))*1000;
 	int cacheSize = 1000;
 	numberOfNodes = Math.max(1000, numberOfNodes);
-        B = BuDDyFactory.init(numberOfNodes, cacheSize);
+        if (System.getProperty("bdd", "buddy").equals("cudd")) {
+            B = CUDDFactory.init(numberOfNodes, cacheSize);
+        } else {
+            B = BuDDyFactory.init(numberOfNodes, cacheSize);
+        }
         B.setVarNum(N * N);
 
         queen = B.one();
