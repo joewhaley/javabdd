@@ -3,6 +3,14 @@
 
 #ifdef GENERATE_TRACE
 
+/* Windows peculiarities */
+#if defined(_MSC_VER) || defined(WIN32)
+#define __inline__
+#define __func__ __FUNCTION__
+#else
+#define HAS_UNISTD_H
+#endif
+
 #define BUDDY_PROLOGUE \
 	int was_enabled = trace_enable; \
 	if(was_enabled) \
@@ -52,14 +60,6 @@ enum arg_type
 	T_BDD_LOAD,
 	T_BDD_PAIR
 };
-
-
-static __inline__ void * xmalloc(int sz)
-{
-        void * retval = malloc(sz);
-        assert(retval);
-        return retval;
-}
 
 void trace_init(const char *filename);
 void trace_add_bdd(enum arg_type type,void * val);
