@@ -58,7 +58,7 @@ public class TestBDDFactory extends BDDFactory {
         }
     }
     
-    class TestBDD extends BDD {
+    private class TestBDD extends BDD {
 
         BDD b1, b2;
 
@@ -862,7 +862,7 @@ public class TestBDDFactory extends BDDFactory {
         return new TestBDDBitVector(a);
     }
 
-    static class TestBDDPairing extends BDDPairing {
+    private static class TestBDDPairing extends BDDPairing {
         
         BDDPairing b1, b2;
         
@@ -897,7 +897,7 @@ public class TestBDDFactory extends BDDFactory {
         
     }
         
-    class TestBDDDomain extends BDDDomain {
+    private class TestBDDDomain extends BDDDomain {
 
         TestBDDDomain(int a, long b) {
             super(a, b);
@@ -912,7 +912,7 @@ public class TestBDDFactory extends BDDFactory {
         
     }
 
-    class TestBDDBitVector extends BDDBitVector {
+    private class TestBDDBitVector extends BDDBitVector {
 
         TestBDDBitVector(int a) {
             super(a);

@@ -388,7 +388,7 @@ public class CUDDFactory extends BDDFactory {
     /* (non-Javadoc)
      * An implementation of a BDD class, used by the CUDD interface.
      */
-    static class CUDDBDD extends BDD {
+    private static class CUDDBDD extends BDD {
 
         /** The pointer used by the BDD library. */
         private long _ddnode_ptr;
@@ -774,7 +774,7 @@ public class CUDDFactory extends BDDFactory {
     /* (non-Javadoc)
      * An implementation of a BDDDomain, used by the CUDD interface.
      */
-    static class CUDDBDDDomain extends BDDDomain {
+    private static class CUDDBDDDomain extends BDDDomain {
 
         private CUDDBDDDomain(int index, long range) {
             super(index, range);
@@ -792,7 +792,7 @@ public class CUDDFactory extends BDDFactory {
     /* (non-Javadoc)
      * An implementation of a BDDPairing, used by the CUDD interface.
      */
-    static class CUDDBDDPairing extends BDDPairing {
+    private static class CUDDBDDPairing extends BDDPairing {
 
         long _ptr;
 
@@ -843,7 +843,7 @@ public class CUDDFactory extends BDDFactory {
     /* (non-Javadoc)
      * An implementation of a BDDBitVector, used by the CUDD interface.
      */
-    static class CUDDBDDBitVector extends BDDBitVector {
+    private static class CUDDBDDBitVector extends BDDBitVector {
 
         private CUDDBDDBitVector(int a) {
             super(a);

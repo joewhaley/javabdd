@@ -419,7 +419,13 @@ public class TypedBDDFactory extends BDDFactory {
         
     };
     
-    class TypedBDD extends BDD {
+    /**
+     * A BDD with types (domains) attached to it.
+     * 
+     * @author jwhaley
+     * @version $Id$
+     */
+    public class TypedBDD extends BDD {
         
         final BDD bdd;
         final Set dom;
@@ -1000,7 +1006,7 @@ public class TypedBDDFactory extends BDDFactory {
         
     }
     
-    class TypedBDDDomain extends BDDDomain {
+    private class TypedBDDDomain extends BDDDomain {
 
         BDDDomain domain;
         
@@ -1080,7 +1086,7 @@ public class TypedBDDFactory extends BDDFactory {
 
     }
     
-    static class TypedBDDPairing extends BDDPairing {
+    private static class TypedBDDPairing extends BDDPairing {
 
         final Map domMap;
         final BDDPairing pairing;
