@@ -177,7 +177,7 @@ public abstract class BDDDomain {
      * @return BDD
      */
     public BDD buildEquals(BDDDomain that) {
-        if (this.size() != that.size()) {
+        if (!this.size().equals(that.size())) {
             throw new BDDException();
         }
 
