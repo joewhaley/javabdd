@@ -241,6 +241,17 @@ public class TestBDDFactory extends BDDFactory {
         }
 
         /* (non-Javadoc)
+         * @see org.sf.javabdd.BDD#restrictWith(org.sf.javabdd.BDD)
+         */
+        public void restrictWith(BDD var) {
+            BDD c1 = ((TestBDD)var).b1;
+            BDD c2 = ((TestBDD)var).b2;
+            b1.restrictWith(c1);
+            b2.restrictWith(c2);
+            assertSame(b1, b2, "restrict");
+        }
+        
+        /* (non-Javadoc)
          * @see org.sf.javabdd.BDD#simplify(org.sf.javabdd.BDD)
          */
         public BDD simplify(BDD d) {

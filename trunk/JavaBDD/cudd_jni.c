@@ -566,6 +566,28 @@ JNIEXPORT jobject JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_restrict
 
 /*
  * Class:     org_sf_javabdd_CUDDFactory_CUDDBDD
+ * Method:    restrictWith
+ * Signature: (Lorg/sf/javabdd/BDD;)V
+ */
+JNIEXPORT jobject JNICALL Java_org_sf_javabdd_CUDDFactory_00024CUDDBDD_restrictWith
+  (JNIEnv *env, jobject o, jobject p)
+{
+    DdNode* d;
+    DdNode* e;
+    DdNode* f;
+    d = BDD_JavaToC(env, o);
+    e = BDD_JavaToC(env, p);
+    f = Cudd_bddRestrict(manager, d, e);
+    Cudd_Ref(f);
+    (*env)->SetLongField(env, p, bdd_fid, INVALID_BDD);
+    (*env)->SetLongField(env, o, bdd_fid, (jlong)(intptr_cast_type) f);
+    Cudd_RecursiveDeref(manager, e);
+    if ((*env)->IsSameObject(env, o, p) == JNI_FALSE) {
+        Cudd_RecursiveDeref(manager, d);
+    }
+    
+/*
+ * Class:     org_sf_javabdd_CUDDFactory_CUDDBDD
  * Method:    support
  * Signature: ()Lorg/sf/javabdd/BDD;
  */

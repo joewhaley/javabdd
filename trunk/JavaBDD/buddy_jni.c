@@ -1365,6 +1365,40 @@ JNIEXPORT jobject JNICALL Java_org_sf_javabdd_BuDDyFactory_00024BuDDyBDD_restric
 
 /*
  * Class:     org_sf_javabdd_BuDDyFactory_BuDDyBDD
+ * Method:    restrictWith0
+ * Signature: (Lorg/sf/javabdd/BuDDyFactory$BuDDyBDD;)V
+ */
+JNIEXPORT void JNICALL Java_org_sf_javabdd_BuDDyFactory_00024BuDDyBDD_restrictWith0
+  (JNIEnv *env, jobject o, jobject that)
+{
+  BDD b = BDD_JavaToC(env, o);
+  BDD c = BDD_JavaToC(env, that);
+#if defined(TRACE_BUDDYLIB)
+  printf("bdd_restrict(%d, %d)\n", b, c);
+#endif
+  BDD d = bdd_restrict(b, c);
+  if (check_error(env)) return;
+#if defined(TRACE_BUDDYLIB)
+  printf("bdd_addref(%d)\n", d);
+#endif
+  bdd_addref(d);
+  (*env)->SetIntField(env, that, bdd_fid, INVALID_BDD);
+  (*env)->SetIntField(env, o, bdd_fid, d);
+#if defined(TRACE_BUDDYLIB)
+  printf("bdd_delref(%d)\n", b);
+#endif
+  bdd_delref(b);
+  if ((*env)->IsSameObject(env, o, that) == JNI_FALSE) {
+#if defined(TRACE_BUDDYLIB)
+    printf("bdd_delref(%d)\n", c);
+#endif
+    bdd_delref(c);
+  }
+  check_error(env);
+}
+
+/*
+ * Class:     org_sf_javabdd_BuDDyFactory_BuDDyBDD
  * Method:    simplify0
  * Signature: (Lorg/sf/javabdd/BuDDyFactory$BuDDyBDD;)Lorg/sf/javabdd/BuDDyFactory$BuDDyBDD;
  */
