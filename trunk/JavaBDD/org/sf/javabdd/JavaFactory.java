@@ -46,6 +46,8 @@ public class JavaFactory extends BDDFactory {
     class bdd extends BDD {
         int _index;
 
+        static final int INVALID_BDD = -1;
+
         bdd(int index) {
             this._index = index;
             bdd_addref(_index);
@@ -390,7 +392,7 @@ public class JavaFactory extends BDDFactory {
             bdd_delref(_index);
         }
         
-        static final boolean USE_FINALIZER = true;
+        static final boolean USE_FINALIZER = false;
         
         /**
          * @see java.lang.Object#finalize()
@@ -401,8 +403,16 @@ public class JavaFactory extends BDDFactory {
                 if (false && _index >= 0) {
                     System.out.println("BDD not freed! "+System.identityHashCode(this));
                 }
-                this.delRef();
+                this.free();
             }
+        }
+        
+        /**
+         * @see org.sf.javabdd.BDD#free()
+         */
+        public void free() {
+            delRef();
+            _index = INVALID_BDD;
         }
         
     }
@@ -608,6 +618,7 @@ public class JavaFactory extends BDDFactory {
     /* Strings for all error mesages */
     static String errorstrings[] =
         {
+            "",
             "Out of memory",
             "Unknown variable",
             "Value out of range",
