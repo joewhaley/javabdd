@@ -854,6 +854,10 @@ public class CUDDFactory extends BDDFactory {
             return this.realsize;
         }
 
+        public BDD buildAdd(BDDDomain that, int value) {
+            throw new BDDException("not implemented");
+        }
+        
         /* (non-Javadoc)
          * @see org.sf.javabdd.BDDDomain#set()
          */

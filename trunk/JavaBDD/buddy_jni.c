@@ -2040,6 +2040,50 @@ JNIEXPORT jobject JNICALL Java_org_sf_javabdd_BuDDyFactory_00024BuDDyBDDDomain_b
   return result;
 }
 
+#include "bvec.h"
+
+/*
+ * Class:     org_sf_javabdd_BuDDyFactory_BuDDyBDDDomain
+ * Method:    buildAdd0
+ * Signature: (Lorg/sf/javabdd/BuDDyFactory$BuDDyBDDDomain;I)Lorg/sf/javabdd/BuDDyFactory$BuDDyBDD;
+ */
+JNIEXPORT jobject JNICALL Java_org_sf_javabdd_BuDDyFactory_00024BuDDyBDDDomain_buildAdd0
+  (JNIEnv *env, jobject o, jobject that, jint value)
+{
+  int d1 = Domain_JavaToC(env, o);
+  int d2 = Domain_JavaToC(env, that);
+  BVEC x, y, z, v;
+  BDD result;
+  jobject res;
+  int size1 = fdd_varnum(d1);
+  int size2 = fdd_varnum(d1);
+  int n;
+
+  // assert size1 == size2;
+
+  y = bvec_varfdd(d1);
+  v = bvec_con(size1, value);
+  z = bvec_add(y, v);
+  x = bvec_varfdd(d2);
+
+  result = bddtrue;
+ 
+  for (n=0 ; n<x.bitnum ; n++) {
+    bdd a, b;
+    a = bdd_apply(x.bitvec[n], z.bitvec[n], bddop_biimp);
+    bdd_addref(a);
+    b = bdd_and(result, a);
+    bdd_addref(b);
+    bdd_delref(a);
+    bdd_delref(result);
+    result = b;
+  }
+ 
+  res = BDD_CToJava(env, result);
+  check_error(env);
+  return res;
+}
+
 /*
  * Class:     org_sf_javabdd_BuDDyFactory_BuDDyBDDDomain
  * Method:    set
