@@ -69,7 +69,7 @@ else
   ifeq (${CC},icc)    # Intel Linux compiler
     CFLAGS = -O2 -Ob2 -ip $(EXTRA_CFLAGS)
     LINK = icc
-    LINKFLAGS = -static-libcxa -shared $(EXTRA_CFLAGS)
+    LINKFLAGS = -shared -static $(EXTRA_CFLAGS)
   endif
 endif
 
@@ -220,13 +220,13 @@ pdo:
 	$(JAVA) NQueens 12
 
 ipo:	buddy_jni.h
-	icc -D_REENTRANT -D_GNU_SOURCE -O2 -Ob2 -ipo $(INCLUDES) -shared -static-libcxa $(DLL_OUTPUT_OPTION)libbuddy.so $(BUDDY_SRCS)
+	icc -D_REENTRANT -D_GNU_SOURCE -O2 -Ob2 -ipo $(INCLUDES) -shared -static $(DLL_OUTPUT_OPTION)libbuddy.so $(BUDDY_SRCS)
 
 pdogen: buddy_jni.h
-	icc -D_REENTRANT -D_GNU_SOURCE -O2 -Ob2 -prof_gen $(INCLUDES) -shared -static-libcxa $(DLL_OUTPUT_OPTION)libbuddy.so $(BUDDY_SRCS)
+	icc -D_REENTRANT -D_GNU_SOURCE -O2 -Ob2 -prof_gen $(INCLUDES) -shared -static $(DLL_OUTPUT_OPTION)libbuddy.so $(BUDDY_SRCS)
 
 pdouse: buddy_jni.h
-	icc -D_REENTRANT -D_GNU_SOURCE -O2 -Ob2 -prof_use -ipo $(INCLUDES) -shared -static-libcxa $(DLL_OUTPUT_OPTION)libbuddy.so $(BUDDY_SRCS)
+	icc -D_REENTRANT -D_GNU_SOURCE -O2 -Ob2 -prof_use -ipo $(INCLUDES) -shared -static $(DLL_OUTPUT_OPTION)libbuddy.so $(BUDDY_SRCS)
 
 opt_report:
 	icl -Qopt_report -Qopt_report_phase all $(INCLUDES) $(CFLAGS) $(DLL_OUTPUT_OPTION)buddy.dll $(BUDDY_SRCS) -LD /link /libpath:$(JDK_ROOT)/lib 
