@@ -861,6 +861,16 @@ public class TestBDDFactory extends BDDFactory {
     }
 
     /* (non-Javadoc)
+     * @see net.sf.javabdd.BDDFactory#getCacheSize()
+     */
+    public int getCacheSize() {
+        int r1 = f1.getCacheSize();
+        int r2 = f2.getCacheSize();
+        assertSame(r1 == r2, "getCacheSize");
+        return r1;
+    }
+    
+    /* (non-Javadoc)
      * @see net.sf.javabdd.BDDFactory#reorderGain()
      */
     public int reorderGain() {
