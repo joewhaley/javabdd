@@ -18,7 +18,7 @@
   <description>
     <![CDATA[
      <p>JavaBDD is a Java library for manipulating BDDs (Binary Decision Diagrams). 
-        Binary decision diagrams are widely used in model checking, formal 
+	Binary decision diagrams are widely used in model checking, formal 
 	verification, optimizing circuit diagrams, etc. For an excellent overview of 
 	the BDD data structure, see this set of <a href="http://www.itu.dk/people/hra/notes-index.html">
 	lecture notes</a> by Henrik Reif Andersen.</p>
@@ -27,10 +27,13 @@
 	However, JavaBDD's API is designed to be object-oriented. The ugly C function 
 	interface and reference counting schemes have been hidden underneath a uniform, 
 	object-oriented interface.</p>
-	<p>JavaBDD includes a 100% Java implementation. It can also interface with two 
+	<p>JavaBDD includes a 100% Java implementation.  It can also interface with the
+        <a href="http://javaddlib.sourceforge.net/jdd/">JDD</a> library, or with three
 	popular BDD libraries written in C via a JNI interface: <a href="http://www.itu.dk/research/buddy/">
-	BuDDy</a> and <a href="http://vlsi.colorado.edu/~fabio/CUDD/cuddIntro.html">CUDD</a>.
-	</p>
+	BuDDy</a>, <a href="http://vlsi.colorado.edu/~fabio/CUDD/cuddIntro.html">CUDD</a>,
+	and <a href="http://www-cad.eecs.berkeley.edu/Research/cal_bdd/">CAL</a>.
+	JavaBDD provides a uniform interface to all of these libraries, so you can easily switch between
+	them without having to make changes to your application.</p>
 	<p>JavaBDD is designed for high performance applications, so it also exposes many 
 	of the lower level options of the BDD library, like cache sizes and advanced 
 	variable reordering.</p>
