@@ -21,8 +21,13 @@ public class NQueens {
             return;
         }
 
-        /* Initialize with 100000 nodes, 10000 cache entries and NxN variables */
-        B = BuDDyFactory.init(N * N * 256, 10000);
+	long time = System.currentTimeMillis();
+
+        /* Initialize with reasonable nodes and cache size and NxN variables */
+	int numberOfNodes = (int) (Math.pow(4.4, N-6))*1000;
+	int cacheSize = 1000;
+	numberOfNodes = Math.max(1000, numberOfNodes);
+        B = BuDDyFactory.init(numberOfNodes, cacheSize);
         B.setVarNum(N * N);
 
         queen = B.one();
@@ -61,6 +66,9 @@ public class NQueens {
         System.out.println();
 
         B.done();
+
+	time = System.currentTimeMillis() - time;
+	System.out.println("Time: "+time/1000.+" seconds");
     }
 
     static void build(int i, int j) {
@@ -70,14 +78,20 @@ public class NQueens {
         /* No one in the same column */
         for (l = 0; l < N; l++) {
             if (l != j) {
-                a.andWith(X[i][j].imp(X[i][l].not()));
+		BDD t = X[i][l].not();
+		BDD u = X[i][j].imp(t);
+		t.free();
+                a.andWith(u);
             }
         }
 
         /* No one in the same row */
         for (k = 0; k < N; k++) {
             if (k != i) {
-                b.andWith(X[i][j].imp(X[k][j].not()));
+		BDD t = X[k][j].not();
+		BDD u = X[i][j].imp(t);
+		t.free();
+                b.andWith(u);
             }
         }
 
@@ -86,7 +100,10 @@ public class NQueens {
             int ll = k - i + j;
             if (ll >= 0 && ll < N) {
                 if (k != i) {
-                    c.andWith(X[i][j].imp(X[k][ll].not()));
+		    BDD t = X[k][ll].not();
+		    BDD u = X[i][j].imp(t);
+		    t.free();
+                    c.andWith(u);
                 }
             }
         }
@@ -96,7 +113,10 @@ public class NQueens {
             int ll = i + j - k;
             if (ll >= 0 && ll < N) {
                 if (k != i) {
-                    d.andWith(X[i][j].imp(X[k][ll].not()));
+		    BDD t = X[k][ll].not();
+		    BDD u = X[i][j].imp(t);
+		    t.free();
+                    d.andWith(u);
                 }
             }
         }
