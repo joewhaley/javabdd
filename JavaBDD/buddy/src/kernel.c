@@ -28,7 +28,7 @@
 ========================================================================*/
 
 /*************************************************************************
-  $Header: /cvsroot/buddy/buddy/src/kernel.c,v 1.5 2004/09/24 02:56:39 joewhaley Exp $
+  $Header: /cvsroot/buddy/buddy/src/kernel.c,v 1.4 2004/08/03 16:49:54 haimcohen Exp $
   FILE:  kernel.c
   DESCR: implements the bdd kernel functions.
   AUTH:  Jorn Lind
@@ -103,6 +103,10 @@ jmp_buf      bddexception;      /* Long-jump point for interrupting calc. */
 int          bddresized;        /* Flag indicating a resize of the nodetable */
 
 bddCacheStat bddcachestats;
+int  	     trace_enable = 0; /* Flag indicating whether to trace lib calls */
+int	     trace_outputted = 0; /* Flag indicating whether the trace file
+				  * has been outputted yet
+				  */
 
 
 /*=== PRIVATE KERNEL VARIABLES =========================================*/
@@ -116,6 +120,9 @@ static bddinthandler  err_handler;     /* Error handler */
 static bddgbchandler  gbc_handler;     /* Garbage collection handler */
 static bdd2inthandler resize_handler;  /* Node-table-resize handler */
 
+/* Pre-allocate node table */
+static int MAX_ALLOC_NODES = 100000000;
+static BddNode* alloced;
 
    /* Strings for all error mesages */
 static char *errorstrings[BDD_ERRNUM] =
@@ -174,16 +181,36 @@ ALSO   {* bdd\_done, bdd\_resize\_hook *}
 int bdd_init(int initnodesize, int cs)
 {
    int n, err;
+   char * str;
+
+
+   /* Check to see if tracing is enabled */
+
+   if( (str = getenv("BUDDY_TRACE_FILE")) != NULL)
+   {
+	   trace_enable = 1;
+	   trace_init(str);
+   }
+
+   BUDDY_PROLOGUE;
+   ADD_ARG1(T_INT,initnodesize);
+   ADD_ARG1(T_INT,cs);
    
    srand48( SRAND48SEED ) ;
 
    if (bddrunning)
-      return bdd_error(BDD_RUNNING);
+      RETURN(bdd_error(BDD_RUNNING));
    
    bddnodesize = bdd_prime_gte(initnodesize);
    
-   if ((bddnodes=(BddNode*)malloc(sizeof(BddNode)*bddnodesize)) == NULL)
-      return bdd_error(BDD_MEMORY);
+   if ((MAX_ALLOC_NODES == 0) ||
+       (alloced=(BddNode*)malloc(sizeof(BddNode)*MAX_ALLOC_NODES)) == NULL) {
+     if ((alloced=(BddNode*)malloc(sizeof(BddNode)*bddnodesize)) == NULL) {
+       RETURN(bdd_error(BDD_MEMORY));
+     }
+     MAX_ALLOC_NODES = bddnodesize;
+   }
+   bddnodes = alloced;
 
    bddresized = 0;
    
@@ -204,7 +231,7 @@ int bdd_init(int initnodesize, int cs)
    if ((err=bdd_operator_init(cs)) < 0)
    {
       bdd_done();
-      return err;
+      RETURN(err);
    }
 
    bddfreepos = 2;
@@ -237,7 +264,7 @@ int bdd_init(int initnodesize, int cs)
    if (setjmp(bddexception) != 0)
       assert(0);
 
-   return 0;
+   RETURN(0);
 }
 
 
@@ -253,6 +280,11 @@ ALSO  {* bdd\_init *}
 void bdd_done(void)
 {
    /*sanitycheck(); FIXME */
+
+
+   if(trace_enable)
+   	output_trace();
+
    bdd_fdd_done();
    bdd_reorder_done();
    bdd_pairs_done();
@@ -300,49 +332,52 @@ int bdd_setvarnum(int num)
    int bdv;
    int oldbddvarnum = bddvarnum;
 
+   BUDDY_PROLOGUE;
+   ADD_ARG1(T_INT,num);
+
    bdd_disable_reorder();
       
    if (num < 1  ||  num > MAXVAR)
    {
       bdd_error(BDD_RANGE);
-      return bddfalse;
+      RETURN(bddfalse);
    }
 
    if (num < bddvarnum)
-      return bdd_error(BDD_DECVNUM);
+      RETURN(bdd_error(BDD_DECVNUM));
    if (num == bddvarnum)
-      return 0;
+       RETURN(0);
 
    if (bddvarset == NULL)
    {
       if ((bddvarset=(BDD*)malloc(sizeof(BDD)*num*2)) == NULL)
-	 return bdd_error(BDD_MEMORY);
+	 RETURN(bdd_error(BDD_MEMORY));
       if ((bddlevel2var=(int*)malloc(sizeof(int)*(num+1))) == NULL)
       {
 	 free(bddvarset);
-	 return bdd_error(BDD_MEMORY);
+	 RETURN(bdd_error(BDD_MEMORY));
       }
       if ((bddvar2level=(int*)malloc(sizeof(int)*(num+1))) == NULL)
       {
 	 free(bddvarset);
 	 free(bddlevel2var);
-	 return bdd_error(BDD_MEMORY);
+	 RETURN(bdd_error(BDD_MEMORY));
       }
    }
    else
    {
       if ((bddvarset=(BDD*)realloc(bddvarset,sizeof(BDD)*num*2)) == NULL)
-	 return bdd_error(BDD_MEMORY);
+	 RETURN(bdd_error(BDD_MEMORY));
       if ((bddlevel2var=(int*)realloc(bddlevel2var,sizeof(int)*(num+1))) == NULL)
       {
 	 free(bddvarset);
-	 return bdd_error(BDD_MEMORY);
+	 RETURN(bdd_error(BDD_MEMORY));
       }
       if ((bddvar2level=(int*)realloc(bddvar2level,sizeof(int)*(num+1))) == NULL)
       {
 	 free(bddvarset);
 	 free(bddlevel2var);
-	 return bdd_error(BDD_MEMORY);
+	 RETURN(bdd_error(BDD_MEMORY));
       }
    }
 
@@ -359,7 +394,7 @@ int bdd_setvarnum(int num)
       if (bdderrorcond)
       {
 	 bddvarnum = bdv;
-	 return -bdderrorcond;
+	 RETURN(-bdderrorcond);
       }
       
       bddnodes[bddvarset[bddvarnum*2]].refcou = MAXREF;
@@ -375,10 +410,10 @@ int bdd_setvarnum(int num)
    
    bdd_pairs_resize(oldbddvarnum, bddvarnum);
    bdd_operator_varresize();
-   
+  
    bdd_enable_reorder();
-   
-   return 0;
+
+   RETURN(0); 
 }
 
 
@@ -395,12 +430,15 @@ ALSO    {* bdd\_setvarnum, bdd\_ithvar, bdd\_nithvar *}
 int bdd_extvarnum(int num)
 {
    int start = bddvarnum;
+
+   BUDDY_PROLOGUE;
+   ADD_ARG1(T_INT,num);
    
    if (num < 0  ||  num > 0x3FFFFFFF)
-      return bdd_error(BDD_RANGE);
+      RETURN(bdd_error(BDD_RANGE));
 
    bdd_setvarnum(bddvarnum+num);
-   return start;
+   RETURN(start);
 }
 
 
@@ -434,7 +472,9 @@ ALSO  {* bdd\_errstring *}
 bddinthandler bdd_error_hook(bddinthandler handler)
 {
    bddinthandler tmp = err_handler;
+   BUDDY_IGNOREFN_PROLOGUE;
    err_handler = handler;
+   BUDDY_IGNOREFN_EPILOGUE;
    return tmp;
 }
 
@@ -456,8 +496,10 @@ ALSO    {* bdd\_error\_hook, bdd\_setmaxnodenum *}
 */
 void bdd_clear_error(void)
 {
+   BUDDY_PROLOGUE;
    bdderrorcond = 0;
    bdd_operator_reset();
+   RETURN();
 }
 
 
@@ -545,12 +587,15 @@ ALSO    {* bdd\_setmaxnodenum, bdd\_setminfreenodes *}
 int bdd_setmaxincrease(int size)
 {
    int old = bddmaxnodeincrease;
+
+   BUDDY_PROLOGUE;
+   ADD_ARG1(T_INT,size);
    
    if (size < 0)
-      return bdd_error(BDD_SIZE);
+      RETURN(bdd_error(BDD_SIZE));
 
    bddmaxnodeincrease = size;
-   return old;
+   RETURN(old);
 }
 
 /*
@@ -572,14 +617,17 @@ ALSO   {* bdd\_setmaxincrease, bdd\_setminfreenodes *}
 */
 int bdd_setmaxnodenum(int size)
 {
+   BUDDY_PROLOGUE;
+   ADD_ARG1(T_INT,size);
+
    if (size > bddnodesize  ||  size == 0)
    {
       int old = bddmaxnodesize;
       bddmaxnodesize = size;
-      return old;
+      RETURN(old);
    }
 
-   return bdd_error(BDD_NODES);
+   RETURN(bdd_error(BDD_NODES));
 }
 
 
@@ -604,12 +652,15 @@ ALSO    {* bdd\_setmaxnodenum, bdd\_setmaxincrease *}
 int bdd_setminfreenodes(int mf)
 {
    int old = minfreenodes;
+
+   BUDDY_PROLOGUE;
+   ADD_ARG1(T_INT,mf);
    
    if (mf<0 || mf>100)
-      return bdd_error(BDD_RANGE);
+      RETURN(bdd_error(BDD_RANGE));
 
    minfreenodes = mf;
-   return old;
+   RETURN(old);
 }
 
 
@@ -627,7 +678,8 @@ ALSO    {* bdd\_getallocnum, bdd\_setmaxnodenum *}
 */
 int bdd_getnodenum(void)
 {
-   return bddnodesize - bddfreenum;
+   BUDDY_PROLOGUE;
+   RETURN(bddnodesize - bddfreenum);
 }
 
 
@@ -643,7 +695,8 @@ ALSO    {* bdd\_getnodenum, bdd\_setmaxnodenum *}
 */
 int bdd_getallocnum(void)
 {
-   return bddnodesize;
+   BUDDY_PROLOGUE;
+   RETURN(bddnodesize);
 }
 
 
@@ -659,9 +712,16 @@ ALSO    {* bdd\_init, bdd\_done *}
 */
 int bdd_isrunning(void)
 {
-   return bddrunning;
+   BUDDY_PROLOGUE;
+   RETURN(bddrunning);
 }
 
+#ifndef VERSION
+#define VERSION (MAJOR_VERSION*10+MINOR_VERSION)
+#endif
+#ifndef PACKAGE_VERSION
+#define PACKAGE_VERSION "VERSION"
+#endif
 
 /*
 NAME    {* bdd\_versionstr *}
@@ -675,7 +735,8 @@ ALSO    {* bdd\_versionnum *}
 char *bdd_versionstr(void)
 {
    static char str[] = "BuDDy -  release " PACKAGE_VERSION;
-   return str;
+   BUDDY_PROLOGUE;
+   RETURN(str);
 }
 
 
@@ -690,7 +751,8 @@ ALSO    {* bdd\_versionstr *}
 */
 int bdd_versionnum(void)
 {
-   return MAJOR_VERSION * 10 + MINOR_VERSION;
+   BUDDY_PROLOGUE;
+   RETURN(MAJOR_VERSION * 10 + MINOR_VERSION);
 }
 
 
@@ -777,7 +839,9 @@ void bdd_fprintstat(FILE *ofile)
 
 void bdd_printstat(void)
 {
+   BUDDY_PROLOGUE;
    bdd_fprintstat(stdout);
+   RETURN();
 }
 
 
@@ -797,10 +861,13 @@ ALSO    {* bdd\_err\_hook *}
 */
 const char *bdd_errstring(int e)
 {
+   BUDDY_PROLOGUE;
+   ADD_ARG1(T_INT,e);
+
    e = abs(e);
    if (e<1 || e>BDD_ERRNUM)
-      return NULL;
-   return errorstrings[e-1];
+      RETURN(NULL);
+   RETURN(errorstrings[e-1]);
 }
 
 
@@ -813,10 +880,11 @@ void bdd_default_errhandler(int e)
 
 int bdd_error(int e)
 {
+   BUDDY_PROLOGUE;
    if (err_handler != NULL)
       err_handler(e);
    
-   return e;
+   RETURN(e);
 }
 
 
@@ -837,7 +905,8 @@ ALSO    {* bdd\_false, bddtrue, bddfalse *}
 */
 BDD bdd_true(void)
 {
-   return 1;
+   BUDDY_PROLOGUE;
+   RETURN_BDD(1);
 }
 
 
@@ -854,7 +923,8 @@ ALSO    {* bdd\_true, bddtrue, bddfalse *}
 */
 BDD bdd_false(void)
 {
-   return 0;
+   BUDDY_PROLOGUE;
+   RETURN_BDD(0);
 }
 
 
@@ -877,13 +947,15 @@ RETURN  {* The I'th variable on succes, otherwise the constant false bdd *}
 ALSO {* bdd\_setvarnum, bdd\_nithvar, bddtrue, bddfalse *} */
 BDD bdd_ithvar(int var)
 {
+   BUDDY_PROLOGUE;
+   ADD_ARG1(T_INT,var);
    if (var < 0  ||  var >= bddvarnum)
    {
       bdd_error(BDD_VAR);
-      return bddfalse;
+      RETURN_BDD(bddfalse);
    }
 
-   return bddvarset[var*2];
+   RETURN_BDD(bddvarset[var*2]);
 }
 
 
@@ -903,13 +975,15 @@ ALSO    {* bdd\_setvarnum, bdd\_ithvar, bddtrue, bddfalse *}
 */
 BDD bdd_nithvar(int var)
 {
+   BUDDY_PROLOGUE;
+   ADD_ARG1(T_INT,var);
    if (var < 0  ||  var >= bddvarnum)
    {
       bdd_error(BDD_VAR);
-      return bddfalse;
+      RETURN_BDD(bddfalse);
    }
    
-   return bddvarset[var*2+1];
+   RETURN_BDD(bddvarset[var*2+1]);
 }
 
 
@@ -925,7 +999,8 @@ ALSO    {* bdd\_setvarnum, bdd\_ithvar *}
 */
 int bdd_varnum(void)
 {
-   return bddvarnum;
+   BUDDY_PROLOGUE;
+   RETURN(bddvarnum);
 }
 
 
@@ -939,11 +1014,14 @@ RETURN  {* The variable number. *}
 */
 int bdd_var(BDD root)
 {
+   BUDDY_PROLOGUE;
+   ADD_ARG1(T_BDD,root);
+
    CHECK(root);
    if (root < 2)
-      return bdd_error(BDD_ILLBDD);
+      RETURN(bdd_error(BDD_ILLBDD));
 
-   return (bddlevel2var[LEVEL(root)]);
+   RETURN(bddlevel2var[LEVEL(root)]);
 }
 
 
@@ -958,11 +1036,14 @@ ALSO    {* bdd\_high *}
 */
 BDD bdd_low(BDD root)
 {
+   BUDDY_PROLOGUE;
+   ADD_ARG1(T_BDD,root);
+
    CHECK(root);
    if (root < 2)
-      return bdd_error(BDD_ILLBDD);
+      RETURN_BDD(bdd_error(BDD_ILLBDD));
 
-   return (LOW(root));
+   RETURN_BDD(LOW(root));
 }
 
 
@@ -977,11 +1058,14 @@ ALSO    {* bdd\_low *}
 */
 BDD bdd_high(BDD root)
 {
+   BUDDY_PROLOGUE;
+   ADD_ARG1(T_BDD,root);
+
    CHECK(root);
    if (root < 2)
-      return bdd_error(BDD_ILLBDD);
+      RETURN_BDD(bdd_error(BDD_ILLBDD));
 
-   return (HIGH(root));
+   RETURN_BDD(HIGH(root));
 }
 
 
@@ -1117,15 +1201,18 @@ RETURN  {* The BDD node {\tt r}. *}
 */
 BDD bdd_addref(BDD root)
 {
+   BUDDY_PROLOGUE;
+   ADD_ARG1(T_BDD,root);
+
    if (root < 2  ||  !bddrunning)
-      return root;
+      RETURN_BDD(root);
    if (root >= bddnodesize)
-      return bdd_error(BDD_ILLBDD);
+      RETURN_BDD(bdd_error(BDD_ILLBDD));
    if (LOW(root) == -1)
-      return bdd_error(BDD_ILLBDD);
+      RETURN_BDD(bdd_error(BDD_ILLBDD));
 
    INCREF(root);
-   return root;
+   RETURN_BDD(root);
 }
 
 
@@ -1143,18 +1230,23 @@ RETURN  {* The BDD node {\tt r}. *}
 */
 BDD bdd_delref(BDD root)
 {
+   BUDDY_PROLOGUE;
+   ADD_ARG1(T_BDD,root);
    if (root < 2  ||  !bddrunning)
-      return root;
+      RETURN_BDD(root);
    if (root >= bddnodesize)
-      return bdd_error(BDD_ILLBDD);
+      RETURN_BDD(bdd_error(BDD_ILLBDD));
    if (LOW(root) == -1)
-      return bdd_error(BDD_ILLBDD);
+      RETURN_BDD(bdd_error(BDD_ILLBDD));
 
    /* if the following line is present, fails there much earlier */ 
-   if (!HASREF(root)) bdd_error(BDD_BREAK); /* distinctive */
+   if (!HASREF(root))
+	   bdd_error(BDD_BREAK); /* distinctive */ 
    
    DECREF(root);
-   return root;
+   if(!HASREF(root))
+	   trace_del_bdd(T_BDD,(void *)root);  
+   RETURN_BDD(root);
 }
 
 
@@ -1369,10 +1461,15 @@ int bdd_noderesize(int doRehash)
    if (resize_handler != NULL)
       resize_handler(oldsize, bddnodesize);
 
-   newnodes = (BddNode*)realloc(bddnodes, sizeof(BddNode)*bddnodesize);
-   if (newnodes == NULL)
-      return bdd_error(BDD_MEMORY);
-   bddnodes = newnodes;
+   if (bddnodesize > MAX_ALLOC_NODES) {
+     alloced = (BddNode*)realloc(alloced, sizeof(BddNode)*bddnodesize);
+     if (alloced == NULL)
+       return bdd_error(BDD_MEMORY);
+     bddnodes = alloced;
+     MAX_ALLOC_NODES = bddnodesize;
+   } else {
+     bddnodes = alloced;
+   }
 
    if (doRehash)
       for (n=0 ; n<oldsize ; n++)
@@ -1479,6 +1576,10 @@ RETURN {* A BDD variable set. *} */
 BDD bdd_makeset(int *varset, int varnum)
 {
    int v, res=1;
+
+   BUDDY_PROLOGUE;
+   ADD_ARG2(T_INT_PTR,varset,varnum);
+   ADD_ARG1(T_INT,varnum);
    
    for (v=varnum-1 ; v>=0 ; v--)
    {
@@ -1489,7 +1590,7 @@ BDD bdd_makeset(int *varset, int varnum)
       res = tmp;
    }
 
-   return res;
+   RETURN_BDD(res);
 }
 
 

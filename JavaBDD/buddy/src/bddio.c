@@ -118,7 +118,9 @@ ALSO    {* bdd\_printtable, bdd\_printset, bdd\_printdot *}
 */
 void bdd_printall(void)
 {
+   BUDDY_PROLOGUE;
    bdd_fprintall(stdout);
+   RETURN();
 }
 
 
@@ -162,7 +164,10 @@ ALSO    {* bdd\_printall, bdd\_printset, bdd\_printdot *}
 */
 void bdd_printtable(BDD r)
 {
+   BUDDY_PROLOGUE;
+   ADD_ARG1(T_BDD,r);
    bdd_fprinttable(stdout, r);
+   RETURN();
 }
 
 
@@ -225,7 +230,10 @@ ALSO    {* bdd\_printall, bdd\_printtable, bdd\_printdot, bdd\_file\_hook, bdd\_
 */
 void bdd_printset(BDD r)
 {
+   BUDDY_PROLOGUE;
+   ADD_ARG1(T_BDD,r);
    bdd_fprintset(stdout, r);
+   RETURN();
 }
 
 
@@ -311,7 +319,10 @@ ALSO    {* bdd\_printall, bdd\_printtable, bdd\_printset *}
 */
 void bdd_printdot(BDD r)
 {
+   BUDDY_PROLOGUE;
+   ADD_ARG1(T_BDD,r);
    bdd_fprintdot(stdout, r);
+   RETURN();
 }
 
 
@@ -383,12 +394,16 @@ int bdd_fnsave(char *fname, BDD r)
    FILE *ofile;
    int ok;
 
+   BUDDY_PROLOGUE;
+   ADD_ARG1(T_CHAR_PTR,fname);
+   ADD_ARG1(T_BDD,r);
+
    if ((ofile=fopen(fname,"w")) == NULL)
-      return bdd_error(BDD_FILE);
+      RETURN(bdd_error(BDD_FILE));
 
    ok = bdd_save(ofile, r);
    fclose(ofile);
-   return ok;
+   RETURN(ok);
 }
 
 
@@ -477,12 +492,20 @@ int bdd_fnload(char *fname, BDD *root)
    FILE *ifile;
    int ok;
 
+   BUDDY_PROLOGUE;
+   ADD_ARG1(T_CHAR_PTR,fname);
+
    if ((ifile=fopen(fname,"r")) == NULL)
-      return bdd_error(BDD_FILE);
+   {
+
+      ADD_ARG1(T_BDD_LOAD,*root); 
+      RETURN(bdd_error(BDD_FILE));
+   }
 
    ok = bdd_load(ifile, root);
+   ADD_ARG1(T_BDD_LOAD,*root); 
    fclose(ifile);
-   return ok;
+   RETURN(ok); 
 }
 
 
@@ -532,10 +555,8 @@ int bdd_load(FILE *ifile, BDD *root)
       return tmproot;
    else
       *root = tmproot;
-   
    return 0;
 }
-
 
 static int bdd_loaddata(FILE *ifile)
 {

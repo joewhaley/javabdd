@@ -28,7 +28,7 @@
 ========================================================================*/
 
 /*************************************************************************
-  $Header: /cvsroot/buddy/buddy/src/bddop.c,v 1.5 2004/09/24 02:56:39 joewhaley Exp $
+  $Header: /cvsroot/buddy/buddy/src/bddop.c,v 1.4 2004/07/31 09:50:00 haimcohen Exp $
   FILE:  bddop.c
   DESCR: BDD operators
   AUTH:  Jorn Lind
@@ -121,10 +121,12 @@ extern bddCacheStat bddcachestats;
    /* Internal prototypes */
 static BDD    not_rec(BDD);
 static BDD    apply_rec(BDD, BDD);
+static BDD    apply_rec0(BDD, BDD);
 static BDD    ite_rec(BDD, BDD, BDD);
 static int    simplify_rec(BDD, BDD);
 static int    quant_rec(int);
 static int    appquant_rec(int, int);
+static int    appquant_rec0(int, int);
 static int    restrict_rec(int);
 static BDD    constrain_rec(BDD, BDD);
 static BDD    replace_rec(BDD);
@@ -142,6 +144,16 @@ static void   varprofile_rec(int);
 static double bdd_pathcount_rec(BDD);
 static int    varset2vartable(BDD);
 static int    varset2svartable(BDD);
+
+#if defined(SPECIALIZE_OR)
+static BDD    or_rec(BDD, BDD);
+#endif
+#if defined(SPECIALIZE_AND)
+static BDD    and_rec(BDD, BDD);
+#endif
+#if defined(SPECIALIZE_RELPROD)
+static int    relprod_rec(int, int);
+#endif
 
 
    /* Hashvalues */
@@ -286,15 +298,18 @@ ALSO    {* bdd\_init *}
 int bdd_setcacheratio(int r)
 {
    int old = cacheratio;
+
+   BUDDY_PROLOGUE;
+   ADD_ARG1(T_INT,r);
    
    if (r <= 0)
-      return bdd_error(BDD_RANGE);
+      RETURN(bdd_error(BDD_RANGE));
    if (bddnodesize == 0)
-      return old;
+      RETURN(old);
    
    cacheratio = r;
    bdd_operator_noderesize();
-   return old;
+   RETURN(old);
 }
 
 
@@ -338,6 +353,11 @@ BDD bdd_buildcube(int value, int width, BDD *variables)
    BDD result = BDDONE;
    int z;
 
+   BUDDY_PROLOGUE;
+   ADD_ARG1(T_INT,value);
+   ADD_ARG1(T_INT,width);
+   ADD_ARG2(T_BDD_PTR,variables,width);
+
    for (z=0 ; z<width ; z++, value>>=1)
    {
       BDD tmp;
@@ -356,7 +376,7 @@ BDD bdd_buildcube(int value, int width, BDD *variables)
       result = tmp;
    }
 
-   return result;
+   RETURN_BDD(result);
 }
 
 
@@ -364,6 +384,11 @@ BDD bdd_ibuildcube(int value, int width, int *variables)
 {
    BDD result = BDDONE;
    int z;
+
+   BUDDY_PROLOGUE;
+   ADD_ARG1(T_INT,value);
+   ADD_ARG1(T_INT,width);
+   ADD_ARG2(T_INT_PTR,variables,width);
 
    for (z=0 ; z<width ; z++, value>>=1)
    {
@@ -382,7 +407,7 @@ BDD bdd_ibuildcube(int value, int width, int *variables)
       result = tmp;
    }
 
-   return result;
+   RETURN_BDD(result);
 }
 
 
@@ -402,6 +427,8 @@ BDD bdd_not(BDD r)
 {
    BDD res;
    firstReorder = 1;
+   BUDDY_PROLOGUE;
+   ADD_ARG1(T_BDD,r);
    CHECKa(r, bddfalse);
 
  again:
@@ -424,7 +451,7 @@ BDD bdd_not(BDD r)
    }
 
    checkresize();
-   return res;
+   RETURN_BDD(res);
 }
 
 
@@ -506,6 +533,10 @@ BDD bdd_apply(BDD l, BDD r, int op)
 {
    BDD res;
    firstReorder = 1;
+   BUDDY_PROLOGUE;
+   ADD_ARG1(T_BDD,l);
+   ADD_ARG1(T_BDD,r);
+   ADD_ARG1(T_INT,op);
    
    CHECKa(l, bddfalse);
    CHECKa(r, bddfalse);
@@ -513,7 +544,7 @@ BDD bdd_apply(BDD l, BDD r, int op)
    if (op<0 || op>bddop_invimp)
    {
       bdd_error(BDD_OP);
-      return bddfalse;
+      RETURN_BDD(bddfalse);
    }
 
  again:
@@ -538,11 +569,26 @@ BDD bdd_apply(BDD l, BDD r, int op)
    }
    
    checkresize();
-   return res;
+   RETURN_BDD(res);
 }
 
-
 static BDD apply_rec(BDD l, BDD r)
+{
+  switch (applyop) {
+#if defined(SPECIALIZE_AND)
+  case bddop_and:
+     return and_rec(l, r);
+#endif
+#if defined(SPECIALIZE_OR)
+  case bddop_or:
+     return or_rec(l, r);
+#endif
+  default:
+    return apply_rec0(l, r);
+  }
+}
+
+static BDD apply_rec0(BDD l, BDD r)
 {
    BddCacheData *entry;
    BDD res;
@@ -614,21 +660,21 @@ static BDD apply_rec(BDD l, BDD r)
       
       if (LEVEL(l) == LEVEL(r))
       {
-	 PUSHREF( apply_rec(LOW(l), LOW(r)) );
-	 PUSHREF( apply_rec(HIGH(l), HIGH(r)) );
+	 PUSHREF( apply_rec0(LOW(l), LOW(r)) );
+	 PUSHREF( apply_rec0(HIGH(l), HIGH(r)) );
 	 res = bdd_makenode(LEVEL(l), READREF(2), READREF(1));
       }
       else
       if (LEVEL(l) < LEVEL(r))
       {
-	 PUSHREF( apply_rec(LOW(l), r) );
-	 PUSHREF( apply_rec(HIGH(l), r) );
+	 PUSHREF( apply_rec0(LOW(l), r) );
+	 PUSHREF( apply_rec0(HIGH(l), r) );
 	 res = bdd_makenode(LEVEL(l), READREF(2), READREF(1));
       }
       else
       {
-	 PUSHREF( apply_rec(l, LOW(r)) );
-	 PUSHREF( apply_rec(l, HIGH(r)) );
+	 PUSHREF( apply_rec0(l, LOW(r)) );
+	 PUSHREF( apply_rec0(l, HIGH(r)) );
 	 res = bdd_makenode(LEVEL(r), READREF(2), READREF(1));
       }
 
@@ -643,6 +689,126 @@ static BDD apply_rec(BDD l, BDD r)
    return res;
 }
 
+#if defined(SPECIALIZE_AND)
+/* Special version of apply for common case of 'and' operation. */
+static BDD and_rec(BDD l, BDD r)
+{
+   BddCacheData *entry;
+   BDD res;
+   
+   if (l == r)
+     return l;
+   if (ISZERO(l)  ||  ISZERO(r))
+     return 0;
+   if (ISONE(l))
+     return r;
+   if (ISONE(r))
+     return l;
+
+   entry = BddCache_lookup(&applycache, APPLYHASH(l,r,bddop_and));
+   
+   if (entry->a == l  &&  entry->b == r  &&  entry->c == bddop_and)
+     {
+#ifdef CACHESTATS
+       bddcachestats.opHit++;
+#endif
+       return entry->r.res;
+     }
+#ifdef CACHESTATS
+   bddcachestats.opMiss++;
+#endif
+   
+   if (LEVEL(l) == LEVEL(r))
+     {
+       PUSHREF( and_rec(LOW(l), LOW(r)) );
+       PUSHREF( and_rec(HIGH(l), HIGH(r)) );
+       res = bdd_makenode(LEVEL(l), READREF(2), READREF(1));
+     }
+   else
+     if (LEVEL(l) < LEVEL(r))
+       {
+	 PUSHREF( and_rec(LOW(l), r) );
+	 PUSHREF( and_rec(HIGH(l), r) );
+	 res = bdd_makenode(LEVEL(l), READREF(2), READREF(1));
+       }
+     else
+       {
+	 PUSHREF( and_rec(l, LOW(r)) );
+	 PUSHREF( and_rec(l, HIGH(r)) );
+	 res = bdd_makenode(LEVEL(r), READREF(2), READREF(1));
+       }
+   
+   POPREF(2);
+   
+   entry->a = l;
+   entry->b = r;
+   entry->c = bddop_and;
+   entry->r.res = res;
+
+   return res;
+}
+#endif
+
+#if defined(SPECIALIZE_OR)
+/* Special version of apply for common case of 'or' operation. */
+static BDD or_rec(BDD l, BDD r)
+{
+   BddCacheData *entry;
+   BDD res;
+   
+   if (l == r)
+     return l;
+   if (ISONE(l)  ||  ISONE(r))
+     return 1;
+   if (ISZERO(l))
+     return r;
+   if (ISZERO(r))
+     return l;
+
+   entry = BddCache_lookup(&applycache, APPLYHASH(l,r,bddop_or));
+   
+   if (entry->a == l  &&  entry->b == r  &&  entry->c == bddop_or)
+     {
+#ifdef CACHESTATS
+       bddcachestats.opHit++;
+#endif
+       return entry->r.res;
+     }
+#ifdef CACHESTATS
+   bddcachestats.opMiss++;
+#endif
+   
+   if (LEVEL(l) == LEVEL(r))
+     {
+       PUSHREF( or_rec(LOW(l), LOW(r)) );
+       PUSHREF( or_rec(HIGH(l), HIGH(r)) );
+       res = bdd_makenode(LEVEL(l), READREF(2), READREF(1));
+     }
+   else
+     if (LEVEL(l) < LEVEL(r))
+       {
+	 PUSHREF( or_rec(LOW(l), r) );
+	 PUSHREF( or_rec(HIGH(l), r) );
+	 res = bdd_makenode(LEVEL(l), READREF(2), READREF(1));
+       }
+     else
+       {
+	 PUSHREF( or_rec(l, LOW(r)) );
+	 PUSHREF( or_rec(l, HIGH(r)) );
+	 res = bdd_makenode(LEVEL(r), READREF(2), READREF(1));
+       }
+   
+   POPREF(2);
+   
+   entry->a = l;
+   entry->b = r;
+   entry->c = bddop_or;
+   entry->r.res = res;
+
+   return res;
+}
+#endif
+
 
 /*
 NAME    {* bdd\_and *}
@@ -655,7 +821,10 @@ ALSO    {* bdd\_apply, bdd\_or, bdd\_xor *}
 */
 BDD bdd_and(BDD l, BDD r)
 {
-   return bdd_apply(l,r,bddop_and);
+   BUDDY_PROLOGUE;
+   ADD_ARG1(T_BDD,l);
+   ADD_ARG1(T_BDD,r);
+   RETURN_BDD(bdd_apply(l,r,bddop_and));
 }
 
 
@@ -670,7 +839,10 @@ ALSO    {* bdd\_apply, bdd\_xor, bdd\_and *}
 */
 BDD bdd_or(BDD l, BDD r)
 {
-   return bdd_apply(l,r,bddop_or);
+   BUDDY_PROLOGUE;
+   ADD_ARG1(T_BDD,l);
+   ADD_ARG1(T_BDD,r);
+   RETURN_BDD(bdd_apply(l,r,bddop_or));
 }
 
 
@@ -685,7 +857,11 @@ ALSO    {* bdd\_apply, bdd\_or, bdd\_and *}
 */
 BDD bdd_xor(BDD l, BDD r)
 {
-   return bdd_apply(l,r,bddop_xor);
+   BUDDY_PROLOGUE;
+   ADD_ARG1(T_BDD,l);
+   ADD_ARG1(T_BDD,r);
+   
+   RETURN_BDD(bdd_apply(l,r,bddop_xor));
 }
 
 
@@ -700,7 +876,10 @@ ALSO    {* bdd\_apply, bdd\_biimp *}
 */
 BDD bdd_imp(BDD l, BDD r)
 {
-   return bdd_apply(l,r,bddop_imp);
+   BUDDY_PROLOGUE;
+   ADD_ARG1(T_BDD,l);
+   ADD_ARG1(T_BDD,r);
+   RETURN_BDD(bdd_apply(l,r,bddop_imp));
 }
 
 
@@ -715,7 +894,10 @@ ALSO    {* bdd\_apply, bdd\_imp *}
 */
 BDD bdd_biimp(BDD l, BDD r)
 {
-   return bdd_apply(l,r,bddop_biimp);
+   BUDDY_PROLOGUE;
+   ADD_ARG1(T_BDD,l);
+   ADD_ARG1(T_BDD,r);
+   RETURN_BDD(bdd_apply(l,r,bddop_biimp));
 }
 
 
@@ -738,6 +920,11 @@ BDD bdd_ite(BDD f, BDD g, BDD h)
 {
    BDD res;
    firstReorder = 1;
+
+   BUDDY_PROLOGUE;
+   ADD_ARG1(T_BDD,f);
+   ADD_ARG1(T_BDD,g);
+   ADD_ARG1(T_BDD,h);
    
    CHECKa(f, bddfalse);
    CHECKa(g, bddfalse);
@@ -764,7 +951,7 @@ BDD bdd_ite(BDD f, BDD g, BDD h)
    }
 
    checkresize();
-   return res;
+   RETURN_BDD(res);
 }
 
 
@@ -907,18 +1094,22 @@ BDD bdd_restrict(BDD r, BDD var)
 {
    BDD res;
    firstReorder = 1;
+
+   BUDDY_PROLOGUE;
+   ADD_ARG1(T_BDD,r);
+   ADD_ARG1(T_BDD,var);
    
    CHECKa(r,bddfalse);
    CHECKa(var,bddfalse);
    
    if (var < 2)  /* Empty set */
-      return r;
+      RETURN_BDD(r);
    
  again:
    if (setjmp(bddexception) == 0)
    {
       if (varset2svartable(var) < 0)
-	 return bddfalse;
+	 RETURN_BDD(bddfalse);
 
       INITREF;
       miscid = (var << 3) | CACHEID_RESTRICT;
@@ -939,7 +1130,7 @@ BDD bdd_restrict(BDD r, BDD var)
    }
 
    checkresize();
-   return res;
+   RETURN_BDD(res);
 }
 
 
@@ -1002,6 +1193,10 @@ BDD bdd_constrain(BDD f, BDD c)
 {
    BDD res;
    firstReorder = 1;
+
+   BUDDY_PROLOGUE;
+   ADD_ARG1(T_BDD,f);
+   ADD_ARG1(T_BDD,c);
    
    CHECKa(f,bddfalse);
    CHECKa(c,bddfalse);
@@ -1028,7 +1223,7 @@ BDD bdd_constrain(BDD f, BDD c)
    }
 
    checkresize();
-   return res;
+   RETURN_BDD(res);
 }
 
 
@@ -1123,6 +1318,10 @@ BDD bdd_replace(BDD r, bddPair *pair)
 {
    BDD res;
    firstReorder = 1;
+
+   BUDDY_PROLOGUE;
+   ADD_ARG1(T_BDD,r);
+   ADD_ARG1(T_BDD_PAIR,pair);
    
    CHECKa(r, bddfalse);
    
@@ -1150,7 +1349,7 @@ BDD bdd_replace(BDD r, bddPair *pair)
    }
 
    checkresize();
-   return res;
+   RETURN_BDD(res);
 }
 
 
@@ -1242,13 +1441,18 @@ BDD bdd_compose(BDD f, BDD g, int var)
 {
    BDD res;
    firstReorder = 1;
+
+   BUDDY_PROLOGUE;
+   ADD_ARG1(T_BDD,f);
+   ADD_ARG1(T_BDD,g);
+   ADD_ARG1(T_INT,var);
    
    CHECKa(f, bddfalse);
    CHECKa(g, bddfalse);
    if (var < 0 || var >= bddvarnum)
    {
       bdd_error(BDD_VAR);
-      return bddfalse;
+      RETURN_BDD(bddfalse);
    }
    
  again:
@@ -1274,7 +1478,7 @@ BDD bdd_compose(BDD f, BDD g, int var)
    }
 
    checkresize();
-   return res;
+   RETURN_BDD(res);
 }
 
 
@@ -1360,6 +1564,11 @@ BDD bdd_veccompose(BDD f, bddPair *pair)
 {
    BDD res;
    firstReorder = 1;
+
+   BUDDY_PROLOGUE;
+   ADD_ARG1(T_BDD,f);
+   ADD_ARG1(T_BDD_PAIR,pair);
+
    
    CHECKa(f, bddfalse);
    
@@ -1387,7 +1596,7 @@ BDD bdd_veccompose(BDD f, bddPair *pair)
    }
 
    checkresize();
-   return res;
+   RETURN_BDD(res);
 }
 
 
@@ -1442,6 +1651,10 @@ BDD bdd_simplify(BDD f, BDD d)
 {
    BDD res;
    firstReorder = 1;
+
+   BUDDY_PROLOGUE;
+   ADD_ARG1(T_BDD,f);
+   ADD_ARG1(T_BDD,d);
    
    CHECKa(f, bddfalse);
    CHECKa(d, bddfalse);
@@ -1468,7 +1681,7 @@ BDD bdd_simplify(BDD f, BDD d)
    }
 
    checkresize();
-   return res;
+   RETURN_BDD(res);
 }
 
 
@@ -1522,7 +1735,11 @@ static BDD simplify_rec(BDD f, BDD d)
    }
    else /* LEVEL(d) < LEVEL(f) */
    {
+#if defined(SPECIALIZE_OR)
+      PUSHREF( or_rec(LOW(d), HIGH(d)) ); /* Exist quant */
+#else
       PUSHREF( apply_rec(LOW(d), HIGH(d)) ); /* Exist quant */
+#endif
       res = simplify_rec(f, READREF(1));
       POPREF(1);
    }
@@ -1552,18 +1769,22 @@ BDD bdd_exist(BDD r, BDD var)
 {
    BDD res;
    firstReorder = 1;
+
+   BUDDY_PROLOGUE;
+   ADD_ARG1(T_BDD,r);
+   ADD_ARG1(T_BDD,var);
    
    CHECKa(r, bddfalse);
    CHECKa(var, bddfalse);
    
    if (var < 2)  /* Empty set */
-      return r;
+      RETURN_BDD(r);
 
  again:
    if (setjmp(bddexception) == 0)
    {
       if (varset2vartable(var) < 0)
-	 return bddfalse;
+	 RETURN_BDD(bddfalse);
 
       INITREF;
       quantid = (var << 3) | CACHEID_EXIST; /* FIXME: range */
@@ -1585,7 +1806,7 @@ BDD bdd_exist(BDD r, BDD var)
    }
 
    checkresize();
-   return res;
+   RETURN_BDD(res);
 }
 
 
@@ -1603,18 +1824,22 @@ BDD bdd_forall(BDD r, BDD var)
 {
    BDD res;
    firstReorder = 1;
+
+   BUDDY_PROLOGUE;
+   ADD_ARG1(T_BDD,r);
+   ADD_ARG1(T_BDD,var);
    
    CHECKa(r, bddfalse);
    CHECKa(var, bddfalse);
    
    if (var < 2)  /* Empty set */
-      return r;
+      RETURN_BDD(r);
 
  again:
    if (setjmp(bddexception) == 0)
    {
       if (varset2vartable(var) < 0)
-	 return bddfalse;
+	 RETURN_BDD(bddfalse);
 
       INITREF;
       quantid = (var << 3) | CACHEID_FORALL;
@@ -1636,7 +1861,7 @@ BDD bdd_forall(BDD r, BDD var)
    }
 
    checkresize();
-   return res;
+   RETURN_BDD(res);
 }
 
 
@@ -1657,18 +1882,22 @@ BDD bdd_unique(BDD r, BDD var)
 {
    BDD res;
    firstReorder = 1;
+
+   BUDDY_PROLOGUE;
+   ADD_ARG1(T_BDD,r);
+   ADD_ARG1(T_BDD,var);
    
    CHECKa(r, bddfalse);
    CHECKa(var, bddfalse);
    
    if (var < 2)  /* Empty set */
-      return r;
+      RETURN_BDD(r);
 
  again:
    if (setjmp(bddexception) == 0)
    {
       if (varset2vartable(var) < 0)
-	 return bddfalse;
+	 RETURN_BDD(bddfalse);
 
       INITREF;
       quantid = (var << 3) | CACHEID_UNIQUE;
@@ -1690,7 +1919,7 @@ BDD bdd_unique(BDD r, BDD var)
    }
 
    checkresize();
-   return res;
+   RETURN_BDD(res);
 }
 
 
@@ -1717,10 +1946,11 @@ static int quant_rec(int r)
    PUSHREF( quant_rec(LOW(r)) );
    PUSHREF( quant_rec(HIGH(r)) );
    
-   if (INVARSET(LEVEL(r)))
-      res = apply_rec(READREF(2), READREF(1));
-   else
+   if (INVARSET(LEVEL(r))) {
+     res = apply_rec(READREF(2), READREF(1));
+   } else {
       res = bdd_makenode(LEVEL(r), READREF(2), READREF(1));
+   }
 
    POPREF(2);
    
@@ -1756,6 +1986,12 @@ BDD bdd_appex(BDD l, BDD r, int opr, BDD var)
 {
    BDD res;
    firstReorder = 1;
+
+   BUDDY_PROLOGUE;
+   ADD_ARG1(T_BDD,l);
+   ADD_ARG1(T_BDD,r);
+   ADD_ARG1(T_INT,opr);
+   ADD_ARG1(T_BDD,var);
    
    CHECKa(l, bddfalse);
    CHECKa(r, bddfalse);
@@ -1764,17 +2000,17 @@ BDD bdd_appex(BDD l, BDD r, int opr, BDD var)
    if (opr<0 || opr>bddop_invimp)
    {
       bdd_error(BDD_OP);
-      return bddfalse;
+      RETURN_BDD(bddfalse);
    }
    
    if (var < 2)  /* Empty set */
-      return bdd_apply(l,r,opr);
+      RETURN_BDD(bdd_apply(l,r,opr));
 
  again:
    if (setjmp(bddexception) == 0)
    {
       if (varset2vartable(var) < 0)
-	 return bddfalse;
+	 RETURN_BDD(bddfalse);
    
       INITREF;
       applyop = bddop_or;
@@ -1798,9 +2034,8 @@ BDD bdd_appex(BDD l, BDD r, int opr, BDD var)
    }
    
    checkresize();
-   return res;
+   RETURN_BDD(res);
 }
-
 
 /*
 NAME    {* bdd\_appall *}
@@ -1822,6 +2057,12 @@ BDD bdd_appall(BDD l, BDD r, int opr, BDD var)
 {
    BDD res;
    firstReorder = 1;
+
+   BUDDY_PROLOGUE;
+   ADD_ARG1(T_BDD,l);
+   ADD_ARG1(T_BDD,r);
+   ADD_ARG1(T_INT,opr);
+   ADD_ARG1(T_BDD,var);
    
    CHECKa(l, bddfalse);
    CHECKa(r, bddfalse);
@@ -1830,17 +2071,17 @@ BDD bdd_appall(BDD l, BDD r, int opr, BDD var)
    if (opr<0 || opr>bddop_invimp)
    {
       bdd_error(BDD_OP);
-      return bddfalse;
+      RETURN_BDD(bddfalse);
    }
    
    if (var < 2)  /* Empty set */
-      return bdd_apply(l,r,opr);
+      RETURN_BDD(bdd_apply(l,r,opr));
 
  again:
    if (setjmp(bddexception) == 0)
    {
       if (varset2vartable(var) < 0)
-	 return bddfalse;
+	 RETURN_BDD(bddfalse);
 
       INITREF;
       applyop = bddop_and;
@@ -1864,7 +2105,7 @@ BDD bdd_appall(BDD l, BDD r, int opr, BDD var)
    }
 
    checkresize();
-   return res;
+   RETURN_BDD(res);
 }
 
 
@@ -1888,6 +2129,12 @@ BDD bdd_appuni(BDD l, BDD r, int opr, BDD var)
 {
    BDD res;
    firstReorder = 1;
+
+   BUDDY_PROLOGUE;
+   ADD_ARG1(T_BDD,l);
+   ADD_ARG1(T_BDD,r);
+   ADD_ARG1(T_INT,opr);
+   ADD_ARG1(T_BDD,var);
    
    CHECKa(l, bddfalse);
    CHECKa(r, bddfalse);
@@ -1896,17 +2143,17 @@ BDD bdd_appuni(BDD l, BDD r, int opr, BDD var)
    if (opr<0 || opr>bddop_invimp)
    {
       bdd_error(BDD_OP);
-      return bddfalse;
+      RETURN_BDD(bddfalse);
    }
    
    if (var < 2)  /* Empty set */
-      return bdd_apply(l,r,opr);
+      RETURN_BDD(bdd_apply(l,r,opr));
 
  again:
    if (setjmp(bddexception) == 0)
    {
       if (varset2vartable(var) < 0)
-	 return bddfalse;
+	 RETURN_BDD(bddfalse);
 
       INITREF;
       applyop = bddop_xor;
@@ -1930,11 +2177,19 @@ BDD bdd_appuni(BDD l, BDD r, int opr, BDD var)
    }
 
    checkresize();
-   return res;
+   RETURN_BDD(res);
 }
 
-
 static int appquant_rec(int l, int r)
+{
+#if defined(SPECIALIZE_RELPROD)
+  if (applyop == bddop_or && appexop == bddop_and)
+    return relprod_rec(l, r);
+#endif
+  return appquant_rec0(l, r);
+}
+
+static int appquant_rec0(int l, int r)
 {
    BddCacheData *entry;
    int res;
@@ -2005,8 +2260,8 @@ static int appquant_rec(int l, int r)
 
       if (LEVEL(l) == LEVEL(r))
       {
-	 PUSHREF( appquant_rec(LOW(l), LOW(r)) );
-	 PUSHREF( appquant_rec(HIGH(l), HIGH(r)) );
+	 PUSHREF( appquant_rec0(LOW(l), LOW(r)) );
+	 PUSHREF( appquant_rec0(HIGH(l), HIGH(r)) );
 	 if (INVARSET(LEVEL(l)))
 	    res = apply_rec(READREF(2), READREF(1));
 	 else
@@ -2015,8 +2270,8 @@ static int appquant_rec(int l, int r)
       else
       if (LEVEL(l) < LEVEL(r))
       {
-	 PUSHREF( appquant_rec(LOW(l), r) );
-	 PUSHREF( appquant_rec(HIGH(l), r) );
+	 PUSHREF( appquant_rec0(LOW(l), r) );
+	 PUSHREF( appquant_rec0(HIGH(l), r) );
 	 if (INVARSET(LEVEL(l)))
 	    res = apply_rec(READREF(2), READREF(1));
 	 else
@@ -2024,8 +2279,8 @@ static int appquant_rec(int l, int r)
       }
       else
       {
-	 PUSHREF( appquant_rec(l, LOW(r)) );
-	 PUSHREF( appquant_rec(l, HIGH(r)) );
+	 PUSHREF( appquant_rec0(l, LOW(r)) );
+	 PUSHREF( appquant_rec0(l, HIGH(r)) );
 	 if (INVARSET(LEVEL(r)))
 	    res = apply_rec(READREF(2), READREF(1));
 	 else
@@ -2042,6 +2297,86 @@ static int appquant_rec(int l, int r)
 
    return res;
 }
+
+#if defined(SPECIALIZE_RELPROD)
+/* Special version of appex for common case of relprod. */
+static int relprod_rec(int l, int r)
+{
+   BddCacheData *entry;
+   int res;
+   int lev;
+
+   if (l == 0  ||  r == 0)
+     return 0;
+   if (l == r  ||  r == 1)
+     return quant_rec(l);
+   if (l == 1)
+     return quant_rec(r);
+   
+   if (LEVEL(l) > quantlast  &&  LEVEL(r) > quantlast)
+   {
+      applyop = bddop_and;
+#if defined(SPECIALIZE_AND)
+      res = and_rec(l,r);
+#else
+      res = apply_rec(l,r);
+#endif
+      applyop = bddop_or;
+   }
+   else
+   {
+      entry = BddCache_lookup(&appexcache, APPEXHASH(l,r,bddop_and));
+      if (entry->a == l  &&  entry->b == r  &&  entry->c == appexid)
+      {
+#ifdef CACHESTATS
+	 bddcachestats.opHit++;
+#endif
+	 return entry->r.res;
+      }
+#ifdef CACHESTATS
+      bddcachestats.opMiss++;
+#endif
+
+      if (LEVEL(l) == LEVEL(r))
+      {
+	 PUSHREF( relprod_rec(LOW(l), LOW(r)) );
+	 PUSHREF( relprod_rec(HIGH(l), HIGH(r)) );
+         lev = LEVEL(l);
+      }
+      else
+      if (LEVEL(l) < LEVEL(r))
+      {
+	 PUSHREF( relprod_rec(LOW(l), r) );
+	 PUSHREF( relprod_rec(HIGH(l), r) );
+         lev = LEVEL(l);
+      }
+      else
+      {
+	 PUSHREF( relprod_rec(l, LOW(r)) );
+	 PUSHREF( relprod_rec(l, HIGH(r)) );
+         lev = LEVEL(r);
+      }
+
+      if (INVARSET(lev))
+#if defined(SPECIALIZE_OR)
+        res = or_rec(READREF(2), READREF(1));
+#else
+        res = apply_rec(READREF(2), READREF(1));
+#endif
+      else
+        res = bdd_makenode(lev, READREF(2), READREF(1));
+
+      POPREF(2);
+      
+      entry->a = l;
+      entry->b = r;
+      entry->c = appexid;
+      entry->r.res = res;
+   }
+
+   return res;
+}
+#endif
 
 
 /*************************************************************************
@@ -2066,11 +2401,14 @@ BDD bdd_support(BDD r)
    int n;
    int res=1;
 
+   BUDDY_PROLOGUE;
+   ADD_ARG1(T_BDD,r);
+
    CHECKa(r, bddfalse);
 
    /* Variable sets are conjunctions, so the empty support is bddtrue.  */
    if (r < 2)
-      return bddtrue;
+      RETURN_BDD(bddtrue);
 
       /* On-demand allocation of support set */
    if (supportSize < bddvarnum)
@@ -2080,7 +2418,7 @@ BDD bdd_support(BDD r)
      if ((supportSet=(int*)malloc(bddvarnum*sizeof(int))) == NULL)
      {
        bdd_error(BDD_MEMORY);
-       return bddfalse;
+       RETURN_BDD(bddfalse);
      }
      memset(supportSet, 0, bddvarnum*sizeof(int));
      supportSize = bddvarnum;
@@ -2120,7 +2458,7 @@ BDD bdd_support(BDD r)
    
    bdd_enable_reorder();
 
-   return res;
+   RETURN_BDD(res);
 }
 
 
@@ -2164,9 +2502,12 @@ BDD bdd_satone(BDD r)
 {
    BDD res;
 
+   BUDDY_PROLOGUE;
+   ADD_ARG1(T_BDD,r);
+
    CHECKa(r, bddfalse);
    if (r < 2)
-      return r;
+      RETURN_BDD(r);
 
    bdd_disable_reorder();
    
@@ -2176,7 +2517,7 @@ BDD bdd_satone(BDD r)
    bdd_enable_reorder();
 
    checkresize();
-   return res;
+   RETURN_BDD(res);
 }
 
 
@@ -2217,13 +2558,18 @@ BDD bdd_satoneset(BDD r, BDD var, BDD pol)
 {
    BDD res;
 
+   BUDDY_PROLOGUE;
+   ADD_ARG1(T_BDD,r);
+   ADD_ARG1(T_BDD,var);
+   ADD_ARG1(T_BDD,pol);
+
    CHECKa(r, bddfalse);
    if (ISZERO(r))
-      return r;
+      RETURN_BDD(r);
    if (!ISCONST(pol))
    {
       bdd_error(BDD_ILLBDD);
-      return bddfalse;
+      RETURN_BDD(bddfalse);
    }
 
    bdd_disable_reorder();
@@ -2235,7 +2581,7 @@ BDD bdd_satoneset(BDD r, BDD var, BDD pol)
    bdd_enable_reorder();
 
    checkresize();
-   return res;
+   RETURN_BDD(res);
 }
 
 
@@ -2300,9 +2646,12 @@ BDD bdd_fullsatone(BDD r)
    BDD res;
    int v;
 
+   BUDDY_PROLOGUE;
+   ADD_ARG1(T_BDD,r);
+
    CHECKa(r, bddfalse);
    if (r == 0)
-      return 0;
+      RETURN_BDD(0);
 
    bdd_disable_reorder();
    
@@ -2317,7 +2666,7 @@ BDD bdd_fullsatone(BDD r)
    bdd_enable_reorder();
 
    checkresize();
-   return res;
+   RETURN_BDD(res);
 }
 
 
@@ -2390,6 +2739,8 @@ ALSO    {* bdd\_satone bdd\_satoneset, bdd\_fullsatone, bdd\_satcount, bdd\_satc
 void bdd_allsat(BDD r, bddallsathandler handler)
 {
    int v;
+
+   BUDDY_IGNOREFN_PROLOGUE;
   
    CHECKn(r);
 
@@ -2408,6 +2759,8 @@ void bdd_allsat(BDD r, bddallsathandler handler)
    allsat_rec(r);
 
    free(allsatProfile);
+
+   BUDDY_IGNOREFN_EPILOGUE;
 }
 
 
@@ -2473,13 +2826,15 @@ RETURN  {* The number of possible assignments. *}
 double bdd_satcount(BDD r)
 {
    double size=1;
+   BUDDY_PROLOGUE;
+   ADD_ARG1(T_BDD,r);
 
    CHECKa(r, 0.0);
 
    miscid = CACHEID_SATCOU;
    size = pow(2.0, (double)LEVEL(r));
    
-   return size * satcount_rec(r);
+   RETURN(size * satcount_rec(r));
 }
 
 
@@ -2488,15 +2843,19 @@ double bdd_satcountset(BDD r, BDD varset)
    double unused = bddvarnum;
    BDD n;
 
+   BUDDY_PROLOGUE;
+   ADD_ARG1(T_BDD,r);
+   ADD_ARG1(T_BDD,varset);
+
    if (ISCONST(varset)  ||  ISZERO(r)) /* empty set */
-      return 0.0;
+      RETURN(0.0);
 
    for (n=varset ; !ISCONST(n) ; n=HIGH(n))
       unused--;
 
    unused = bdd_satcount(r) / pow(2.0,unused);
 
-   return unused >= 1.0 ? unused : 1.0;
+   RETURN(unused >= 1.0 ? unused : 1.0);
 }
 
 
@@ -2555,6 +2914,9 @@ double bdd_satcountln(BDD r)
 {
    double size;
 
+   BUDDY_PROLOGUE;
+   ADD_ARG1(T_BDD,r);
+
    CHECKa(r, 0.0);
 
    miscid = CACHEID_SATCOULN;
@@ -2563,7 +2925,7 @@ double bdd_satcountln(BDD r)
    if (size >= 0.0)
       size += LEVEL(r);
 
-   return size;
+   RETURN(size);
 }
 
 
@@ -2572,15 +2934,19 @@ double bdd_satcountlnset(BDD r, BDD varset)
    double unused = bddvarnum;
    BDD n;
 
+   BUDDY_PROLOGUE;
+   ADD_ARG1(T_BDD,r);
+   ADD_ARG1(T_BDD,varset);
+
    if (ISCONST(varset)) /* empty set */
-      return 0.0;
+      RETURN(0.0);
 
    for (n=varset ; !ISCONST(n) ; n=HIGH(n))
       unused--;
 
    unused = bdd_satcountln(r) - unused;
 
-   return unused >= 0.0 ? unused : 0.0;
+   RETURN(unused >= 0.0 ? unused : 0.0);
 }
 
 
@@ -2642,12 +3008,15 @@ int bdd_nodecount(BDD r)
 {
    int num=0;
 
+   BUDDY_PROLOGUE;
+   ADD_ARG1(T_BDD,r);
+
    CHECK(r);
    
    bdd_markcount(r, &num);
    bdd_unmark(r);
 
-   return num;
+   RETURN(num);
 }
 
 
@@ -2668,13 +3037,17 @@ int bdd_anodecount(BDD *r, int num)
    int n;
    int cou=0;
 
+   BUDDY_PROLOGUE;
+   ADD_ARG2(T_BDD_PTR,r,num);
+   ADD_ARG1(T_INT,num);
+
    for (n=0 ; n<num ; n++)
       bdd_markcount(r[n], &cou);
    
    for (n=0 ; n<num ; n++)
       bdd_unmark(r[n]);
 
-   return cou;
+   RETURN(cou);
 }
 
 
@@ -2695,18 +3068,20 @@ RETURN  {* A pointer to an integer array with the profile or NULL if an
 */
 int *bdd_varprofile(BDD r)
 {
+   BUDDY_PROLOGUE;
+   ADD_ARG1(T_BDD,r);
    CHECKa(r, NULL);
    
    if ((varprofile=(int*)malloc(sizeof(int)*bddvarnum)) == NULL)
    {
       bdd_error(BDD_MEMORY);
-      return NULL;
+      RETURN(NULL);
    }
 
    memset(varprofile, 0, sizeof(int)*bddvarnum);
    varprofile_rec(r);
    bdd_unmark(r);
-   return varprofile;
+   RETURN(varprofile);
 }
 
 
@@ -2743,11 +3118,13 @@ ALSO    {* bdd\_nodecount, bdd\_satcount *}
 */
 double bdd_pathcount(BDD r)
 {
+   BUDDY_PROLOGUE;
+   ADD_ARG1(T_BDD,r);
    CHECKa(r, 0.0);
 
    miscid = CACHEID_PATHCOU;
 
-   return bdd_pathcount_rec(r);
+   RETURN(bdd_pathcount_rec(r));
 }
 
 

@@ -1523,17 +1523,21 @@ int bdd_swapvar(int v1, int v2)
 {
    int l1, l2;
 
+   BUDDY_PROLOGUE;
+   ADD_ARG1(T_INT,v1);
+   ADD_ARG1(T_INT,v2);
+
       /* Do not swap when variable-blocks are used */
    if (vartree != NULL)
-      return bdd_error(BDD_VARBLK);
+      RETURN(bdd_error(BDD_VARBLK));
 	 
       /* Don't bother swapping x with x */
    if (v1 == v2)
-      return 0;
+      RETURN(0);
 
       /* Make sure the variable exists */
    if (v1 < 0  ||  v1 >= bddvarnum  ||  v2 < 0  ||  v2 >= bddvarnum)
-      return bdd_error(BDD_VAR);
+      RETURN(bdd_error(BDD_VAR));
 
    l1 = bddvar2level[v1];
    l2 = bddvar2level[v2];
@@ -1560,7 +1564,7 @@ int bdd_swapvar(int v1, int v2)
 
    reorder_done();
    
-   return 0;
+   RETURN(0);
 }
 
 
@@ -1597,7 +1601,9 @@ ALSO    {* bdd\_enable\_reorder *}
 */
 void bdd_disable_reorder(void)
 {
+   BUDDY_PROLOGUE;
    reorderdisabled = 1;
+   RETURN();
 }
 
 
@@ -1611,7 +1617,9 @@ ALSO    {* bdd\_disable\_reorder *}
 */
 void bdd_enable_reorder(void)
 {
+   BUDDY_PROLOGUE;
    reorderdisabled = 0;
+   RETURN();
 }
 
 
@@ -1803,14 +1811,17 @@ void bdd_reorder(int method)
    BddTree *top;
    int savemethod = bddreordermethod;
    int savetimes = bddreordertimes;
+
+   BUDDY_PROLOGUE;
+   ADD_ARG1(T_INT,method);
    
    bddreordermethod = method;
    bddreordertimes = 1;
 
    if ((top=bddtree_new(-1)) == NULL)
-      return;
+      RETURN();
    if (reorder_init() < 0)
-      return;
+      RETURN();
 
    usednum_before = bddnodesize - bddfreenum;
    
@@ -1829,6 +1840,7 @@ void bdd_reorder(int method)
    reorder_done();
    bddreordermethod = savemethod;
    bddreordertimes = savetimes;
+   RETURN();
 }
 
 
@@ -1846,10 +1858,11 @@ DESCR   {* Returns the gain in percent of the previous number of used
 */
 int bdd_reorder_gain(void)
 {
+   BUDDY_PROLOGUE;
    if (usednum_before == 0)
-      return 0;
+      RETURN(0);
    
-   return (100*(usednum_before - usednum_after)) / usednum_before;
+   RETURN((100*(usednum_before - usednum_after)) / usednum_before);
 }
 
 
@@ -1947,18 +1960,23 @@ ALSO    {* bdd\_reorder *}
 int bdd_autoreorder(int method)
 {
    int tmp = bddreordermethod;
+   BUDDY_PROLOGUE;
+   ADD_ARG1(T_INT,method);
    bddreordermethod = method;
    bddreordertimes = -1;
-   return tmp;
+   RETURN(tmp);
 }
 
 
 int bdd_autoreorder_times(int method, int num)
 {
    int tmp = bddreordermethod;
+   BUDDY_PROLOGUE;
+   ADD_ARG1(T_INT,method);
+   ADD_ARG1(T_INT,num);
    bddreordermethod = method;
    bddreordertimes = num;
-   return tmp;
+   RETURN(tmp);
 }
 
 
@@ -1973,10 +1991,12 @@ ALSO    {* bdd\_reorder, bdd\_level2var *}
 */
 int bdd_var2level(int var)
 {
+   BUDDY_PROLOGUE;
+   ADD_ARG1(T_INT,var);
    if (var < 0  ||  var >= bddvarnum)
-      return bdd_error(BDD_VAR);
+      RETURN(bdd_error(BDD_VAR));
 
-   return bddvar2level[var];
+   RETURN(bddvar2level[var]);
 }
 
 
@@ -1991,10 +2011,12 @@ ALSO    {* bdd\_reorder, bdd\_var2level *}
 */
 int bdd_level2var(int level)
 {
+   BUDDY_PROLOGUE;
+   ADD_ARG1(T_INT,level);
    if (level < 0  ||  level >= bddvarnum)
-      return bdd_error(BDD_VAR);
+      RETURN(bdd_error(BDD_VAR));
 
-   return bddlevel2var[level];
+   RETURN(bddlevel2var[level]);
 }
 
 
@@ -2009,7 +2031,8 @@ ALSO    {* bdd\_reorder\_times, bdd\_getreorder\_method *}
 */
 int bdd_getreorder_times(void)
 {
-   return bddreordertimes;
+   BUDDY_PROLOGUE;
+   RETURN(bddreordertimes);
 }
 
 
@@ -2024,7 +2047,8 @@ ALSO    {* bdd\_reorder, bdd\_getreorder\_times *}
 */
 int bdd_getreorder_method(void)
 {
-   return bddreordermethod;
+   BUDDY_PROLOGUE;
+   RETURN(bddreordermethod);
 }
 
 
@@ -2044,8 +2068,10 @@ ALSO    {* bdd\_reorder *}
 int bdd_reorder_verbose(int v)
 {
    int tmp = verbose;
+   BUDDY_PROLOGUE;
+   ADD_ARG1(T_INT,v);
    verbose = v;
-   return tmp;
+   RETURN(tmp);
 }
 
 
@@ -2077,9 +2103,14 @@ ALSO    {* bdd\_reorder *}
 bddsizehandler bdd_reorder_probe(bddsizehandler handler)
 {
    bddsizehandler old = reorder_nodenum;
+   BUDDY_IGNOREFN_PROLOGUE;
    if (handler == NULL)
+   {
+      BUDDY_IGNOREFN_EPILOGUE;
       return reorder_nodenum;
+   }
    reorder_nodenum = handler;
+   BUDDY_IGNOREFN_EPILOGUE;
    return old;
 }
 
@@ -2095,9 +2126,11 @@ ALSO    {* bdd\_addvarblock *}
 */
 void bdd_clrvarblocks(void)
 {
+   BUDDY_PROLOGUE;
    bddtree_del(vartree);
    vartree = NULL;
    blockid = 0;
+   RETURN();
 }
 
 
@@ -2141,11 +2174,15 @@ int bdd_addvarblock(BDD b, int fixed)
    BddTree *t;
    int n, *v, size;
    int first, last;
+
+   BUDDY_PROLOGUE;
+   ADD_ARG1(T_BDD,b);
+   ADD_ARG1(T_INT,fixed);
    
    if ((n=bdd_scanset(b, &v, &size)) < 0)
-      return n;
+      RETURN(n);
    if (size < 1)
-      return bdd_error(BDD_VARBLK);
+      RETURN(bdd_error(BDD_VARBLK));
 
    first = last = v[0];
    
@@ -2158,25 +2195,29 @@ int bdd_addvarblock(BDD b, int fixed)
    }
 
    if ((t=bddtree_addrange(vartree, first,last, fixed,blockid)) == NULL)
-      return bdd_error(BDD_VARBLK);
+      RETURN(bdd_error(BDD_VARBLK));
    
    vartree = t;
-   return blockid++;
+   RETURN(blockid++);
 }
 
 
 int bdd_intaddvarblock(int first, int last, int fixed)
 {
    BddTree *t;
+   BUDDY_PROLOGUE;
+   ADD_ARG1(T_INT,first);
+   ADD_ARG1(T_INT,last);
+   ADD_ARG1(T_INT,fixed);
 
    if (first < 0  ||  first >= bddvarnum  ||  last < 0  ||  last >= bddvarnum)
-      return bdd_error(BDD_VAR);
+      RETURN(bdd_error(BDD_VAR));
    
    if ((t=bddtree_addrange(vartree, first,last, fixed,blockid)) == NULL)
-      return bdd_error(BDD_VARBLK);
+      RETURN(bdd_error(BDD_VARBLK));
 
    vartree = t;
-   return blockid++;
+   RETURN(blockid++);
 }
 
 
@@ -2196,8 +2237,11 @@ void bdd_varblockall(void)
 {
    int n;
 
+   BUDDY_PROLOGUE;
+
    for (n=0 ; n<bddvarnum ; n++)
       bdd_intaddvarblock(n,n,1);
+   RETURN();
 }
 
 
@@ -2229,7 +2273,9 @@ ALSO    {* bdd\_reorder, bdd\_addvarblock *}
 */
 void bdd_printorder(void)
 {
+   BUDDY_PROLOGUE;
    bdd_fprintorder(stdout);
+   RETURN();
 }
 
 
@@ -2251,11 +2297,14 @@ void bdd_setvarorder(int *neworder)
 {
    int level;
 
+   BUDDY_PROLOGUE;
+   ADD_ARG2(T_INT_PTR,neworder,bddvarnum);
+
       /* Do not set order when variable-blocks are used */
    if (vartree != NULL)
    {
       bdd_error(BDD_VARBLK);
-      return;
+      RETURN();
    }
    
    reorder_init();
@@ -2269,6 +2318,7 @@ void bdd_setvarorder(int *neworder)
    }
    
    reorder_done();
+   RETURN();
 }
 
 

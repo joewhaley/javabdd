@@ -181,6 +181,12 @@ extern bddCacheStat bddcachestats;
 #define NEW(t,n) ( (t*)malloc(sizeof(t)*(n)) )
 
 
+#ifdef _MSC_VER
+#define srand48(x) srand(x)
+#define lrand48(x) rand(x)
+#endif
+
+
 /*=== KERNEL PROTOTYPES ================================================*/
 
 #ifdef CPLUSPLUS

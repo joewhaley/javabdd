@@ -80,7 +80,6 @@ typedef struct s_bddPair
    struct s_bddPair *next;
 } bddPair;
 
-
 /*=== Status information ===============================================*/
 
 /*
@@ -410,6 +409,8 @@ extern const BDD bddtrue;
 #define BVEC_DIVZERO (-22) /* Division by zero */
 
 #define BDD_ERRNUM 24
+
+#include "trace.h"
 
 /*************************************************************************
    If this file is included from a C++ compiler then the following
@@ -821,6 +822,8 @@ extern bdd_ioformat bddtable;
 extern bdd_ioformat bdddot;
 extern bdd_ioformat bddall;
 extern bdd_ioformat fddset;
+
+extern int trace_enable;
 
 typedef void (*bddstrmhandler)(std::ostream &, int);
 

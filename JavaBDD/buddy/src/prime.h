@@ -41,6 +41,10 @@
 unsigned int bdd_prime_gte(unsigned int src);
 unsigned int bdd_prime_lte(unsigned int src);
 
+#ifdef _MSC_VER
+#define srand48(x) srand(x)
+#define lrand48(x) rand(x)
+#endif
 
 #endif /* _PRIME_H */
 
