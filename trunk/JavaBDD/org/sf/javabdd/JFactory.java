@@ -1160,7 +1160,11 @@ public class JFactory extends BDDFactory {
 
                 if (firstReorder == 0)
                     bdd_disable_reorder();
-                res = apply_rec(l, r);
+                switch (op) {
+                    case bddop_and: res = and_rec(l, r); break;
+                    case bddop_or: res = or_rec(l, r); break;
+                    default: res = apply_rec(l, r); break;
+                }
                 if (firstReorder == 0)
                     bdd_enable_reorder();
             } catch (BDDException x) {
@@ -1182,27 +1186,9 @@ public class JFactory extends BDDFactory {
         BddCacheDataI entry;
         int res;
 
+        if (VERIFY_ASSERTIONS) _assert(applyop != bddop_and && applyop != bddop_or);
+        
         switch (applyop) {
-            case bddop_and :
-                if (l == r)
-                    return l;
-                if (ISZERO(l) || ISZERO(r))
-                    return 0;
-                if (ISONE(l))
-                    return r;
-                if (ISONE(r))
-                    return l;
-                break;
-            case bddop_or :
-                if (l == r)
-                    return l;
-                if (ISONE(l) || ISONE(r))
-                    return 1;
-                if (ISZERO(l))
-                    return r;
-                if (ISZERO(r))
-                    return l;
-                break;
             case bddop_xor :
                 if (l == r)
                     return 0;
@@ -1267,6 +1253,98 @@ public class JFactory extends BDDFactory {
         return res;
     }
 
+    int and_rec(int l, int r) {
+        BddCacheDataI entry;
+        int res;
+
+        if (l == r)
+            return l;
+        if (ISZERO(l) || ISZERO(r))
+            return 0;
+        if (ISONE(l))
+            return r;
+        if (ISONE(r))
+            return l;
+        entry = BddCache_lookupI(applycache, APPLYHASH(l, r, bddop_and));
+
+        if (entry.a == l && entry.b == r && entry.c == bddop_and) {
+            if (CACHESTATS)
+                bddcachestats.opHit++;
+            return entry.res;
+        }
+        if (CACHESTATS)
+            bddcachestats.opMiss++;
+
+        if (LEVEL(l) == LEVEL(r)) {
+            PUSHREF(and_rec(LOW(l), LOW(r)));
+            PUSHREF(and_rec(HIGH(l), HIGH(r)));
+            res = bdd_makenode(LEVEL(l), READREF(2), READREF(1));
+        } else if (LEVEL(l) < LEVEL(r)) {
+            PUSHREF(and_rec(LOW(l), r));
+            PUSHREF(and_rec(HIGH(l), r));
+            res = bdd_makenode(LEVEL(l), READREF(2), READREF(1));
+        } else {
+            PUSHREF(and_rec(l, LOW(r)));
+            PUSHREF(and_rec(l, HIGH(r)));
+            res = bdd_makenode(LEVEL(r), READREF(2), READREF(1));
+        }
+
+        POPREF(2);
+
+        entry.a = l;
+        entry.b = r;
+        entry.c = bddop_and;
+        entry.res = res;
+
+        return res;
+    }
+    
+    int or_rec(int l, int r) {
+        BddCacheDataI entry;
+        int res;
+
+        if (l == r)
+            return l;
+        if (ISONE(l) || ISONE(r))
+            return 1;
+        if (ISZERO(l))
+            return r;
+        if (ISZERO(r))
+            return l;
+        entry = BddCache_lookupI(applycache, APPLYHASH(l, r, bddop_or));
+
+        if (entry.a == l && entry.b == r && entry.c == bddop_or) {
+            if (CACHESTATS)
+                bddcachestats.opHit++;
+            return entry.res;
+        }
+        if (CACHESTATS)
+            bddcachestats.opMiss++;
+
+        if (LEVEL(l) == LEVEL(r)) {
+            PUSHREF(or_rec(LOW(l), LOW(r)));
+            PUSHREF(or_rec(HIGH(l), HIGH(r)));
+            res = bdd_makenode(LEVEL(l), READREF(2), READREF(1));
+        } else if (LEVEL(l) < LEVEL(r)) {
+            PUSHREF(or_rec(LOW(l), r));
+            PUSHREF(or_rec(HIGH(l), r));
+            res = bdd_makenode(LEVEL(l), READREF(2), READREF(1));
+        } else {
+            PUSHREF(or_rec(l, LOW(r)));
+            PUSHREF(or_rec(l, HIGH(r)));
+            res = bdd_makenode(LEVEL(r), READREF(2), READREF(1));
+        }
+
+        POPREF(2);
+
+        entry.a = l;
+        entry.b = r;
+        entry.c = bddop_or;
+        entry.res = res;
+
+        return res;
+    }
+
     int relprod_rec(int l, int r) {
         BddCacheDataI entry;
         int res;
@@ -1283,12 +1361,11 @@ public class JFactory extends BDDFactory {
         int LEVEL_l = LEVEL(l);
         int LEVEL_r = LEVEL(r);
         if (LEVEL_l > quantlast && LEVEL_r > quantlast) {
-            int oldop = applyop;
-            applyop = appexop;
-            res = apply_rec(l, r);
-            applyop = oldop;
+            applyop = bddop_and;
+            res = and_rec(l, r);
+            applyop = bddop_or;
         } else {
-            entry = BddCache_lookupI(appexcache, APPEXHASH(l, r, appexop));
+            entry = BddCache_lookupI(appexcache, APPEXHASH(l, r, bddop_and));
             if (entry.a == l && entry.b == r && entry.c == appexid) {
                 if (CACHESTATS)
                     bddcachestats.opHit++;
@@ -1301,21 +1378,21 @@ public class JFactory extends BDDFactory {
                 PUSHREF(relprod_rec(LOW(l), LOW(r)));
                 PUSHREF(relprod_rec(HIGH(l), HIGH(r)));
                 if (INVARSET(LEVEL_l))
-                    res = apply_rec(READREF(2), READREF(1));
+                    res = or_rec(READREF(2), READREF(1));
                 else
                     res = bdd_makenode(LEVEL_l, READREF(2), READREF(1));
             } else if (LEVEL_l < LEVEL_r) {
                 PUSHREF(relprod_rec(LOW(l), r));
                 PUSHREF(relprod_rec(HIGH(l), r));
                 if (INVARSET(LEVEL_l))
-                    res = apply_rec(READREF(2), READREF(1));
+                    res = or_rec(READREF(2), READREF(1));
                 else
                     res = bdd_makenode(LEVEL_l, READREF(2), READREF(1));
             } else {
                 PUSHREF(relprod_rec(l, LOW(r)));
                 PUSHREF(relprod_rec(l, HIGH(r)));
                 if (INVARSET(LEVEL_r))
-                    res = apply_rec(READREF(2), READREF(1));
+                    res = or_rec(READREF(2), READREF(1));
                 else
                     res = bdd_makenode(LEVEL_r, READREF(2), READREF(1));
             }
@@ -1364,7 +1441,7 @@ public class JFactory extends BDDFactory {
 
                 if (firstReorder == 0)
                     bdd_disable_reorder();
-                res = opr == -1 ? relprod_rec(l, r) : appquant_rec(l, r);
+                res = opr == bddop_and ? relprod_rec(l, r) : appquant_rec(l, r);
                 if (firstReorder == 0)
                     bdd_enable_reorder();
             } catch (BDDException x) {
@@ -1438,17 +1515,9 @@ public class JFactory extends BDDFactory {
         BddCacheDataI entry;
         int res;
 
+        if (VERIFY_ASSERTIONS) _assert(appexop != bddop_and);
+        
         switch (appexop) {
-            case bddop_and :
-                if (l == 0 || r == 0)
-                    return 0;
-                if (l == r)
-                    return quant_rec(l);
-                if (l == 1)
-                    return quant_rec(r);
-                if (r == 1)
-                    return quant_rec(l);
-                break;
             case bddop_or :
                 if (l == 1 || r == 1)
                     return 1;
@@ -1482,7 +1551,11 @@ public class JFactory extends BDDFactory {
         else if (LEVEL(l) > quantlast && LEVEL(r) > quantlast) {
             int oldop = applyop;
             applyop = appexop;
-            res = apply_rec(l, r);
+            switch (applyop) {
+            case bddop_and: res = and_rec(l, r); break;
+            case bddop_or: res = or_rec(l, r); break;
+            default: res = apply_rec(l, r); break;
+            }
             applyop = oldop;
         } else {
             entry = BddCache_lookupI(appexcache, APPEXHASH(l, r, appexop));
@@ -1494,27 +1567,29 @@ public class JFactory extends BDDFactory {
             if (CACHESTATS)
                 bddcachestats.opMiss++;
 
+            int lev;
             if (LEVEL(l) == LEVEL(r)) {
                 PUSHREF(appquant_rec(LOW(l), LOW(r)));
                 PUSHREF(appquant_rec(HIGH(l), HIGH(r)));
-                if (INVARSET(LEVEL(l)))
-                    res = apply_rec(READREF(2), READREF(1));
-                else
-                    res = bdd_makenode(LEVEL(l), READREF(2), READREF(1));
+                lev = LEVEL(l);
             } else if (LEVEL(l) < LEVEL(r)) {
                 PUSHREF(appquant_rec(LOW(l), r));
                 PUSHREF(appquant_rec(HIGH(l), r));
-                if (INVARSET(LEVEL(l)))
-                    res = apply_rec(READREF(2), READREF(1));
-                else
-                    res = bdd_makenode(LEVEL(l), READREF(2), READREF(1));
+                lev = LEVEL(l);
             } else {
                 PUSHREF(appquant_rec(l, LOW(r)));
                 PUSHREF(appquant_rec(l, HIGH(r)));
-                if (INVARSET(LEVEL(r)))
-                    res = apply_rec(READREF(2), READREF(1));
-                else
-                    res = bdd_makenode(LEVEL(r), READREF(2), READREF(1));
+                lev = LEVEL(r);
+            }
+            if (INVARSET(lev)) {
+                int r2 = READREF(2), r1 = READREF(1);
+                switch (applyop) {
+                case bddop_and: res = and_rec(r2, r1); break;
+                case bddop_or: res = or_rec(r2, r1); break;
+                default: res = apply_rec(r2, r1); break;
+                }
+            } else {
+                res = bdd_makenode(lev, READREF(2), READREF(1));
             }
 
             POPREF(2);
@@ -1547,10 +1622,16 @@ public class JFactory extends BDDFactory {
         PUSHREF(quant_rec(LOW(r)));
         PUSHREF(quant_rec(HIGH(r)));
 
-        if (INVARSET(LEVEL(r)))
-            res = apply_rec(READREF(2), READREF(1));
-        else
+        if (INVARSET(LEVEL(r))) {
+            int r2 = READREF(2), r1 = READREF(1);
+            switch (applyop) {
+            case bddop_and: res = and_rec(r2, r1); break;
+            case bddop_or: res = or_rec(r2, r1); break;
+            default: res = apply_rec(r2, r1); break;
+            }
+        } else {
             res = bdd_makenode(LEVEL(r), READREF(2), READREF(1));
+        }
 
         POPREF(2);
 
@@ -2052,7 +2133,7 @@ public class JFactory extends BDDFactory {
             res = bdd_makenode(LEVEL(f), READREF(2), READREF(1));
             POPREF(2);
         } else /* LEVEL(d) < LEVEL(f) */ {
-            PUSHREF(apply_rec(LOW(d), HIGH(d))); /* Exist quant */
+            PUSHREF(or_rec(LOW(d), HIGH(d))); /* Exist quant */
             res = simplify_rec(f, READREF(1));
             POPREF(1);
         }
