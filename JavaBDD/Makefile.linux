@@ -14,6 +14,7 @@ BUDDY_SRC = buddy22/src
 JAVAC=$(JAVA_HOME)/bin/javac
 JAVA=$(JAVA_HOME)/bin/java
 JAVAH=$(JAVA_HOME)/bin/javah
+JAR=$(JAVA_HOME)/bin/jar
 
 INCLUDES=-I$(JAVA_HOME)/include -I$(JAVA_HOME)/include/linux -I$(BUDDY_SRC)
 
@@ -60,8 +61,13 @@ $(JNI_INCLUDES): $(JNI_CLASSFILE)
 $(JNI_CLASSFILE): $(JAVA_SOURCES)
 	$(JAVAC) $(JAVA_SOURCES)
 
-examples: $(EXAMPLE_SOURCES)
+$(EXAMPLE_CLASSFILES): $(EXAMPLE_SOURCES)
 	$(JAVAC) $(EXAMPLE_SOURCES)
+
+examples: $(EXAMPLE_CLASSFILES)
+
+jar: $(JNI_CLASSFILE) $(EXAMPLE_CLASSFILES)
+	$(JAR) cvfm javabdd_0.1.jar javabddManifest $(JAVA_CLASSFILES) $(EXAMPLE_CLASSFILES)
 
 # For 1.2.2 the recommended way is:
 # $(JAVA) -Djava.library.path=. NQueens 8
