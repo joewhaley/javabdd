@@ -277,36 +277,27 @@ public class BuDDyFactory extends BDDFactory {
     /**
      * @see org.sf.javabdd.BDDFactory#extDomain(int[])
      */
-    public BDDDomain[] extDomain(int[] domainSizes) {
-        return null;
-    }
+    public native BDDDomain[] extDomain(int[] domainSizes);
     
     /**
      * @see org.sf.javabdd.BDDFactory#overlapDomain(org.sf.javabdd.BDDDomain, org.sf.javabdd.BDDDomain)
      */
-    public BDDDomain overlapDomain(BDDDomain d1, BDDDomain d2) {
-        return null;
-    }
+    public native BDDDomain overlapDomain(BDDDomain d1, BDDDomain d2);
     
     /**
      * @see org.sf.javabdd.BDDFactory#makeSet(org.sf.javabdd.BDDDomain[])
      */
-    public BDD makeSet(BDDDomain[] v) {
-        return null;
-    }
+    public native BDD makeSet(BDDDomain[] v);
     
     /**
      * @see org.sf.javabdd.BDDFactory#clearAllDomains()
      */
-    public void clearAllDomains() {
-    }
+    public native void clearAllDomains();
     
     /**
      * @see org.sf.javabdd.BDDFactory#numberOfDomains()
      */
-    public int numberOfDomains() {
-        return 0;
-    }
+    public native int numberOfDomains();
 
     /**
      * An implementation of a BDD class, used by the BuDDy interface.
