@@ -90,7 +90,7 @@ JAVA_SOURCES = org/sf/javabdd/BDD.java \
 	org/sf/javabdd/CALFactory.java \
 	org/sf/javabdd/CUDDFactory.java \
 	org/sf/javabdd/FindBestOrder.java \
-	org/sf/javabdd/JavaFactory.java \
+	org/sf/javabdd/JFactory.java \
 	org/sf/javabdd/JDDFactory.java \
 	org/sf/javabdd/TestBDDFactory.java \
 	org/sf/javabdd/TypedBDDFactory.java
