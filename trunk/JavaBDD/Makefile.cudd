@@ -47,7 +47,12 @@ else
   LINK = $(CC)
   LINKFLAGS = -shared
   DLL_OUTPUT_OPTION = -o$(space)
-  INCLUDES = -I. -I$(JDK_ROOT)/include -I$(CUDD_SRC)/cudd -I$(CUDD_SRC)/util \
+  INCLUDES = -I. -I$(JDK_ROOT)/include \
+             -I$(CUDD_SRC)/cudd \
+             -I$(CUDD_SRC)/epd \
+             -I$(CUDD_SRC)/mtr \
+             -I$(CUDD_SRC)/st \
+             -I$(CUDD_SRC)/util \
              -I$(JDK_ROOT)/include/linux
   DLL_NAME = libcudd.so
   ifeq (${CC},icc)    # Intel Linux compiler
@@ -134,7 +139,7 @@ $(JAR_NAME): $(JNI_CLASSFILE) $(EXAMPLE_CLASSFILES)
 	$(JAR) cvfm $(JAR_NAME) javabddManifest $(JAVA_CLASSFILES) $(EXAMPLE_CLASSFILES)
 
 test:	$(DLL_NAME) $(EXAMPLE_CLASSFILES)
-	$(JAVA) -Djava.library.path=. NQueens 8
+	$(JAVA) -Dbdd=cudd -Djava.library.path=. NQueens 8
 
 clean:
 	$(RM) -f $(JAVA_CLASSFILES) $(JNI_INCLUDE) $(DLL_OBJS) $(DLL_NAME) $(EXAMPLE_CLASSFILES) $(JAR_NAME)

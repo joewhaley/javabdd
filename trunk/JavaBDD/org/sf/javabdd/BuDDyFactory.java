@@ -313,7 +313,7 @@ public class BuDDyFactory extends BDDFactory {
     public native int numberOfDomains();
 
     /**
-     * @see org.sf.javabdd.BDDFactory#getDomain()
+     * @see org.sf.javabdd.BDDFactory#getDomain(int)
      */
     public BDDDomain getDomain(int i) {
         if (i < 0 || i >= numberOfDomains())
@@ -719,7 +719,7 @@ public class BuDDyFactory extends BDDFactory {
         public native int[] vars();
         
         /**
-         * @see java.lang.Object#equals()
+         * @see java.lang.Object#equals(java.lang.Object)
          */
         public boolean equals(Object o) {
             try {
