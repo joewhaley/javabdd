@@ -21,10 +21,10 @@ import java.util.Random;
 import java.util.StringTokenizer;
 
 /**
- * This is a 100% Java implementation of the BDD factory.  It is based on
+ * <p>This is a 100% Java implementation of the BDD factory.  It is based on
  * the C source code for BuDDy.  As such, the implementation is very ugly,
  * but it works.  Like BuDDy, it uses reference counting scheme for garbage
- * collection.
+ * collection.</p>
  * 
  * @author John Whaley
  * @version $Id$
@@ -50,7 +50,7 @@ public class JavaFactory extends BDDFactory {
 
         bdd(int index) {
             this._index = index;
-            addRef();
+            bdd_addref(_index);
         }
 
         /* (non-Javadoc)
@@ -194,7 +194,7 @@ public class JavaFactory extends BDDFactory {
         /* (non-Javadoc)
          * @see org.sf.javabdd.BDD#restrictWith(org.sf.javabdd.BDD)
          */
-        public void restrictWith(BDD that) {
+        public BDD restrictWith(BDD that) {
             int x = _index;
             int y = ((bdd) that)._index;
             int a = bdd_restrict(x, y);
@@ -204,6 +204,7 @@ public class JavaFactory extends BDDFactory {
                 that.free();
             bdd_addref(a);
             this._index = a;
+            return this;
         }
         
         /* (non-Javadoc)
@@ -236,7 +237,7 @@ public class JavaFactory extends BDDFactory {
         /* (non-Javadoc)
          * @see org.sf.javabdd.BDD#applyWith(org.sf.javabdd.BDD, org.sf.javabdd.BDDFactory.BDDOp)
          */
-        public void applyWith(BDD that, BDDOp opr) {
+        public BDD applyWith(BDD that, BDDOp opr) {
             int x = _index;
             int y = ((bdd) that)._index;
             int z = opr.id;
@@ -247,6 +248,7 @@ public class JavaFactory extends BDDFactory {
                 that.free();
             bdd_addref(a);
             this._index = a;
+            return this;
         }
 
         /* (non-Javadoc)
@@ -301,7 +303,7 @@ public class JavaFactory extends BDDFactory {
         /* (non-Javadoc)
          * @see org.sf.javabdd.BDD#satOneSet(org.sf.javabdd.BDD, org.sf.javabdd.BDD)
          */
-        public BDD satOneSet(BDD var, BDD pol) {
+        public BDD satOne(BDD var, BDD pol) {
             int x = _index;
             int y = ((bdd) var)._index;
             int z = ((bdd) pol)._index;
@@ -329,13 +331,14 @@ public class JavaFactory extends BDDFactory {
         /* (non-Javadoc)
          * @see org.sf.javabdd.BDD#replaceWith(org.sf.javabdd.BDDPairing)
          */
-        public void replaceWith(BDDPairing pair) {
+        public BDD replaceWith(BDDPairing pair) {
             int x = _index;
             int y = bdd_replace(x, ((bddPair) pair));
             //System.out.println("replaceWith("+System.identityHashCode(this)+") "+x+" -> "+y);
             bdd_delref(x);
             bdd_addref(y);
             _index = y;
+            return this;
         }
 
         /* (non-Javadoc)
@@ -381,22 +384,6 @@ public class JavaFactory extends BDDFactory {
             return _index;
         }
 
-        /* (non-Javadoc)
-         * @see org.sf.javabdd.BDD#addRef()
-         */
-        protected void addRef() {
-            //System.out.println(System.identityHashCode(this)+" addRef("+_index+") ");
-            bdd_addref(_index);
-        }
-
-        /* (non-Javadoc)
-         * @see org.sf.javabdd.BDD#delRef()
-         */
-        protected void delRef() {
-            //System.out.println(System.identityHashCode(this)+" delRef("+_index+") ");
-            bdd_delref(_index);
-        }
-        
         static final boolean USE_FINALIZER = false;
         
         /**
@@ -418,7 +405,7 @@ public class JavaFactory extends BDDFactory {
          * @see org.sf.javabdd.BDD#free()
          */
         public void free() {
-            delRef();
+            bdd_delref(_index);
             _index = INVALID_BDD;
         }
         

@@ -474,7 +474,7 @@ public class CUDDFactory extends BDDFactory {
         /* (non-Javadoc)
          * @see org.sf.javabdd.BDD#restrictWith(org.sf.javabdd.BDD)
          */
-        public native void restrictWith(BDD var);
+        public native BDD restrictWith(BDD var);
         
         /* (non-Javadoc)
          * @see org.sf.javabdd.BDD#simplify(org.sf.javabdd.BDD)
@@ -497,7 +497,7 @@ public class CUDDFactory extends BDDFactory {
         /* (non-Javadoc)
          * @see org.sf.javabdd.BDD#applyWith(org.sf.javabdd.BDD, org.sf.javabdd.BDDFactory.BDDOp)
          */
-        public native void applyWith(BDD that, BDDOp opr);
+        public native BDD applyWith(BDD that, BDDOp opr);
 
         /* (non-Javadoc)
          * @see org.sf.javabdd.BDD#applyAll(org.sf.javabdd.BDD, org.sf.javabdd.BDDFactory.BDDOp, org.sf.javabdd.BDD)
@@ -537,9 +537,9 @@ public class CUDDFactory extends BDDFactory {
         }
 
         /* (non-Javadoc)
-         * @see org.sf.javabdd.BDD#satOneSet(org.sf.javabdd.BDD, org.sf.javabdd.BDD)
+         * @see org.sf.javabdd.BDD#satOne(org.sf.javabdd.BDD, org.sf.javabdd.BDD)
          */
-        public BDD satOneSet(BDD var, BDD pol) {
+        public BDD satOne(BDD var, BDD pol) {
             // TODO Auto-generated method stub
             throw new UnsupportedOperationException();
         }
@@ -560,7 +560,7 @@ public class CUDDFactory extends BDDFactory {
         /* (non-Javadoc)
          * @see org.sf.javabdd.BDD#replaceWith(org.sf.javabdd.BDDPairing)
          */
-        public void replaceWith(BDDPairing pair) {
+        public BDD replaceWith(BDDPairing pair) {
             // TODO Auto-generated method stub
             throw new UnsupportedOperationException();
         }
