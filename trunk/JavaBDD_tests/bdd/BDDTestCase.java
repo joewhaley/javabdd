@@ -7,7 +7,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.lang.reflect.Method;
 import junit.framework.TestCase;
-import org.sf.javabdd.BDDFactory;
+import net.sf.javabdd.BDDFactory;
 
 /**
  * BDDTestCase
@@ -19,11 +19,11 @@ public abstract class BDDTestCase extends TestCase implements Iterator {
     
     static volatile Collection factories;
     static final String[] factoryNames = {
-        "org.sf.javabdd.BuDDyFactory",
-        "org.sf.javabdd.CUDDFactory",
-        "org.sf.javabdd.CALFactory",
-        "org.sf.javabdd.JFactory",
-        //"org.sf.javabdd.JDDFactory",
+        "net.sf.javabdd.BuDDyFactory",
+        "net.sf.javabdd.CUDDFactory",
+        "net.sf.javabdd.CALFactory",
+        "net.sf.javabdd.JFactory",
+        //"net.sf.javabdd.JDDFactory",
     };
     
     static void initFactories(int nodenum, int cachesize) {
