@@ -1,5 +1,5 @@
-// JFactory.java, created Aug 1, 2003 7:06:47 PM by joewhaley
-// Copyright (C) 2003 John Whaley <jwhaley@alum.mit.edu>
+// MicroFactory.java, created Jan 29, 2005 8:24:17 PM by joewhaley
+// Copyright (C) 2005 John Whaley <jwhaley@alum.mit.edu>
 // Licensed under the terms of the GNU LGPL; see COPYING for details.
 package net.sf.javabdd;
 
@@ -17,41 +17,217 @@ import java.io.PrintStream;
 import java.math.BigInteger;
 
 /**
- * <p>This is a 100% Java implementation of the BDD factory.  It is based on
- * the C source code for BuDDy.  As such, the implementation is very ugly,
- * but it works.  Like BuDDy, it uses a reference counting scheme for garbage
- * collection.</p>
+ * MicroFactory
  * 
- * @author John Whaley
+ * @author jwhaley
  * @version $Id$
  */
-public class JFactory extends BDDFactory {
+public class MicroFactory extends BDDFactory {
 
+    // 16 bytes per BDD node
+    //
+    // Max BDD nodes: 2^27 = 134217728
+    // Max variables: 2^10 = 1024
+    // Max refcount: 2^9 = 512
+    // 
+    // 27(high)+27(low)+9(refcount)+1(mark)+27(hash)+27(next)+10(var) = 128 bits
+    // 
+    
     static final boolean VERIFY_ASSERTIONS = false;
-    public static final String REVISION = "$Revision$";
+    static final boolean USE_FINALIZER = false;
+    static final boolean CACHESTATS = false;
+    public static boolean FLUSH_CACHE_ON_GC = false;
     
-    public String getVersion() {
-        return "JFactory "+REVISION.substring(11, REVISION.length()-2);
-    }
-    
-    private JFactory() { }
+    private MicroFactory() { }
     
     /* (non-Javadoc)
      * @see net.sf.javabdd.BDDFactory#init(int, int)
      */
     public static BDDFactory init(int nodenum, int cachesize) {
-        BDDFactory f = new JFactory();
+        BDDFactory f = new MicroFactory();
         f.initialize(nodenum, cachesize);
         return f;
     }
 
-    static final boolean USE_FINALIZER = false;
-    public static boolean FLUSH_CACHE_ON_GC = false;
+    private int[] table;
+    
+    static final int __node_size = 4;
+    static final int offset__hash = 0;
+    static final int offset__next = 1;
+    static final int offset__low = 2;
+    static final int offset__high = 3;
+    static final int offset__lref = 0;
+    static final int offset__href = 1;
+    static final int offset__llev = 2;
+    static final int offset__hlev = 3;
+    static final int offset__mark = 0;
+    
+    static final int NODE_MASK  = 0x07FFFFFF;
+    static final int LEV_LMASK  = 0xF8000000;
+    static final int LEV_HMASK  = 0xF8000000;
+    
+    static final int REF_LMASK  = 0xF8000000;
+    static final int REF_HMASK  = 0xF0000000;
+    static final int REF_LINC   = 0x08000000;
+    static final int REF_HINC   = 0x10000000;
+    static final int MARK_MASK  = 0x08000000;
+    static final int HASH_MASK  = 0x07FFFFFF;
+    static final int NEXT_MASK  = 0x07FFFFFF;
+    
+    static final int NODE_BITS = 27;
+    static final int LEV_LPOS  = 27;
+    static final int LEV_LBITS = 5;
+    static final int LEV_HPOS  = 27;
+    static final int LEV_HBITS = 5;
+    static final int REF_LPOS  = 27;
+    static final int REF_LBITS = 5;
+    static final int REF_HPOS  = 28;
+    static final int REF_HBITS = 4;
+    
+    static final int INVALID_BDD = NODE_MASK;
+    static final int MAXVAR = 0x3FF;
+    static final int MAX_PAIRSID = 0x1FF;
+
+    private final boolean HASREF(int node) {
+        int a = table[node*__node_size + offset__lref] & REF_LMASK;
+        if (a != 0) return true;
+        int b = table[node*__node_size + offset__href] & REF_HMASK;
+        return (b != 0);
+    }
+
+    private final void SETMAXREF(int node) {
+        table[node*__node_size + offset__lref] |= REF_LMASK;
+        table[node*__node_size + offset__href] |= REF_HMASK;
+    }
+
+    private final void CLEARREF(int node) {
+        table[node*__node_size + offset__lref] &= ~REF_LMASK;
+        table[node*__node_size + offset__href] &= ~REF_HMASK;
+    }
+
+    private final void INCREF(int node) {
+        int a = table[node*__node_size + offset__lref] & REF_LMASK;
+        if (a == REF_LMASK) {
+            int b = table[node*__node_size + offset__href] & REF_HMASK;
+            if (b == REF_HMASK) return;
+            table[node*__node_size + offset__href] += REF_HINC;
+        }
+        table[node*__node_size + offset__lref] += REF_LINC;
+    }
+
+    private final void DECREF(int node) {
+        int a = table[node*__node_size + offset__lref] & REF_LMASK;
+        if (a == 0 || a == REF_LMASK) {
+            int b = table[node*__node_size + offset__href] & REF_HMASK;
+            if (a == 0) {
+                if (b == 0) return;
+                table[node*__node_size + offset__high] -= REF_HINC;
+            } else if (b == REF_HMASK) return;
+        }
+        table[node*__node_size + offset__low] -= REF_LINC;
+    }
+
+    private final int GETREF(int node) {
+        int a = table[node*__node_size + offset__lref] & REF_LMASK;
+        int b = table[node*__node_size + offset__href] & REF_HMASK;
+        return a >>> REF_LPOS | b >>> (REF_HPOS-REF_LBITS);
+    }
+
+    private final int LEVEL(int node) {
+        int a = table[node*__node_size + offset__llev] & LEV_LMASK;
+        int b = table[node*__node_size + offset__hlev] & LEV_HMASK;
+        return a >>> LEV_LPOS | b >>> (LEV_HPOS-LEV_LBITS);
+    }
+
+    private final void SETLEVEL(int node, int val) {
+        if (VERIFY_ASSERTIONS) _assert(val >= 0 && val < (1 << (LEV_LBITS + LEV_HBITS)));
+        int a = table[node*__node_size + offset__llev] & ~LEV_LMASK;
+        int b = table[node*__node_size + offset__hlev] & ~LEV_HMASK;
+        a |= (val << LEV_LPOS);
+        b |= (val << (LEV_HPOS-LEV_LBITS)) & LEV_HMASK;
+        table[node*__node_size + offset__llev] = a;
+        table[node*__node_size + offset__hlev] = b;
+    }
+
+    private final void SETMARK(int n) {
+        table[n*__node_size + offset__mark] |= MARK_MASK;
+    }
+    
+    private final void UNMARK(int n) {
+        table[n*__node_size + offset__mark] &= ~MARK_MASK;
+    }
+    
+    private final boolean MARKED(int n) {
+        return (table[n*__node_size + offset__mark] & MARK_MASK) != 0;
+    }
+
+    private final int LOW(int r) {
+        return table[r*__node_size + offset__low] & NODE_MASK;
+    }
+
+    private final void SETLOW(int r, int v) {
+        if (VERIFY_ASSERTIONS) _assert(v >= 0 && v <= NODE_MASK);
+        int a = table[r*__node_size + offset__low] & ~NODE_MASK;
+        a |= v;
+        table[r*__node_size + offset__low] = a;
+    }
+    
+    private final int HIGH(int r) {
+        return table[r*__node_size + offset__high] & NODE_MASK;
+    }
+
+    private final void SETHIGH(int r, int v) {
+        if (VERIFY_ASSERTIONS) _assert(v >= 0 && v <= NODE_MASK);
+        int a = table[r*__node_size + offset__high] & ~NODE_MASK;
+        a |= v;
+        table[r*__node_size + offset__high] = a;
+    }
+    
+    private final int HASH(int r) {
+        return table[r*__node_size + offset__hash] & HASH_MASK;
+    }
+    
+    private final void SETHASH(int r, int v) {
+        if (VERIFY_ASSERTIONS) _assert(v >= 0 && v <= HASH_MASK);
+        int a = table[r*__node_size + offset__hash] & ~HASH_MASK;
+        a |= v;
+        table[r*__node_size + offset__hash] = a;
+    }
+    
+    private final int NEXT(int r) {
+        return table[r*__node_size + offset__next] & NEXT_MASK;
+    }
+    
+    private final void SETNEXT(int r, int v) {
+        if (VERIFY_ASSERTIONS) _assert(v >= 0 && v <= NEXT_MASK);
+        int a = table[r*__node_size + offset__next] & ~NEXT_MASK;
+        a |= v;
+        table[r*__node_size + offset__next] = a;
+    }
+    
+    private final void INIT_NODE(int r, int lev, int lo, int hi, int next) {
+        table[r*__node_size + offset__hash] = 0;
+        table[r*__node_size + offset__next] = next;
+        table[r*__node_size + offset__low] = lo | (lev << LEV_LPOS);
+        table[r*__node_size + offset__high] = hi | ((lev << (LEV_HPOS-LEV_LBITS)) & LEV_HMASK);
+    }
+    
+    private final int VARr(int r) {
+        return LEVEL(r);
+    }
+    private final void SETVARr(int n, int val) {
+        SETLEVEL(n, val);
+    }
+    
+    private static final void _assert(boolean b) {
+        if (!b)
+            throw new InternalError();
+    }
     
     /**
      * Private helper function to create BDD objects.
      */
-    private bdd makeBDD(int id) {
+    private final bdd makeBDD(int id) {
         bdd b;
         if (USE_FINALIZER) {
             b = new bddWithFinalizer(id);
@@ -71,8 +247,6 @@ public class JFactory extends BDDFactory {
     private class bdd extends BDD {
         int _index;
 
-        static final int INVALID_BDD = -1;
-
         bdd(int index) {
             this._index = index;
             bdd_addref(_index);
@@ -82,7 +256,7 @@ public class JFactory extends BDDFactory {
          * @see net.sf.javabdd.BDD#getFactory()
          */
         public BDDFactory getFactory() {
-            return JFactory.this;
+            return MicroFactory.this;
         }
 
         /* (non-Javadoc)
@@ -416,7 +590,7 @@ public class JFactory extends BDDFactory {
         }
         
     }
-
+    
     private class bddWithFinalizer extends bdd {
         
         bddWithFinalizer(int id) {
@@ -438,168 +612,235 @@ public class JFactory extends BDDFactory {
         
     }
     
-    static final int REF_MASK = 0xFFC00000;
-    static final int MARK_MASK = 0x00200000;
-    static final int LEV_MASK = 0x001FFFFF;
-
-    static final int REF_INC = 0x00400000;
-    
-    static final int offset__refcou_and_level = 0;
-    static final int offset__low = 1;
-    static final int offset__high = 2;
-    static final int offset__hash = 3;
-    static final int offset__next = 4;
-    static final int __node_size = 5;
-    
-    private final boolean HASREF(int node) {
-        boolean r = (bddnodes[node*__node_size + offset__refcou_and_level] & REF_MASK) != 0;
-        return r;
-    }
-
-    private final void SETMAXREF(int node) {
-        bddnodes[node*__node_size + offset__refcou_and_level] |= REF_MASK;
-    }
-
-    private final void CLEARREF(int node) {
-        bddnodes[node*__node_size + offset__refcou_and_level] &= ~REF_MASK;
-    }
-
-    private final void INCREF(int node) {
-        if ((bddnodes[node*__node_size + offset__refcou_and_level] & REF_MASK) != REF_MASK)
-            bddnodes[node*__node_size + offset__refcou_and_level] += REF_INC;
-    }
-
-    private final void DECREF(int node) {
-        int rc = bddnodes[node*__node_size + offset__refcou_and_level] & REF_MASK;
-        if (rc != REF_MASK && rc != 0)
-            bddnodes[node*__node_size + offset__refcou_and_level] -= REF_INC;
-    }
-
-    private final int GETREF(int node) {
-        return bddnodes[node*__node_size + offset__refcou_and_level] >>> 22;
-    }
-
-    private final int LEVEL(int node) {
-        return bddnodes[node*__node_size + offset__refcou_and_level] & LEV_MASK;
-    }
-
-    private final int LEVELANDMARK(int node) {
-        return bddnodes[node*__node_size + offset__refcou_and_level] & (LEV_MASK | MARK_MASK);
-    }
-
-    private final void SETLEVEL(int node, int val) {
-        if (VERIFY_ASSERTIONS) _assert(val == (val & LEV_MASK));
-        bddnodes[node*__node_size + offset__refcou_and_level] &= ~LEV_MASK;
-        bddnodes[node*__node_size + offset__refcou_and_level] |= val;
-    }
-
-    private final void SETLEVELANDMARK(int node, int val) {
-        if (VERIFY_ASSERTIONS) _assert(val == (val & (LEV_MASK | MARK_MASK)));
-        bddnodes[node*__node_size + offset__refcou_and_level] &= ~(LEV_MASK | MARK_MASK);
-        bddnodes[node*__node_size + offset__refcou_and_level] |= val;
-    }
-
-    private final void SETMARK(int n) {
-        bddnodes[n*__node_size + offset__refcou_and_level] |= MARK_MASK;
-    }
-    
-    private final void UNMARK(int n) {
-        bddnodes[n*__node_size + offset__refcou_and_level] &= ~MARK_MASK;
-    }
-    
-    private final boolean MARKED(int n) {
-        return (bddnodes[n*__node_size + offset__refcou_and_level] & MARK_MASK) != 0;
-    }
-
-    private final int LOW(int r) {
-        return bddnodes[r*__node_size + offset__low];
-    }
-
-    private final void SETLOW(int r, int v) {
-        bddnodes[r*__node_size + offset__low] = v;
-    }
-    
-    private final int HIGH(int r) {
-        return bddnodes[r*__node_size + offset__high];
-    }
-
-    private final void SETHIGH(int r, int v) {
-        bddnodes[r*__node_size + offset__high] = v;
-    }
-    
-    private final int HASH(int r) {
-        return bddnodes[r*__node_size + offset__hash];
-    }
-    
-    private final void SETHASH(int r, int v) {
-        bddnodes[r*__node_size + offset__hash] = v;
-    }
-    
-    private final int NEXT(int r) {
-        return bddnodes[r*__node_size + offset__next];
-    }
-    
-    private final void SETNEXT(int r, int v) {
-        bddnodes[r*__node_size + offset__next] = v;
-    }
-    
-    private final int VARr(int n) {
-        return LEVELANDMARK(n);
-    }
-    
-    void SETVARr(int n, int val) {
-        SETLEVELANDMARK(n, val);
-    }
-
-    static final void _assert(boolean b) {
-        if (!b)
-            throw new InternalError();
-    }
-
-    private abstract static class BddCacheData {
-        int a, b, c;
-        abstract BddCacheData copy();
-    }
-
-    private static class BddCacheDataI extends BddCacheData {
-        int res;
-        BddCacheData copy() {
-            BddCacheDataI that = new BddCacheDataI();
-            that.a = this.a;
-            that.b = this.b;
-            that.c = this.c;
-            that.res = this.res;
-            return that;
-        }
-    }
-
-    private static class BddCacheDataD extends BddCacheData {
-        double dres;
-        BddCacheData copy() {
-            BddCacheDataD that = new BddCacheDataD();
-            that.a = this.a;
-            that.b = this.b;
-            that.c = this.c;
-            that.dres = this.dres;
-            return that;
-        }
-    }
-
-    private static class BddCache {
-        BddCacheData table[];
-        int tablesize;
-        
-        BddCache copy() {
-            BddCache that = new BddCache();
-            that.table = new BddCacheData[this.table.length];
-            that.tablesize = this.tablesize;
+    private class OpCache1 {
+        OpCache1Entry table[];
+        int cacheHit;
+        int cacheMiss;
+        OpCache1(int size) { alloc(size); }
+        final void alloc(int size) {
+            table = new OpCache1Entry[size];
             for (int i = 0; i < table.length; ++i) {
-                that.table[i] = this.table[i].copy();
+                table[i] = new OpCache1Entry();
             }
+        }
+        final OpCache1Entry lookup(int hash) {
+            return (OpCache1Entry) table[Math.abs(hash % table.length)];
+        }
+        final void reset() {
+            for (int i = 0; i < table.length; ++i) {
+                table[i].a = -1;
+            }
+        }
+        final void clean() {
+            for (int i = 0; i < table.length; ++i) {
+                int a = table[i].a;
+                if (a == -1) continue;
+                if (LOW(a & NODE_MASK) == INVALID_BDD ||
+                    LOW(table[i].res) == INVALID_BDD) {
+                    table[i].a = -1;
+                }
+            }
+        }
+        final OpCache1 copy() {
+            OpCache1 that = new OpCache1(this.table.length);
+            System.arraycopy(this.table, 0, that.table, 0, this.table.length);
+            that.cacheHit = this.cacheHit;
+            that.cacheMiss = this.cacheMiss;
             return that;
         }
     }
 
+    private class OpCache2 {
+        OpCache2Entry table[];
+        int cacheHit;
+        int cacheMiss;
+        OpCache2(int size) { alloc(size); }
+        final void alloc(int size) {
+            table = new OpCache2Entry[size];
+            for (int i = 0; i < table.length; ++i) {
+                table[i] = new OpCache2Entry();
+            }
+        }
+        final OpCache2Entry lookup(int hash) {
+            return (OpCache2Entry) table[Math.abs(hash % table.length)];
+        }
+        final void reset() {
+            for (int i = 0; i < table.length; ++i) {
+                table[i].a = -1;
+            }
+        }
+        final void clean() {
+            for (int i = 0; i < table.length; ++i) {
+                int a = table[i].a;
+                if (a == -1) continue;
+                if (LOW(a & NODE_MASK) == INVALID_BDD ||
+                    LOW(table[i].b) == INVALID_BDD ||
+                    LOW(table[i].res) == INVALID_BDD) {
+                    table[i].a = -1;
+                }
+            }
+        }
+        final OpCache2 copy() {
+            OpCache2 that = new OpCache2(this.table.length);
+            System.arraycopy(this.table, 0, that.table, 0, this.table.length);
+            that.cacheHit = this.cacheHit;
+            that.cacheMiss = this.cacheMiss;
+            return that;
+        }
+    }
+
+    private class OpCache3 {
+        OpCache3Entry table[];
+        int cacheHit;
+        int cacheMiss;
+        OpCache3(int size) { alloc(size); }
+        final void alloc(int size) {
+            table = new OpCache3Entry[size];
+            for (int i = 0; i < table.length; ++i) {
+                table[i] = new OpCache3Entry();
+            }
+        }
+        final OpCache3Entry lookup(int hash) {
+            return (OpCache3Entry) table[Math.abs(hash % table.length)];
+        }
+        final void reset() {
+            for (int i = 0; i < table.length; ++i) {
+                table[i].a = -1;
+            }
+        }
+        final void clean() {
+            for (int i = 0; i < table.length; ++i) {
+                int a = table[i].a;
+                if (a == -1) continue;
+                if (LOW(a & NODE_MASK) == INVALID_BDD ||
+                    LOW(table[i].b) == INVALID_BDD ||
+                    LOW(table[i].c) == INVALID_BDD ||
+                    LOW(table[i].res) == INVALID_BDD) {
+                    table[i].a = -1;
+                }
+            }
+        }
+        final OpCache3 copy() {
+            OpCache3 that = new OpCache3(this.table.length);
+            System.arraycopy(this.table, 0, that.table, 0, this.table.length);
+            that.cacheHit = this.cacheHit;
+            that.cacheMiss = this.cacheMiss;
+            return that;
+        }
+    }
+    
+    private static class OpCache1Entry {
+        int a;
+        int res;
+        
+        final int get_sid(int node, int id) {
+            if (VERIFY_ASSERTIONS) {
+                _assert(node == (node & NODE_MASK));
+                _assert(id == (id & ~NODE_MASK));
+            }
+            int k = node | id;
+            if (a != k) return -1;
+            return res;
+        }
+        
+        final void set_sid(int node, int id, int r) {
+            if (VERIFY_ASSERTIONS) {
+                _assert(node == (node & NODE_MASK));
+                _assert(id == (id & ~NODE_MASK));
+            }
+            a = node | id;
+            res = r;
+        }
+    }
+    
+    private static class OpCache2Entry {
+        int a, b;
+        int res;
+        
+        final int get_id(int node1, int node2, int id) {
+            if (VERIFY_ASSERTIONS) {
+                _assert(node1 == (node1 & NODE_MASK));
+                _assert(node2 == (node2 & NODE_MASK));
+                _assert(id >= 0 && id < (1 << (LEV_LBITS + LEV_HBITS)));
+            }
+            int k = node1 | (id << LEV_LPOS);
+            if (a != k) return -1;
+            k = node2 | ((id << (LEV_HPOS-LEV_LBITS)) & LEV_HMASK);
+            if (b != k) return -1;
+            return res;
+        }
+        
+        final int get_sid(int node1, int node2, int id) {
+            if (VERIFY_ASSERTIONS) {
+                _assert(node1 == (node1 & NODE_MASK));
+                _assert(node2 == (node2 & NODE_MASK));
+                _assert(id == (id & ~NODE_MASK));
+            }
+            int k = node1 | id;
+            if (a != k) return -1;
+            if (b != node2) return -1;
+            return res;
+        }
+        
+        final int get(int node1, int node2) {
+            if (VERIFY_ASSERTIONS) {
+                _assert(node1 == (node1 & NODE_MASK));
+                _assert(node2 == (node2 & NODE_MASK));
+            }
+            if (a != node1) return -1;
+            if (b != node2) return -1;
+            return res;
+        }
+        
+        final void set_id(int node1, int node2, int id, int r) {
+            if (VERIFY_ASSERTIONS) {
+                _assert(node1 == (node1 & NODE_MASK));
+                _assert(node2 == (node2 & NODE_MASK));
+                _assert(id >= 0 && id < (1 << (LEV_LBITS + LEV_HBITS)));
+            }
+            a = node1 | (id << LEV_LPOS);
+            b = node2 | ((id << (LEV_HPOS-LEV_LBITS)) & LEV_HMASK);
+            res = r;
+        }
+        
+        final void set_sid(int node1, int node2, int id, int r) {
+            if (VERIFY_ASSERTIONS) {
+                _assert(node1 == (node1 & NODE_MASK));
+                _assert(node2 == (node2 & NODE_MASK));
+                _assert(id == (id & ~NODE_MASK));
+            }
+            a = node1 | id;
+            b = node2;
+            res = r;
+        }
+        
+        final void set(int node1, int node2, int r) {
+            a = node1;
+            b = node2;
+            res = r;
+        }
+    }
+    
+    private static class OpCache3Entry {
+        int a, b, c;
+        int res;
+        
+        final int get(int node1, int node2, int node3) {
+            if (a != node1) return -1;
+            if (b != node2) return -1;
+            if (c != node3) return -1;
+            return res;
+        }
+        
+        final void set(int node1, int node2, int node3, int r) {
+            a = node1;
+            b = node2;
+            c = node3;
+            res = r;
+        }
+        
+    }
+    
     private static class JavaBDDException extends BDDException {
         public JavaBDDException(int x) {
             super(errorstrings[-x]);
@@ -702,7 +943,6 @@ public class JFactory extends BDDFactory {
             "Illegal shift-left/right parameter",
             "Division by zero" };
 
-    static final int MAXVAR = 0x1FFFFF;
     static final int DEFAULTMAXNODEINC = 50000;
 
     /*=== OTHER INTERNAL DEFINITIONS =======================================*/
@@ -778,7 +1018,7 @@ public class JFactory extends BDDFactory {
             bdd_error(BDD_RUNNING);
         else if (r < 0 || r >= bddnodesize)
             bdd_error(BDD_ILLBDD);
-        else if (r >= 2 && LOW(r) == -1)
+        else if (r >= 2 && LOW(r) == INVALID_BDD)
             bdd_error(BDD_ILLBDD);
     }
     void CHECKa(int r, int x) {
@@ -817,6 +1057,12 @@ public class JFactory extends BDDFactory {
 
     static final int NOTHASH(int r) {
         return r;
+    }
+    static final int ANDHASH(int l, int r) {
+        return PAIR(l, r);
+    }
+    static final int ORHASH(int l, int r) {
+        return PAIR(l, r);
     }
     static final int APPLYHASH(int l, int r, int op) {
         return TRIPLE(l, r, op);
@@ -882,25 +1128,21 @@ public class JFactory extends BDDFactory {
 
     int bdd_not(int r) {
         int res;
-        firstReorder = 1;
+        int numReorder = 1;
         CHECKa(r, bddfalse);
 
-        if (applycache == null) applycache = BddCacheI_init(cachesize);
+        if (singlecache == null) singlecache = new OpCache1(cachesize); // not_rec()
+        
         again : for (;;) {
             try {
                 INITREF();
-
-                if (firstReorder == 0)
-                    bdd_disable_reorder();
+                if (numReorder == 0) bdd_disable_reorder();
                 res = not_rec(r);
-                if (firstReorder == 0)
-                    bdd_enable_reorder();
+                if (numReorder == 0) bdd_enable_reorder();
             } catch (BDDException x) {
                 bdd_checkreorder();
-                if (firstReorder-- == 1)
-                    continue again;
-                res = bddfalse;
-                /* avoid warning about res being uninitialized */
+                numReorder--;
+                continue again;
             }
             break;
         }
@@ -910,63 +1152,50 @@ public class JFactory extends BDDFactory {
     }
 
     int not_rec(int r) {
-        BddCacheDataI entry;
+        OpCache1Entry entry;
         int res;
 
-        if (ISZERO(r))
-            return bddtrue;
-        if (ISONE(r))
-            return bddfalse;
+        if (ISCONST(r))
+            return 1 - r;
 
-        entry = BddCache_lookupI(applycache, NOTHASH(r));
-
-        if (entry.a == r && entry.c == bddop_not) {
-            if (CACHESTATS)
-                cachestats.opHit++;
-            return entry.res;
+        entry = singlecache.lookup(NOTHASH(r));
+        if ((res = entry.get_sid(r, bddop_not << NODE_BITS)) >= 0) {
+            if (CACHESTATS) singlecache.cacheHit++;
+            return res;
         }
-        if (CACHESTATS)
-            cachestats.opMiss++;
+        if (CACHESTATS) singlecache.cacheMiss++;
 
         PUSHREF(not_rec(LOW(r)));
         PUSHREF(not_rec(HIGH(r)));
         res = bdd_makenode(LEVEL(r), READREF(2), READREF(1));
         POPREF(2);
 
-        entry.a = r;
-        entry.c = bddop_not;
-        entry.res = res;
+        entry.set_sid(r, bddop_not << NODE_BITS, res);
 
         return res;
     }
 
     int bdd_ite(int f, int g, int h) {
         int res;
-        firstReorder = 1;
+        int numReorder = 1;
 
         CHECKa(f, bddfalse);
         CHECKa(g, bddfalse);
         CHECKa(h, bddfalse);
 
-        if (applycache == null) applycache = BddCacheI_init(cachesize);
-        if (itecache == null) itecache = BddCacheI_init(cachesize);
+        if (itecache == null) itecache = new OpCache3(cachesize); // ite_rec()
+        if (singlecache == null) singlecache = new OpCache1(cachesize); // not_rec()
         
         again : for (;;) {
             try {
                 INITREF();
-
-                if (firstReorder == 0)
-                    bdd_disable_reorder();
+                if (numReorder == 0) bdd_disable_reorder();
                 res = ite_rec(f, g, h);
-                if (firstReorder == 0)
-                    bdd_enable_reorder();
+                if (numReorder == 0) bdd_enable_reorder();
             } catch (BDDException x) {
                 bdd_checkreorder();
-
-                if (firstReorder-- == 1)
-                    continue again;
-                res = BDDZERO;
-                /* avoid warning about res being uninitialized */
+                numReorder--;
+                continue again;
             }
             break;
         }
@@ -976,110 +1205,97 @@ public class JFactory extends BDDFactory {
     }
 
     int ite_rec(int f, int g, int h) {
-        BddCacheDataI entry;
+        OpCache3Entry entry;
         int res;
 
-        if (ISONE(f))
-            return g;
-        if (ISZERO(f))
-            return h;
-        if (g == h)
-            return g;
-        if (ISONE(g) && ISZERO(h))
-            return f;
-        if (ISZERO(g) && ISONE(h))
-            return not_rec(f);
+        if (ISONE(f)) return g;
+        if (ISZERO(f)) return h;
+        if (g == h) return g;
+        if (ISONE(g) && ISZERO(h)) return f;
+        if (ISZERO(g) && ISONE(h)) return not_rec(f);
 
-        entry = BddCache_lookupI(itecache, ITEHASH(f, g, h));
-        if (entry.a == f && entry.b == g && entry.c == h) {
-            if (CACHESTATS)
-                cachestats.opHit++;
-            return entry.res;
+        entry = itecache.lookup(ITEHASH(f, g, h));
+        if ((res = entry.get(f, g, h)) >= 0) {
+            if (CACHESTATS) itecache.cacheHit++;
+            return res;
         }
-        if (CACHESTATS)
-            cachestats.opMiss++;
+        if (CACHESTATS) itecache.cacheMiss++;
 
-        if (LEVEL(f) == LEVEL(g)) {
-            if (LEVEL(f) == LEVEL(h)) {
+        int LEVEL_f = LEVEL(f);
+        int LEVEL_g = LEVEL(g);
+        int LEVEL_h = LEVEL(h);
+        if (LEVEL_f == LEVEL_g) {
+            if (LEVEL_f == LEVEL_h) {
                 PUSHREF(ite_rec(LOW(f), LOW(g), LOW(h)));
                 PUSHREF(ite_rec(HIGH(f), HIGH(g), HIGH(h)));
-                res = bdd_makenode(LEVEL(f), READREF(2), READREF(1));
-            } else if (LEVEL(f) < LEVEL(h)) {
+                res = bdd_makenode(LEVEL_f, READREF(2), READREF(1));
+            } else if (LEVEL_f < LEVEL_h) {
                 PUSHREF(ite_rec(LOW(f), LOW(g), h));
                 PUSHREF(ite_rec(HIGH(f), HIGH(g), h));
-                res = bdd_makenode(LEVEL(f), READREF(2), READREF(1));
+                res = bdd_makenode(LEVEL_f, READREF(2), READREF(1));
             } else /* f > h */ {
                 PUSHREF(ite_rec(f, g, LOW(h)));
                 PUSHREF(ite_rec(f, g, HIGH(h)));
-                res = bdd_makenode(LEVEL(h), READREF(2), READREF(1));
+                res = bdd_makenode(LEVEL_h, READREF(2), READREF(1));
             }
-        } else if (LEVEL(f) < LEVEL(g)) {
-            if (LEVEL(f) == LEVEL(h)) {
+        } else if (LEVEL_f < LEVEL_g) {
+            if (LEVEL_f == LEVEL_h) {
                 PUSHREF(ite_rec(LOW(f), g, LOW(h)));
                 PUSHREF(ite_rec(HIGH(f), g, HIGH(h)));
-                res = bdd_makenode(LEVEL(f), READREF(2), READREF(1));
-            } else if (LEVEL(f) < LEVEL(h)) {
+                res = bdd_makenode(LEVEL_f, READREF(2), READREF(1));
+            } else if (LEVEL_f < LEVEL_h) {
                 PUSHREF(ite_rec(LOW(f), g, h));
                 PUSHREF(ite_rec(HIGH(f), g, h));
-                res = bdd_makenode(LEVEL(f), READREF(2), READREF(1));
+                res = bdd_makenode(LEVEL_f, READREF(2), READREF(1));
             } else /* f > h */ {
                 PUSHREF(ite_rec(f, g, LOW(h)));
                 PUSHREF(ite_rec(f, g, HIGH(h)));
-                res = bdd_makenode(LEVEL(h), READREF(2), READREF(1));
+                res = bdd_makenode(LEVEL_h, READREF(2), READREF(1));
             }
         } else /* f > g */ {
-            if (LEVEL(g) == LEVEL(h)) {
+            if (LEVEL_g == LEVEL_h) {
                 PUSHREF(ite_rec(f, LOW(g), LOW(h)));
                 PUSHREF(ite_rec(f, HIGH(g), HIGH(h)));
-                res = bdd_makenode(LEVEL(g), READREF(2), READREF(1));
-            } else if (LEVEL(g) < LEVEL(h)) {
+                res = bdd_makenode(LEVEL_g, READREF(2), READREF(1));
+            } else if (LEVEL_g < LEVEL_h) {
                 PUSHREF(ite_rec(f, LOW(g), h));
                 PUSHREF(ite_rec(f, HIGH(g), h));
-                res = bdd_makenode(LEVEL(g), READREF(2), READREF(1));
+                res = bdd_makenode(LEVEL_g, READREF(2), READREF(1));
             } else /* g > h */ {
                 PUSHREF(ite_rec(f, g, LOW(h)));
                 PUSHREF(ite_rec(f, g, HIGH(h)));
-                res = bdd_makenode(LEVEL(h), READREF(2), READREF(1));
+                res = bdd_makenode(LEVEL_h, READREF(2), READREF(1));
             }
         }
 
         POPREF(2);
 
-        entry.a = f;
-        entry.b = g;
-        entry.c = h;
-        entry.res = res;
+        entry.set(f, g, h, res);
 
         return res;
     }
 
     int bdd_replace(int r, bddPair pair) {
         int res;
-        firstReorder = 1;
+        int numReorder = 1;
 
         CHECKa(r, bddfalse);
 
-        if (replacecache == null) replacecache = BddCacheI_init(cachesize);
+        if (replacecache == null) replacecache = new OpCache2(cachesize); // replace_rec()
         
         again : for (;;) {
             try {
                 INITREF();
                 replacepair = pair.result;
                 replacelast = pair.last;
-                replaceid = (pair.id << 2) | CACHEID_REPLACE;
-
-                if (firstReorder == 0)
-                    bdd_disable_reorder();
+                replaceid = (pair.id << 1) | CACHEID_REPLACE;
+                if (numReorder == 0) bdd_disable_reorder();
                 res = replace_rec(r);
-                if (firstReorder == 0)
-                    bdd_enable_reorder();
+                if (numReorder == 0) bdd_enable_reorder();
             } catch (BDDException x) {
                 bdd_checkreorder();
-
-                if (firstReorder-- == 1)
-                    continue again;
-                res = BDDZERO;
-                /* avoid warning about res being uninitialized */
+                numReorder--;
+                continue again;
             }
             break;
         }
@@ -1089,34 +1305,25 @@ public class JFactory extends BDDFactory {
     }
 
     int replace_rec(int r) {
-        BddCacheDataI entry;
+        OpCache2Entry entry;
         int res;
 
-        if (ISCONST(r) || LEVEL(r) > replacelast)
-            return r;
+        if (ISCONST(r) || LEVEL(r) > replacelast) return r;
 
-        entry = BddCache_lookupI(replacecache, REPLACEHASH(r));
-        if (entry.a == r && entry.c == replaceid) {
-            if (CACHESTATS)
-                cachestats.opHit++;
-            return entry.res;
+        entry = replacecache.lookup(REPLACEHASH(r));
+        if ((res = entry.get(r, replaceid)) >= 0) {
+            if (CACHESTATS) replacecache.cacheHit++;
+            return res;
         }
-        if (CACHESTATS)
-            cachestats.opMiss++;
+        if (CACHESTATS) replacecache.cacheMiss++;
 
         PUSHREF(replace_rec(LOW(r)));
         PUSHREF(replace_rec(HIGH(r)));
 
-        res =
-            bdd_correctify(
-                LEVEL(replacepair[LEVEL(r)]),
-                READREF(2),
-                READREF(1));
+        res = bdd_correctify(LEVEL(replacepair[LEVEL(r)]), READREF(2), READREF(1));
         POPREF(2);
 
-        entry.a = r;
-        entry.c = replaceid;
-        entry.res = res;
+        entry.set(r, replaceid, res);
 
         return res;
     }
@@ -1152,7 +1359,7 @@ public class JFactory extends BDDFactory {
 
     int bdd_apply(int l, int r, int op) {
         int res;
-        firstReorder = 1;
+        int numReorder = 1;
 
         CHECKa(l, bddfalse);
         CHECKa(r, bddfalse);
@@ -1162,41 +1369,43 @@ public class JFactory extends BDDFactory {
             return bddfalse;
         }
 
-        if (applycache == null) applycache = BddCacheI_init(cachesize);
+        switch (op) {
+            case bddop_and:
+                if (andcache == null) andcache = new OpCache2(cachesize);
+                break;
+            case bddop_or:
+                if (orcache == null) orcache = new OpCache2(cachesize);
+                break;
+            default:
+                if (applycache == null) applycache = new OpCache2(cachesize);
+                break;
+        }
         
         again : for (;;) {
             try {
                 INITREF();
                 applyop = op;
-
-                if (firstReorder == 0)
-                    bdd_disable_reorder();
+                if (numReorder == 0) bdd_disable_reorder();
                 switch (op) {
                     case bddop_and: res = and_rec(l, r); break;
                     case bddop_or: res = or_rec(l, r); break;
                     default: res = apply_rec(l, r); break;
                 }
-                if (firstReorder == 0)
-                    bdd_enable_reorder();
+                if (numReorder == 0) bdd_enable_reorder();
             } catch (BDDException x) {
                 bdd_checkreorder();
-
-                if (firstReorder-- == 1)
-                    continue again;
-                res = BDDZERO;
-                /* avoid warning about res being uninitialized */
+                numReorder--;
+                continue again;
             }
             break;
         }
 
-        //validate(res);
-        
         checkresize();
         return res;
     }
 
     int apply_rec(int l, int r) {
-        BddCacheDataI entry;
+        OpCache2Entry entry;
         int res;
 
         if (VERIFY_ASSERTIONS) _assert(applyop != bddop_and && applyop != bddop_or);
@@ -1231,203 +1440,183 @@ public class JFactory extends BDDFactory {
         if (ISCONST(l) && ISCONST(r))
             res = oprres[applyop][l << 1 | r];
         else {
-            entry = BddCache_lookupI(applycache, APPLYHASH(l, r, applyop));
-
-            if (entry.a == l && entry.b == r && entry.c == applyop) {
-                if (CACHESTATS)
-                    cachestats.opHit++;
-                return entry.res;
+            entry = applycache.lookup(APPLYHASH(l, r, applyop));
+            if ((res = entry.get_sid(l, r, applyop << NODE_BITS)) >= 0) {
+                if (CACHESTATS) applycache.cacheHit++;
+                return res;
             }
-            if (CACHESTATS)
-                cachestats.opMiss++;
-
-            if (LEVEL(l) == LEVEL(r)) {
+            if (CACHESTATS) applycache.cacheMiss++;
+            
+            int LEVEL_l = LEVEL(l);
+            int LEVEL_r = LEVEL(r);
+            if (LEVEL_l == LEVEL_r) {
                 PUSHREF(apply_rec(LOW(l), LOW(r)));
                 PUSHREF(apply_rec(HIGH(l), HIGH(r)));
-                res = bdd_makenode(LEVEL(l), READREF(2), READREF(1));
-            } else if (LEVEL(l) < LEVEL(r)) {
+                res = bdd_makenode(LEVEL_l, READREF(2), READREF(1));
+            } else if (LEVEL_l < LEVEL_r) {
                 PUSHREF(apply_rec(LOW(l), r));
                 PUSHREF(apply_rec(HIGH(l), r));
-                res = bdd_makenode(LEVEL(l), READREF(2), READREF(1));
+                res = bdd_makenode(LEVEL_l, READREF(2), READREF(1));
             } else {
                 PUSHREF(apply_rec(l, LOW(r)));
                 PUSHREF(apply_rec(l, HIGH(r)));
-                res = bdd_makenode(LEVEL(r), READREF(2), READREF(1));
+                res = bdd_makenode(LEVEL_r, READREF(2), READREF(1));
             }
 
             POPREF(2);
 
-            entry.a = l;
-            entry.b = r;
-            entry.c = applyop;
-            entry.res = res;
+            entry.set_sid(l, r, applyop << NODE_BITS, res);
         }
 
         return res;
     }
 
     int and_rec(int l, int r) {
-        BddCacheDataI entry;
+        OpCache2Entry entry;
         int res;
 
-        if (l == r)
-            return l;
-        if (ISZERO(l) || ISZERO(r))
-            return 0;
-        if (ISONE(l))
-            return r;
-        if (ISONE(r))
-            return l;
-        entry = BddCache_lookupI(applycache, APPLYHASH(l, r, bddop_and));
-
-        if (entry.a == l && entry.b == r && entry.c == bddop_and) {
-            if (CACHESTATS)
-                cachestats.opHit++;
-            return entry.res;
+        if (l == r) return l;
+        if (ISZERO(l) || ISZERO(r)) return 0;
+        if (ISONE(l)) return r;
+        if (ISONE(r)) return l;
+        
+        entry = andcache.lookup(ANDHASH(l, r));
+        if ((res = entry.get(l, r)) >= 0) {
+            if (CACHESTATS) andcache.cacheHit++;
+            return res;
         }
-        if (CACHESTATS)
-            cachestats.opMiss++;
-
-        if (LEVEL(l) == LEVEL(r)) {
+        if (CACHESTATS) andcache.cacheMiss++;
+        
+        int LEVEL_l = LEVEL(l);
+        int LEVEL_r = LEVEL(r);
+        if (LEVEL_l == LEVEL_r) {
             PUSHREF(and_rec(LOW(l), LOW(r)));
             PUSHREF(and_rec(HIGH(l), HIGH(r)));
-            res = bdd_makenode(LEVEL(l), READREF(2), READREF(1));
-        } else if (LEVEL(l) < LEVEL(r)) {
+            res = bdd_makenode(LEVEL_l, READREF(2), READREF(1));
+        } else if (LEVEL_l < LEVEL_r) {
             PUSHREF(and_rec(LOW(l), r));
             PUSHREF(and_rec(HIGH(l), r));
-            res = bdd_makenode(LEVEL(l), READREF(2), READREF(1));
+            res = bdd_makenode(LEVEL_l, READREF(2), READREF(1));
         } else {
             PUSHREF(and_rec(l, LOW(r)));
             PUSHREF(and_rec(l, HIGH(r)));
-            res = bdd_makenode(LEVEL(r), READREF(2), READREF(1));
+            res = bdd_makenode(LEVEL_r, READREF(2), READREF(1));
         }
 
         POPREF(2);
 
-        entry.a = l;
-        entry.b = r;
-        entry.c = bddop_and;
-        entry.res = res;
+        entry.set(l, r, res);
 
         return res;
     }
     
     int or_rec(int l, int r) {
-        BddCacheDataI entry;
+        OpCache2Entry entry;
         int res;
 
-        if (l == r)
-            return l;
-        if (ISONE(l) || ISONE(r))
-            return 1;
-        if (ISZERO(l))
-            return r;
-        if (ISZERO(r))
-            return l;
-        entry = BddCache_lookupI(applycache, APPLYHASH(l, r, bddop_or));
-
-        if (entry.a == l && entry.b == r && entry.c == bddop_or) {
-            if (CACHESTATS)
-                cachestats.opHit++;
-            return entry.res;
+        if (l == r) return l;
+        if (ISONE(l) || ISONE(r)) return 1;
+        if (ISZERO(l)) return r;
+        if (ISZERO(r)) return l;
+        entry = orcache.lookup(ORHASH(l, r));
+        if ((res = entry.get(l, r)) >= 0) {
+            if (CACHESTATS) orcache.cacheHit++;
+            return res;
         }
-        if (CACHESTATS)
-            cachestats.opMiss++;
+        if (CACHESTATS) orcache.cacheMiss++;
 
-        if (LEVEL(l) == LEVEL(r)) {
+        int LEVEL_l = LEVEL(l);
+        int LEVEL_r = LEVEL(r);
+        if (LEVEL_l == LEVEL_r) {
             PUSHREF(or_rec(LOW(l), LOW(r)));
             PUSHREF(or_rec(HIGH(l), HIGH(r)));
-            res = bdd_makenode(LEVEL(l), READREF(2), READREF(1));
-        } else if (LEVEL(l) < LEVEL(r)) {
+            res = bdd_makenode(LEVEL_l, READREF(2), READREF(1));
+        } else if (LEVEL_l < LEVEL_r) {
             PUSHREF(or_rec(LOW(l), r));
             PUSHREF(or_rec(HIGH(l), r));
-            res = bdd_makenode(LEVEL(l), READREF(2), READREF(1));
+            res = bdd_makenode(LEVEL_l, READREF(2), READREF(1));
         } else {
             PUSHREF(or_rec(l, LOW(r)));
             PUSHREF(or_rec(l, HIGH(r)));
-            res = bdd_makenode(LEVEL(r), READREF(2), READREF(1));
+            res = bdd_makenode(LEVEL_r, READREF(2), READREF(1));
         }
 
         POPREF(2);
 
-        entry.a = l;
-        entry.b = r;
-        entry.c = bddop_or;
-        entry.res = res;
+        entry.set(l, r, res);
 
         return res;
     }
 
-    int relprod_rec(int l, int r) {
-        BddCacheDataI entry;
-        int res;
-
-        if (l == 0 || r == 0)
-            return 0;
-        if (l == r)
-            return quant_rec(l);
-        if (l == 1)
-            return quant_rec(r);
-        if (r == 1)
-            return quant_rec(l);
-        
-        int LEVEL_l = LEVEL(l);
-        int LEVEL_r = LEVEL(r);
-        if (LEVEL_l > quantlast && LEVEL_r > quantlast) {
-            applyop = bddop_and;
-            res = and_rec(l, r);
-            applyop = bddop_or;
-        } else {
-            entry = BddCache_lookupI(appexcache, APPEXHASH(l, r, bddop_and));
-            if (entry.a == l && entry.b == r && entry.c == appexid) {
-                if (CACHESTATS)
-                    cachestats.opHit++;
-                return entry.res;
-            }
-            if (CACHESTATS)
-                cachestats.opMiss++;
-
-            if (LEVEL_l == LEVEL_r) {
-                PUSHREF(relprod_rec(LOW(l), LOW(r)));
-                PUSHREF(relprod_rec(HIGH(l), HIGH(r)));
-                if (INVARSET(LEVEL_l))
-                    res = or_rec(READREF(2), READREF(1));
-                else
-                    res = bdd_makenode(LEVEL_l, READREF(2), READREF(1));
-            } else if (LEVEL_l < LEVEL_r) {
-                PUSHREF(relprod_rec(LOW(l), r));
-                PUSHREF(relprod_rec(HIGH(l), r));
-                if (INVARSET(LEVEL_l))
-                    res = or_rec(READREF(2), READREF(1));
-                else
-                    res = bdd_makenode(LEVEL_l, READREF(2), READREF(1));
-            } else {
-                PUSHREF(relprod_rec(l, LOW(r)));
-                PUSHREF(relprod_rec(l, HIGH(r)));
-                if (INVARSET(LEVEL_r))
-                    res = or_rec(READREF(2), READREF(1));
-                else
-                    res = bdd_makenode(LEVEL_r, READREF(2), READREF(1));
-            }
-
-            POPREF(2);
-
-            entry.a = l;
-            entry.b = r;
-            entry.c = appexid;
-            entry.res = res;
-        }
-
-        return res;
-    }
-    
     int bdd_relprod(int a, int b, int var) {
         return bdd_appex(a, b, bddop_and, var);
     }
 
     int bdd_appex(int l, int r, int opr, int var) {
         int res;
-        firstReorder = 1;
+        int numReorder = 1;
+
+        CHECKa(l, bddfalse);
+        CHECKa(r, bddfalse);
+        CHECKa(var, bddfalse);
+
+        if (opr < 0 || opr > bddop_invimp) {
+            bdd_error(BDD_OP);
+            return bddfalse;
+        }
+
+        if (ISCONST(var)) /* Empty set */
+            return bdd_apply(l, r, opr);
+
+        switch (opr) {
+            case bddop_and:
+                if (andcache == null) andcache = new OpCache2(cachesize);
+                if (relprodcache == null) relprodcache = new OpCache2(cachesize);
+                break;
+            case bddop_or:
+                if (appexcache == null) appexcache = new OpCache3(cachesize);
+                break;
+            default:
+                if (applycache == null) applycache = new OpCache2(cachesize);
+                if (appexcache == null) appexcache = new OpCache3(cachesize);
+                break;
+        }
+        if (orcache == null) orcache = new OpCache2(cachesize); // or_rec()
+        if (quantcache == null) quantcache = new OpCache2(cachesize); // quant_rec()
+        
+        again : for (;;) {
+            if (varset2vartable(var) < 0)
+                return bddfalse;
+            try {
+                INITREF();
+                applyop = bddop_or;
+                appexop = opr;
+                if (opr == bddop_and)
+                    appexid = var;
+                else
+                    appexid = (var << 7) | (appexop << 3) | CACHEID_APPEX;
+                quantid = appexid;
+                if (numReorder == 0) bdd_disable_reorder();
+                if (opr == bddop_and)
+                    res = relprod_rec(l, r);
+                else
+                    res = appquant_rec(l, r);
+                if (numReorder == 0) bdd_enable_reorder();
+            } catch (BDDException x) {
+                bdd_checkreorder();
+                numReorder--;
+                continue again;
+            }
+            break;
+        }
+
+        checkresize();
+        return res;
+    }
+
+    int bdd_appall(int l, int r, int opr, int var) {
+        int res;
+        int numReorder = 1;
 
         CHECKa(l, bddfalse);
         CHECKa(r, bddfalse);
@@ -1441,33 +1630,86 @@ public class JFactory extends BDDFactory {
         if (var < 2) /* Empty set */
             return bdd_apply(l, r, opr);
 
-        if (applycache == null) applycache = BddCacheI_init(cachesize);
-        if (appexcache == null) appexcache = BddCacheI_init(cachesize);
-        if (quantcache == null) quantcache = BddCacheI_init(cachesize);
+        switch (opr) {
+            case bddop_or:
+                if (orcache == null) orcache = new OpCache2(cachesize); // or_rec()
+                break;
+            default:
+                if (applycache == null) applycache = new OpCache2(cachesize); // apply_rec()
+                break;
+        }
+        if (appexcache == null) appexcache = new OpCache3(cachesize); // appquant_rec()
+        if (andcache == null) andcache = new OpCache2(cachesize); // and_rec()
+        if (quantcache == null) quantcache = new OpCache2(cachesize); // quant_rec()
         
         again : for (;;) {
             if (varset2vartable(var) < 0)
                 return bddfalse;
             try {
                 INITREF();
-
-                applyop = bddop_or;
+                applyop = bddop_and;
                 appexop = opr;
-                appexid = (var << 5) | (appexop << 1); /* FIXME: range! */
-                quantid = (appexid << 3) | CACHEID_APPEX;
-
-                if (firstReorder == 0)
-                    bdd_disable_reorder();
-                res = opr == bddop_and ? relprod_rec(l, r) : appquant_rec(l, r);
-                if (firstReorder == 0)
-                    bdd_enable_reorder();
+                appexid = (var << 7) | (appexop << 3) | CACHEID_APPAL;
+                quantid = appexid;
+                if (numReorder == 0) bdd_disable_reorder();
+                res = appquant_rec(l, r);
+                if (numReorder == 0) bdd_enable_reorder();
             } catch (BDDException x) {
                 bdd_checkreorder();
+                numReorder--;
+                continue again;
+            }
+            break;
+        }
 
-                if (firstReorder-- == 1)
-                    continue again;
-                res = BDDZERO;
-                /* avoid warning about res being uninitialized */
+        checkresize();
+        return res;
+    }
+
+    int bdd_appuni(int l, int r, int opr, int var) {
+        int res;
+        int numReorder = 1;
+
+        CHECKa(l, bddfalse);
+        CHECKa(r, bddfalse);
+        CHECKa(var, bddfalse);
+
+        if (opr < 0 || opr > bddop_invimp) {
+            bdd_error(BDD_OP);
+            return bddfalse;
+        }
+
+        if (var < 2) /* Empty set */
+            return bdd_apply(l, r, opr);
+
+        switch (opr) {
+            case bddop_and:
+                if (andcache == null) andcache = new OpCache2(cachesize); // and_rec()
+                break;
+            case bddop_or:
+                if (orcache == null) orcache = new OpCache2(cachesize); // or_rec()
+                break;
+            default:
+                if (applycache == null) applycache = new OpCache2(cachesize); // apply_rec()
+                break;
+        }
+        if (appexcache == null) appexcache = new OpCache3(cachesize); // appquant_rec()
+        if (quantcache == null) quantcache = new OpCache2(cachesize); // quant_rec()
+        
+        again : for (;;) {
+            try {
+                INITREF();
+                applyop = bddop_xor;
+                appexop = opr;
+                appexid = (var << 7) | (appexop << 3) | CACHEID_APPUN; /* FIXME: range! */
+                quantid = appexid;
+                if (numReorder == 0) bdd_disable_reorder();
+                res = appuni_rec(l, r, var);
+                if (numReorder == 0) bdd_enable_reorder();
+            } catch (BDDException x) {
+                bdd_checkreorder();
+                numReorder--;
+                continue again;
             }
             break;
         }
@@ -1479,12 +1721,10 @@ public class JFactory extends BDDFactory {
     int varset2vartable(int r) {
         int n;
 
-        if (r < 2)
-            return bdd_error(BDD_VARSET);
+        if (r < 2) return bdd_error(BDD_VARSET);
 
         quantvarsetID++;
-
-        if (quantvarsetID == INT_MAX) {
+        if (quantvarsetID == Integer.MAX_VALUE) {
             for (int i = 0; i < bddvarnum; ++i)
                 quantvarset[i] = 0;
             quantvarsetID = 1;
@@ -1500,24 +1740,21 @@ public class JFactory extends BDDFactory {
         return 0;
     }
 
-    static final int INT_MAX = Integer.MAX_VALUE;
-
     int varset2svartable(int r) {
         int n;
 
-        if (r < 2)
-            return bdd_error(BDD_VARSET);
+        if (r < 2) return bdd_error(BDD_VARSET);
 
         quantvarsetID++;
 
-        if (quantvarsetID == INT_MAX / 2) {
+        if (quantvarsetID == Integer.MAX_VALUE / 2) {
             for (int i = 0; i < bddvarnum; ++i)
                 quantvarset[i] = 0;
             quantvarsetID = 1;
         }
 
         quantlast = 0;
-        for (n = r; !ISCONST(n);) {
+        for (n = r; !ISCONST(n); ) {
             if (ISZERO(LOW(n))) {
                 quantvarset[LEVEL(n)] = quantvarsetID;
                 n = HIGH(n);
@@ -1533,43 +1770,37 @@ public class JFactory extends BDDFactory {
     }
 
     int appquant_rec(int l, int r) {
-        BddCacheDataI entry;
+        OpCache3Entry entry;
         int res;
 
         if (VERIFY_ASSERTIONS) _assert(appexop != bddop_and);
         
         switch (appexop) {
             case bddop_or :
-                if (l == 1 || r == 1)
-                    return 1;
-                if (l == r)
-                    return quant_rec(l);
-                if (l == 0)
-                    return quant_rec(r);
-                if (r == 0)
-                    return quant_rec(l);
+                if (l == 1 || r == 1) return 1;
+                if (l == r) return quant_rec(l);
+                if (l == 0) return quant_rec(r);
+                if (r == 0) return quant_rec(l);
                 break;
             case bddop_xor :
-                if (l == r)
-                    return 0;
-                if (l == 0)
-                    return quant_rec(r);
-                if (r == 0)
-                    return quant_rec(l);
+                if (l == r) return 0;
+                if (l == 0) return quant_rec(r);
+                if (r == 0) return quant_rec(l);
                 break;
             case bddop_nand :
-                if (l == 0 || r == 0)
-                    return 1;
+                if (l == 0 || r == 0) return 1;
                 break;
             case bddop_nor :
-                if (l == 1 || r == 1)
-                    return 0;
+                if (l == 1 || r == 1) return 0;
                 break;
         }
 
         if (ISCONST(l) && ISCONST(r))
-            res = oprres[appexop][(l << 1) | r];
-        else if (LEVEL(l) > quantlast && LEVEL(r) > quantlast) {
+            return oprres[appexop][(l << 1) | r];
+        
+        int LEVEL_l = LEVEL(l);
+        int LEVEL_r = LEVEL(r);
+        if (LEVEL_l > quantlast && LEVEL_r > quantlast) {
             int oldop = applyop;
             applyop = appexop;
             switch (applyop) {
@@ -1578,54 +1809,99 @@ public class JFactory extends BDDFactory {
             default: res = apply_rec(l, r); break;
             }
             applyop = oldop;
-        } else {
-            entry = BddCache_lookupI(appexcache, APPEXHASH(l, r, appexop));
-            if (entry.a == l && entry.b == r && entry.c == appexid) {
-                if (CACHESTATS)
-                    cachestats.opHit++;
-                return entry.res;
-            }
-            if (CACHESTATS)
-                cachestats.opMiss++;
-
-            int lev;
-            if (LEVEL(l) == LEVEL(r)) {
-                PUSHREF(appquant_rec(LOW(l), LOW(r)));
-                PUSHREF(appquant_rec(HIGH(l), HIGH(r)));
-                lev = LEVEL(l);
-            } else if (LEVEL(l) < LEVEL(r)) {
-                PUSHREF(appquant_rec(LOW(l), r));
-                PUSHREF(appquant_rec(HIGH(l), r));
-                lev = LEVEL(l);
-            } else {
-                PUSHREF(appquant_rec(l, LOW(r)));
-                PUSHREF(appquant_rec(l, HIGH(r)));
-                lev = LEVEL(r);
-            }
-            if (INVARSET(lev)) {
-                int r2 = READREF(2), r1 = READREF(1);
-                switch (applyop) {
-                case bddop_and: res = and_rec(r2, r1); break;
-                case bddop_or: res = or_rec(r2, r1); break;
-                default: res = apply_rec(r2, r1); break;
-                }
-            } else {
-                res = bdd_makenode(lev, READREF(2), READREF(1));
-            }
-
-            POPREF(2);
-
-            entry.a = l;
-            entry.b = r;
-            entry.c = appexid;
-            entry.res = res;
+            return res;
         }
+        entry = appexcache.lookup(APPEXHASH(l, r, appexop));
+        if ((res = entry.get(l, r, appexid)) >= 0) {
+            if (CACHESTATS) appexcache.cacheHit++;
+            return res;
+        }
+        if (CACHESTATS) appexcache.cacheMiss++;
+
+        int lev;
+        if (LEVEL_l == LEVEL_r) {
+            PUSHREF(appquant_rec(LOW(l), LOW(r)));
+            PUSHREF(appquant_rec(HIGH(l), HIGH(r)));
+            lev = LEVEL_l;
+        } else if (LEVEL_l < LEVEL_r) {
+            PUSHREF(appquant_rec(LOW(l), r));
+            PUSHREF(appquant_rec(HIGH(l), r));
+            lev = LEVEL_l;
+        } else {
+            PUSHREF(appquant_rec(l, LOW(r)));
+            PUSHREF(appquant_rec(l, HIGH(r)));
+            lev = LEVEL_r;
+        }
+        if (INVARSET(lev)) {
+            int r2 = READREF(2), r1 = READREF(1);
+            switch (applyop) {
+            case bddop_and: res = and_rec(r2, r1); break;
+            case bddop_or: res = or_rec(r2, r1); break;
+            default: res = apply_rec(r2, r1); break;
+            }
+        } else {
+            res = bdd_makenode(lev, READREF(2), READREF(1));
+        }
+
+        POPREF(2);
+
+        entry.set(l, r, appexid, res);
 
         return res;
     }
 
+    int relprod_rec(int l, int r) {
+        OpCache2Entry entry;
+        int res;
+
+        if (l == 0 || r == 0) return 0;
+        if (l == r) return quant_rec(l);
+        if (l == 1) return quant_rec(r);
+        if (r == 1) return quant_rec(l);
+        
+        int LEVEL_l = LEVEL(l);
+        int LEVEL_r = LEVEL(r);
+        if (LEVEL_l > quantlast && LEVEL_r > quantlast) {
+            applyop = bddop_and;
+            res = and_rec(l, r);
+            applyop = bddop_or;
+            return res;
+        }
+        entry = relprodcache.lookup(APPEXHASH(l, r, appexop));
+        if ((res = entry.get_id(l, r, appexop)) >= 0) {
+            if (CACHESTATS) relprodcache.cacheHit++;
+            return res;
+        }
+        if (CACHESTATS) relprodcache.cacheMiss++;
+
+        int lev;
+        if (LEVEL_l == LEVEL_r) {
+            PUSHREF(relprod_rec(LOW(l), LOW(r)));
+            PUSHREF(relprod_rec(HIGH(l), HIGH(r)));
+            lev = LEVEL_l;
+        } else if (LEVEL_l < LEVEL_r) {
+            PUSHREF(relprod_rec(LOW(l), r));
+            PUSHREF(relprod_rec(HIGH(l), r));
+            lev = LEVEL_l;
+        } else {
+            PUSHREF(relprod_rec(l, LOW(r)));
+            PUSHREF(relprod_rec(l, HIGH(r)));
+            lev = LEVEL_r;
+        }
+        if (INVARSET(lev))
+            res = or_rec(READREF(2), READREF(1));
+        else
+            res = bdd_makenode(lev, READREF(2), READREF(1));
+
+        POPREF(2);
+
+        entry.set_id(l, r, appexid, res);
+
+        return res;
+    }
+    
     int appuni_rec(int l, int r, int var) {
-        BddCacheDataI entry;
+        OpCache3Entry entry;
         int res;
 
         int LEVEL_l, LEVEL_r, LEVEL_var;
@@ -1649,70 +1925,381 @@ public class JFactory extends BDDFactory {
             default: res = apply_rec(l, r); break;
             }
             applyop = oldop;
-        } else {
-            entry = BddCache_lookupI(appexcache, APPEXHASH(l, r, appexop));
-            if (entry.a == l && entry.b == r && entry.c == appexid) {
-                if (CACHESTATS)
-                    cachestats.opHit++;
-                return entry.res;
-            }
-            if (CACHESTATS)
-                cachestats.opMiss++;
-
-            int lev;
-            if (LEVEL_l == LEVEL_r) {
-                if (LEVEL_l == LEVEL_var) {
-                    lev = -1;
-                    var = HIGH(var);
-                } else {
-                    lev = LEVEL_l;
-                }
-                PUSHREF(appuni_rec(LOW(l), LOW(r), var));
-                PUSHREF(appuni_rec(HIGH(l), HIGH(r), var));
-                lev = LEVEL_l;
-            } else if (LEVEL_l < LEVEL_r) {
-                if (LEVEL_l == LEVEL_var) {
-                    lev = -1;
-                    var = HIGH(var);
-                } else {
-                    lev = LEVEL_l;
-                }
-                PUSHREF(appuni_rec(LOW(l), r, var));
-                PUSHREF(appuni_rec(HIGH(l), r, var));
-            } else {
-                if (LEVEL_r == LEVEL_var) {
-                    lev = -1;
-                    var = HIGH(var);
-                } else {
-                    lev = LEVEL_r;
-                }
-                PUSHREF(appuni_rec(l, LOW(r), var));
-                PUSHREF(appuni_rec(l, HIGH(r), var));
-            }
-            if (lev == -1) {
-                int r2 = READREF(2), r1 = READREF(1);
-                switch (applyop) {
-                case bddop_and: res = and_rec(r2, r1); break;
-                case bddop_or: res = or_rec(r2, r1); break;
-                default: res = apply_rec(r2, r1); break;
-                }
-            } else {
-                res = bdd_makenode(lev, READREF(2), READREF(1));
-            }
-
-            POPREF(2);
-
-            entry.a = l;
-            entry.b = r;
-            entry.c = appexid;
-            entry.res = res;
+            return res;
         }
+        entry = appexcache.lookup(APPEXHASH(l, r, appexop));
+        if ((res = entry.get(l, r, appexid)) >= 0) {
+            if (CACHESTATS) appexcache.cacheHit++;
+            return res;
+        }
+        if (CACHESTATS) appexcache.cacheMiss++;
+
+        int lev;
+        if (LEVEL_l == LEVEL_r) {
+            if (LEVEL_l == LEVEL_var) {
+                lev = -1;
+                var = HIGH(var);
+            } else {
+                lev = LEVEL_l;
+            }
+            PUSHREF(appuni_rec(LOW(l), LOW(r), var));
+            PUSHREF(appuni_rec(HIGH(l), HIGH(r), var));
+            lev = LEVEL_l;
+        } else if (LEVEL_l < LEVEL_r) {
+            if (LEVEL_l == LEVEL_var) {
+                lev = -1;
+                var = HIGH(var);
+            } else {
+                lev = LEVEL_l;
+            }
+            PUSHREF(appuni_rec(LOW(l), r, var));
+            PUSHREF(appuni_rec(HIGH(l), r, var));
+        } else {
+            if (LEVEL_r == LEVEL_var) {
+                lev = -1;
+                var = HIGH(var);
+            } else {
+                lev = LEVEL_r;
+            }
+            PUSHREF(appuni_rec(l, LOW(r), var));
+            PUSHREF(appuni_rec(l, HIGH(r), var));
+        }
+        if (lev == -1) {
+            int r2 = READREF(2), r1 = READREF(1);
+            switch (applyop) {
+            case bddop_and: res = and_rec(r2, r1); break;
+            case bddop_or: res = or_rec(r2, r1); break;
+            default: res = apply_rec(r2, r1); break;
+            }
+        } else {
+            res = bdd_makenode(lev, READREF(2), READREF(1));
+        }
+
+        POPREF(2);
+
+        entry.set(l, r, appexid, res);
 
         return res;
     }
     
+    int bdd_constrain(int f, int c) {
+        int res;
+        int numReorder = 1;
+
+        CHECKa(f, bddfalse);
+        CHECKa(c, bddfalse);
+
+        if (misccache == null) misccache = new OpCache2(cachesize);
+        
+        again : for (;;) {
+            try {
+                INITREF();
+                miscid = CACHEID_CONSTRAIN << NODE_BITS;
+                if (numReorder == 0) bdd_disable_reorder();
+                res = constrain_rec(f, c);
+                if (numReorder == 0) bdd_enable_reorder();
+            } catch (BDDException x) {
+                bdd_checkreorder();
+                numReorder--;
+                continue again;
+            }
+            break;
+        }
+
+        checkresize();
+        return res;
+    }
+
+    int constrain_rec(int f, int c) {
+        OpCache2Entry entry;
+        int res;
+
+        if (ISONE(c)) return f;
+        if (ISCONST(f)) return f;
+        if (c == f) return BDDONE;
+        if (ISZERO(c)) return BDDZERO;
+
+        entry = misccache.lookup(CONSTRAINHASH(f, c));
+        if ((res = entry.get_sid(f, c, miscid)) >= 0) {
+            if (CACHESTATS) misccache.cacheHit++;
+            return res;
+        }
+        if (CACHESTATS) misccache.cacheMiss++;
+        
+        int LEVEL_f = LEVEL(f);
+        int LEVEL_c = LEVEL(c);
+        if (LEVEL_f == LEVEL_c) {
+            int LOW_c = LOW(c);
+            int HIGH_c = HIGH(c);
+            if (ISZERO(LOW_c))
+                res = constrain_rec(HIGH(f), HIGH_c);
+            else if (ISZERO(HIGH_c))
+                res = constrain_rec(LOW(f), LOW_c);
+            else {
+                PUSHREF(constrain_rec(LOW(f), LOW_c));
+                PUSHREF(constrain_rec(HIGH(f), HIGH_c));
+                res = bdd_makenode(LEVEL_f, READREF(2), READREF(1));
+                POPREF(2);
+            }
+        } else if (LEVEL_f < LEVEL_c) {
+            PUSHREF(constrain_rec(LOW(f), c));
+            PUSHREF(constrain_rec(HIGH(f), c));
+            res = bdd_makenode(LEVEL_f, READREF(2), READREF(1));
+            POPREF(2);
+        } else {
+            int LOW_c = LOW(c);
+            int HIGH_c = HIGH(c);
+            if (ISZERO(LOW_c))
+                res = constrain_rec(f, HIGH_c);
+            else if (ISZERO(HIGH_c))
+                res = constrain_rec(f, LOW_c);
+            else {
+                PUSHREF(constrain_rec(f, LOW_c));
+                PUSHREF(constrain_rec(f, HIGH_c));
+                res = bdd_makenode(LEVEL_c, READREF(2), READREF(1));
+                POPREF(2);
+            }
+        }
+
+        entry.set_sid(f, c, miscid, res);
+
+        return res;
+    }
+
+    int bdd_compose(int f, int g, int var) {
+        int res;
+        int numReorder = 1;
+
+        CHECKa(f, bddfalse);
+        CHECKa(g, bddfalse);
+        if (var < 0 || var >= bddvarnum) {
+            bdd_error(BDD_VAR);
+            return bddfalse;
+        }
+
+        if (appexcache == null) appexcache = new OpCache3(cachesize);
+        if (itecache == null) itecache = new OpCache3(cachesize);
+        
+        again : for (;;) {
+            try {
+                INITREF();
+                composelevel = bddvar2level[var];
+                appexid = (composelevel << 3) | CACHEID_COMPOSE;
+                if (numReorder == 0) bdd_disable_reorder();
+                res = compose_rec(f, g);
+                if (numReorder == 0) bdd_enable_reorder();
+            } catch (BDDException x) {
+                bdd_checkreorder();
+                numReorder--;
+                continue again;
+            }
+            break;
+        }
+
+        checkresize();
+        return res;
+    }
+
+    int compose_rec(int f, int g) {
+        OpCache3Entry entry;
+        int res;
+
+        int LEVEL_f = LEVEL(f);
+        if (LEVEL_f > composelevel) return f;
+
+        entry = appexcache.lookup(COMPOSEHASH(f, g));
+        if ((res = entry.get(f, g, appexid)) >= 0) {
+            if (CACHESTATS) appexcache.cacheHit++;
+            return res;
+        }
+        if (CACHESTATS) appexcache.cacheMiss++;
+
+        if (LEVEL_f < composelevel) {
+            int LEVEL_g = LEVEL(g);
+            int lev;
+            if (LEVEL_f == LEVEL_g) {
+                PUSHREF(compose_rec(LOW(f), LOW(g)));
+                PUSHREF(compose_rec(HIGH(f), HIGH(g)));
+                lev = LEVEL_f;
+            } else if (LEVEL_f < LEVEL_g) {
+                PUSHREF(compose_rec(LOW(f), g));
+                PUSHREF(compose_rec(HIGH(f), g));
+                lev = LEVEL_f;
+            } else {
+                PUSHREF(compose_rec(f, LOW(g)));
+                PUSHREF(compose_rec(f, HIGH(g)));
+                lev = LEVEL_g;
+            }
+            res = bdd_makenode(lev, READREF(2), READREF(1));
+            POPREF(2);
+        } else
+            /*if (LEVEL_f == composelevel) changed 2-nov-98 */ {
+            res = ite_rec(g, HIGH(f), LOW(f));
+        }
+
+        entry.set(f, g, appexid, res);
+
+        return res;
+    }
+
+    int bdd_veccompose(int f, bddPair pair) {
+        int res;
+        int numReorder = 1;
+
+        CHECKa(f, bddfalse);
+
+        if (singlecache == null) singlecache = new OpCache1(cachesize);
+        if (replacecache == null) replacecache = new OpCache2(cachesize);
+        if (itecache == null) itecache = new OpCache3(cachesize);
+        
+        again : for (;;) {
+            try {
+                INITREF();
+                replacepair = pair.result;
+                replacelast = pair.last;
+                replaceid = (pair.id << 1) | CACHEID_VECCOMPOSE;
+                if (numReorder == 0) bdd_disable_reorder();
+                res = veccompose_rec(f);
+                if (numReorder == 0) bdd_enable_reorder();
+            } catch (BDDException x) {
+                bdd_checkreorder();
+                numReorder--;
+                continue again;
+            }
+            break;
+        }
+
+        checkresize();
+        return res;
+    }
+
+    int veccompose_rec(int f) {
+        OpCache2Entry entry;
+        int res;
+
+        int LEVEL_f = LEVEL(f);
+        if (LEVEL_f > replacelast) return f;
+
+        entry = replacecache.lookup(VECCOMPOSEHASH(f));
+        if ((res = entry.get(f, replaceid)) >= 0) {
+            if (CACHESTATS) replacecache.cacheHit++;
+            return res;
+        }
+        if (CACHESTATS) replacecache.cacheMiss++;
+        
+        PUSHREF(veccompose_rec(LOW(f)));
+        PUSHREF(veccompose_rec(HIGH(f)));
+        res = ite_rec(replacepair[LEVEL(f)], READREF(1), READREF(2));
+        POPREF(2);
+
+        entry.set(f, replaceid, res);
+
+        return res;
+    }
+
+    int bdd_exist(int r, int var) {
+        int res;
+        int numReorder = 1;
+
+        CHECKa(r, bddfalse);
+        CHECKa(var, bddfalse);
+
+        if (ISCONST(var)) /* Empty set */
+            return r;
+
+        if (quantcache == null) quantcache = new OpCache2(cachesize); // quant_rec()
+        if (orcache == null) orcache = new OpCache2(cachesize); // or_rec()
+        
+        again : for (;;) {
+            if (varset2vartable(var) < 0) return bddfalse;
+            try {
+                INITREF();
+                quantid = (var << 3) | CACHEID_EXIST;
+                applyop = bddop_or;
+                if (numReorder == 0) bdd_disable_reorder();
+                res = quant_rec(r);
+                if (numReorder == 0) bdd_enable_reorder();
+            } catch (BDDException x) {
+                bdd_checkreorder();
+                numReorder--;
+                continue again;
+            }
+            break;
+        }
+
+        checkresize();
+        return res;
+    }
+
+    int bdd_forall(int r, int var) {
+        int res;
+        int numReorder = 1;
+
+        CHECKa(r, bddfalse);
+        CHECKa(var, bddfalse);
+
+        if (var < 2) /* Empty set */
+            return r;
+
+        if (quantcache == null) quantcache = new OpCache2(cachesize); // quant_rec()
+        if (andcache == null) andcache = new OpCache2(cachesize); // and_rec()
+        
+        again : for (;;) {
+            if (varset2vartable(var) < 0) return bddfalse;
+            try {
+                INITREF();
+                quantid = (var << 3) | CACHEID_FORALL;
+                applyop = bddop_and;
+                if (numReorder == 0) bdd_disable_reorder();
+                res = quant_rec(r);
+                if (numReorder == 0) bdd_enable_reorder();
+            } catch (BDDException x) {
+                bdd_checkreorder();
+                numReorder--;
+                continue again;
+            }
+            break;
+        }
+
+        checkresize();
+        return res;
+    }
+
+    int bdd_unique(int r, int var) {
+        int res;
+        int numReorder = 1;
+
+        CHECKa(r, bddfalse);
+        CHECKa(var, bddfalse);
+
+        if (var < 2) /* Empty set */
+            return r;
+
+        if (quantcache == null) quantcache = new OpCache2(cachesize);
+        if (applycache == null) applycache = new OpCache2(cachesize);
+        
+        again : for (;;) {
+            try {
+                INITREF();
+                quantid = (var << 3) | CACHEID_UNIQUE;
+                applyop = bddop_xor;
+                if (numReorder == 0) bdd_disable_reorder();
+                res = unique_rec(r, var);
+                if (numReorder == 0) bdd_enable_reorder();
+            } catch (BDDException x) {
+                bdd_checkreorder();
+                numReorder--;
+                continue again;
+            }
+            break;
+        }
+
+        checkresize();
+        return res;
+    }
+
     int unique_rec(int r, int q) {
-        BddCacheDataI entry;
+        OpCache2Entry entry;
         int res;
         int LEVEL_r, LEVEL_q;
 
@@ -1726,14 +2313,12 @@ public class JFactory extends BDDFactory {
         if (r < 2 || q < 2)
             return r;
         
-        entry = BddCache_lookupI(quantcache, QUANTHASH(r));
-        if (entry.a == r && entry.c == quantid) {
-            if (CACHESTATS)
-                cachestats.opHit++;
-            return entry.res;
+        entry = quantcache.lookup(QUANTHASH(r));
+        if ((res = entry.get(r, quantid)) >= 0) {
+            if (CACHESTATS) quantcache.cacheHit++;
+            return res;
         }
-        if (CACHESTATS)
-            cachestats.opMiss++;
+        if (CACHESTATS) quantcache.cacheMiss++;
 
         if (LEVEL_r == LEVEL_q) {
             PUSHREF(unique_rec(LOW(r), HIGH(q)));
@@ -1747,28 +2332,23 @@ public class JFactory extends BDDFactory {
 
         POPREF(2);
 
-        entry.a = r;
-        entry.c = quantid;
-        entry.res = res;
+        entry.set(r, quantid, res);
 
         return res;
     }
     
     int quant_rec(int r) {
-        BddCacheDataI entry;
+        OpCache2Entry entry;
         int res;
 
-        if (r < 2 || LEVEL(r) > quantlast)
-            return r;
+        if (ISCONST(r) || LEVEL(r) > quantlast) return r;
 
-        entry = BddCache_lookupI(quantcache, QUANTHASH(r));
-        if (entry.a == r && entry.c == quantid) {
-            if (CACHESTATS)
-                cachestats.opHit++;
-            return entry.res;
+        entry = quantcache.lookup(QUANTHASH(r));
+        if ((res = entry.get(r, quantid)) >= 0) {
+            if (CACHESTATS) quantcache.cacheHit++;
+            return res;
         }
-        if (CACHESTATS)
-            cachestats.opMiss++;
+        if (CACHESTATS) quantcache.cacheMiss++;
 
         PUSHREF(quant_rec(LOW(r)));
         PUSHREF(quant_rec(HIGH(r)));
@@ -1786,380 +2366,14 @@ public class JFactory extends BDDFactory {
 
         POPREF(2);
 
-        entry.a = r;
-        entry.c = quantid;
-        entry.res = res;
+        entry.set(r, quantid, res);
 
-        return res;
-    }
-
-    int bdd_constrain(int f, int c) {
-        int res;
-        firstReorder = 1;
-
-        CHECKa(f, bddfalse);
-        CHECKa(c, bddfalse);
-
-        if (misccache == null) misccache = BddCacheI_init(cachesize);
-        
-        again : for (;;) {
-            try {
-                INITREF();
-                miscid = CACHEID_CONSTRAIN;
-
-                if (firstReorder == 0)
-                    bdd_disable_reorder();
-                res = constrain_rec(f, c);
-                if (firstReorder == 0)
-                    bdd_enable_reorder();
-            } catch (BDDException x) {
-                bdd_checkreorder();
-
-                if (firstReorder-- == 1)
-                    continue again;
-                res = BDDZERO;
-                /* avoid warning about res being uninitialized */
-            }
-            break;
-        }
-
-        checkresize();
-        return res;
-    }
-
-    int constrain_rec(int f, int c) {
-        BddCacheDataI entry;
-        int res;
-
-        if (ISONE(c))
-            return f;
-        if (ISCONST(f))
-            return f;
-        if (c == f)
-            return BDDONE;
-        if (ISZERO(c))
-            return BDDZERO;
-
-        entry = BddCache_lookupI(misccache, CONSTRAINHASH(f, c));
-        if (entry.a == f && entry.b == c && entry.c == miscid) {
-            if (CACHESTATS)
-                cachestats.opHit++;
-            return entry.res;
-        }
-        if (CACHESTATS)
-            cachestats.opMiss++;
-
-        if (LEVEL(f) == LEVEL(c)) {
-            if (ISZERO(LOW(c)))
-                res = constrain_rec(HIGH(f), HIGH(c));
-            else if (ISZERO(HIGH(c)))
-                res = constrain_rec(LOW(f), LOW(c));
-            else {
-                PUSHREF(constrain_rec(LOW(f), LOW(c)));
-                PUSHREF(constrain_rec(HIGH(f), HIGH(c)));
-                res = bdd_makenode(LEVEL(f), READREF(2), READREF(1));
-                POPREF(2);
-            }
-        } else if (LEVEL(f) < LEVEL(c)) {
-            PUSHREF(constrain_rec(LOW(f), c));
-            PUSHREF(constrain_rec(HIGH(f), c));
-            res = bdd_makenode(LEVEL(f), READREF(2), READREF(1));
-            POPREF(2);
-        } else {
-            if (ISZERO(LOW(c)))
-                res = constrain_rec(f, HIGH(c));
-            else if (ISZERO(HIGH(c)))
-                res = constrain_rec(f, LOW(c));
-            else {
-                PUSHREF(constrain_rec(f, LOW(c)));
-                PUSHREF(constrain_rec(f, HIGH(c)));
-                res = bdd_makenode(LEVEL(c), READREF(2), READREF(1));
-                POPREF(2);
-            }
-        }
-
-        entry.a = f;
-        entry.b = c;
-        entry.c = miscid;
-        entry.res = res;
-
-        return res;
-    }
-
-    int bdd_compose(int f, int g, int var) {
-        int res;
-        firstReorder = 1;
-
-        CHECKa(f, bddfalse);
-        CHECKa(g, bddfalse);
-        if (var < 0 || var >= bddvarnum) {
-            bdd_error(BDD_VAR);
-            return bddfalse;
-        }
-
-        if (applycache == null) applycache = BddCacheI_init(cachesize);
-        if (itecache == null) itecache = BddCacheI_init(cachesize);
-        
-        again : for (;;) {
-            try {
-                INITREF();
-                composelevel = bddvar2level[var];
-                replaceid = (composelevel << 2) | CACHEID_COMPOSE;
-
-                if (firstReorder == 0)
-                    bdd_disable_reorder();
-                res = compose_rec(f, g);
-                if (firstReorder == 0)
-                    bdd_enable_reorder();
-            } catch (BDDException x) {
-                bdd_checkreorder();
-
-                if (firstReorder-- == 1)
-                    continue again;
-                res = BDDZERO;
-                /* avoid warning about res being uninitialized */
-            }
-            break;
-        }
-
-        checkresize();
-        return res;
-    }
-
-    int compose_rec(int f, int g) {
-        BddCacheDataI entry;
-        int res;
-
-        if (LEVEL(f) > composelevel)
-            return f;
-
-        entry = BddCache_lookupI(replacecache, COMPOSEHASH(f, g));
-        if (entry.a == f && entry.b == g && entry.c == replaceid) {
-            if (CACHESTATS)
-                cachestats.opHit++;
-            return entry.res;
-        }
-        if (CACHESTATS)
-            cachestats.opMiss++;
-
-        if (LEVEL(f) < composelevel) {
-            if (LEVEL(f) == LEVEL(g)) {
-                PUSHREF(compose_rec(LOW(f), LOW(g)));
-                PUSHREF(compose_rec(HIGH(f), HIGH(g)));
-                res = bdd_makenode(LEVEL(f), READREF(2), READREF(1));
-            } else if (LEVEL(f) < LEVEL(g)) {
-                PUSHREF(compose_rec(LOW(f), g));
-                PUSHREF(compose_rec(HIGH(f), g));
-                res = bdd_makenode(LEVEL(f), READREF(2), READREF(1));
-            } else {
-                PUSHREF(compose_rec(f, LOW(g)));
-                PUSHREF(compose_rec(f, HIGH(g)));
-                res = bdd_makenode(LEVEL(g), READREF(2), READREF(1));
-            }
-            POPREF(2);
-        } else
-            /*if (LEVEL(f) == composelevel) changed 2-nov-98 */ {
-            res = ite_rec(g, HIGH(f), LOW(f));
-        }
-
-        entry.a = f;
-        entry.b = g;
-        entry.c = replaceid;
-        entry.res = res;
-
-        return res;
-    }
-
-    int bdd_veccompose(int f, bddPair pair) {
-        int res;
-        firstReorder = 1;
-
-        CHECKa(f, bddfalse);
-
-        if (applycache == null) applycache = BddCacheI_init(cachesize);
-        if (itecache == null) itecache = BddCacheI_init(cachesize);
-        if (replacecache == null) replacecache = BddCacheI_init(cachesize);
-        
-        again : for (;;) {
-            try {
-                INITREF();
-                replacepair = pair.result;
-                replaceid = (pair.id << 2) | CACHEID_VECCOMPOSE;
-                replacelast = pair.last;
-
-                if (firstReorder == 0)
-                    bdd_disable_reorder();
-                res = veccompose_rec(f);
-                if (firstReorder == 0)
-                    bdd_enable_reorder();
-            } catch (BDDException x) {
-                bdd_checkreorder();
-
-                if (firstReorder-- == 1)
-                    continue again;
-                res = BDDZERO;
-                /* avoid warning about res being uninitialized */
-            }
-            break;
-        }
-
-        checkresize();
-        return res;
-    }
-
-    int veccompose_rec(int f) {
-        BddCacheDataI entry;
-        int res;
-
-        if (LEVEL(f) > replacelast)
-            return f;
-
-        entry = BddCache_lookupI(replacecache, VECCOMPOSEHASH(f));
-        if (entry.a == f && entry.c == replaceid) {
-            if (CACHESTATS)
-                cachestats.opHit++;
-            return entry.res;
-        }
-        if (CACHESTATS)
-            cachestats.opMiss++;
-
-        PUSHREF(veccompose_rec(LOW(f)));
-        PUSHREF(veccompose_rec(HIGH(f)));
-        res = ite_rec(replacepair[LEVEL(f)], READREF(1), READREF(2));
-        POPREF(2);
-
-        entry.a = f;
-        entry.c = replaceid;
-        entry.res = res;
-
-        return res;
-    }
-
-    int bdd_exist(int r, int var) {
-        int res;
-        firstReorder = 1;
-
-        CHECKa(r, bddfalse);
-        CHECKa(var, bddfalse);
-
-        if (var < 2) /* Empty set */
-            return r;
-
-        if (applycache == null) applycache = BddCacheI_init(cachesize);
-        if (quantcache == null) quantcache = BddCacheI_init(cachesize);
-        
-        again : for (;;) {
-            if (varset2vartable(var) < 0)
-                return bddfalse;
-            try {
-                INITREF();
-
-                quantid = (var << 3) | CACHEID_EXIST; /* FIXME: range */
-                applyop = bddop_or;
-
-                if (firstReorder == 0)
-                    bdd_disable_reorder();
-                res = quant_rec(r);
-                if (firstReorder == 0)
-                    bdd_enable_reorder();
-            } catch (BDDException x) {
-                bdd_checkreorder();
-
-                if (firstReorder-- == 1)
-                    continue again;
-                res = BDDZERO;
-                /* avoid warning about res being uninitialized */
-            }
-            break;
-        }
-
-        checkresize();
-        return res;
-    }
-
-    int bdd_forall(int r, int var) {
-        int res;
-        firstReorder = 1;
-
-        CHECKa(r, bddfalse);
-        CHECKa(var, bddfalse);
-
-        if (var < 2) /* Empty set */
-            return r;
-
-        if (applycache == null) applycache = BddCacheI_init(cachesize);
-        if (quantcache == null) quantcache = BddCacheI_init(cachesize);
-        
-        again : for (;;) {
-            if (varset2vartable(var) < 0)
-                return bddfalse;
-            try {
-                INITREF();
-                quantid = (var << 3) | CACHEID_FORALL;
-                applyop = bddop_and;
-
-                if (firstReorder == 0)
-                    bdd_disable_reorder();
-                res = quant_rec(r);
-                if (firstReorder == 0)
-                    bdd_enable_reorder();
-            } catch (BDDException x) {
-                bdd_checkreorder();
-
-                if (firstReorder-- == 1)
-                    continue again;
-                res = BDDZERO;
-                /* avoid warning about res being uninitialized */
-            }
-            break;
-        }
-
-        checkresize();
-        return res;
-    }
-
-    int bdd_unique(int r, int var) {
-        int res;
-        firstReorder = 1;
-
-        CHECKa(r, bddfalse);
-        CHECKa(var, bddfalse);
-
-        if (var < 2) /* Empty set */
-            return r;
-
-        if (applycache == null) applycache = BddCacheI_init(cachesize);
-        if (quantcache == null) quantcache = BddCacheI_init(cachesize);
-        
-        again : for (;;) {
-            try {
-                INITREF();
-                quantid = (var << 3) | CACHEID_UNIQUE;
-                applyop = bddop_xor;
-
-                if (firstReorder == 0)
-                    bdd_disable_reorder();
-                res = unique_rec(r, var);
-                if (firstReorder == 0)
-                    bdd_enable_reorder();
-            } catch (BDDException x) {
-                bdd_checkreorder();
-
-                if (firstReorder-- == 1)
-                    continue again;
-                res = BDDZERO;
-                /* avoid warning about res being uninitialized */
-            }
-            break;
-        }
-
-        checkresize();
         return res;
     }
 
     int bdd_restrict(int r, int var) {
         int res;
-        firstReorder = 1;
+        int numReorder = 1;
 
         CHECKa(r, bddfalse);
         CHECKa(var, bddfalse);
@@ -2167,27 +2381,21 @@ public class JFactory extends BDDFactory {
         if (var < 2) /* Empty set */
             return r;
 
-        if (misccache == null) misccache = BddCacheI_init(cachesize);
+        if (quantcache == null) quantcache = new OpCache2(cachesize);
         
         again : for (;;) {
             if (varset2svartable(var) < 0)
                 return bddfalse;
             try {
                 INITREF();
-                miscid = (var << 3) | CACHEID_RESTRICT;
-
-                if (firstReorder == 0)
-                    bdd_disable_reorder();
+                quantid = (var << 3) | CACHEID_RESTRICT;
+                if (numReorder == 0) bdd_disable_reorder();
                 res = restrict_rec(r);
-                if (firstReorder == 0)
-                    bdd_enable_reorder();
+                if (numReorder == 0) bdd_enable_reorder();
             } catch (BDDException x) {
                 bdd_checkreorder();
-
-                if (firstReorder-- == 1)
-                    continue again;
-                res = BDDZERO;
-                /* avoid warning about res being uninitialized */
+                numReorder--;
+                continue again;
             }
             break;
         }
@@ -2197,20 +2405,16 @@ public class JFactory extends BDDFactory {
     }
 
     int restrict_rec(int r) {
-        BddCacheDataI entry;
+        OpCache2Entry entry;
         int res;
 
-        if (ISCONST(r) || LEVEL(r) > quantlast)
-            return r;
-
-        entry = BddCache_lookupI(misccache, RESTRHASH(r, miscid));
-        if (entry.a == r && entry.c == miscid) {
-            if (CACHESTATS)
-                cachestats.opHit++;
-            return entry.res;
+        if (ISCONST(r) || LEVEL(r) > quantlast) return r;
+        entry = quantcache.lookup(RESTRHASH(r, quantid));
+        if ((res = entry.get(r, quantid)) >= 0) {
+            if (CACHESTATS) quantcache.cacheHit++;
+            return res;
         }
-        if (CACHESTATS)
-            cachestats.opMiss++;
+        if (CACHESTATS) quantcache.cacheMiss++;
 
         if (INSVARSET(LEVEL(r))) {
             if (quantvarset[LEVEL(r)] > 0) {
@@ -2225,39 +2429,32 @@ public class JFactory extends BDDFactory {
             POPREF(2);
         }
 
-        entry.a = r;
-        entry.c = miscid;
-        entry.res = res;
+        entry.set(r, quantid, res);
 
         return res;
     }
 
     int bdd_simplify(int f, int d) {
         int res;
-        firstReorder = 1;
+        int numReorder = 1;
 
         CHECKa(f, bddfalse);
         CHECKa(d, bddfalse);
 
-        if (applycache == null) applycache = BddCacheI_init(cachesize);
+        if (applycache == null) applycache = new OpCache2(cachesize);
+        if (orcache == null) orcache = new OpCache2(cachesize);
         
         again : for (;;) {
             try {
                 INITREF();
                 applyop = bddop_or;
-
-                if (firstReorder == 0)
-                    bdd_disable_reorder();
+                if (numReorder == 0) bdd_disable_reorder();
                 res = simplify_rec(f, d);
-                if (firstReorder == 0)
-                    bdd_enable_reorder();
+                if (numReorder == 0) bdd_enable_reorder();
             } catch (BDDException x) {
                 bdd_checkreorder();
-
-                if (firstReorder-- == 1)
-                    continue again;
-                res = BDDZERO;
-                /* avoid warning about res being uninitialized */
+                numReorder--;
+                continue again;
             }
             break;
         }
@@ -2267,57 +2464,50 @@ public class JFactory extends BDDFactory {
     }
 
     int simplify_rec(int f, int d) {
-        BddCacheDataI entry;
+        OpCache2Entry entry;
         int res;
 
-        if (ISONE(d) || ISCONST(f))
-            return f;
-        if (d == f)
-            return BDDONE;
-        if (ISZERO(d))
-            return BDDZERO;
+        if (ISONE(d) || ISCONST(f)) return f;
+        if (d == f) return BDDONE;
+        if (ISZERO(d)) return BDDZERO;
 
-        entry = BddCache_lookupI(applycache, APPLYHASH(f, d, bddop_simplify));
-
-        if (entry.a == f && entry.b == d && entry.c == bddop_simplify) {
-            if (CACHESTATS)
-                cachestats.opHit++;
-            return entry.res;
+        entry = applycache.lookup(APPLYHASH(f, d, bddop_simplify));
+        if ((res = entry.get_sid(f, d, bddop_simplify << NODE_BITS)) >= 0) {
+            if (CACHESTATS) applycache.cacheHit++;
+            return res;
         }
-        if (CACHESTATS)
-            cachestats.opMiss++;
+        if (CACHESTATS) applycache.cacheMiss++;
 
-        if (LEVEL(f) == LEVEL(d)) {
-            if (ISZERO(LOW(d)))
-                res = simplify_rec(HIGH(f), HIGH(d));
-            else if (ISZERO(HIGH(d)))
-                res = simplify_rec(LOW(f), LOW(d));
+        int LEVEL_f = LEVEL(f);
+        int LEVEL_d = LEVEL(d);
+        if (LEVEL_f == LEVEL_d) {
+            int LOW_d = LOW(d);
+            int HIGH_d = HIGH(d);
+            if (ISZERO(LOW_d))
+                res = simplify_rec(HIGH(f), HIGH_d);
+            else if (ISZERO(HIGH_d))
+                res = simplify_rec(LOW(f), LOW_d);
             else {
-                PUSHREF(simplify_rec(LOW(f), LOW(d)));
-                PUSHREF(simplify_rec(HIGH(f), HIGH(d)));
-                res = bdd_makenode(LEVEL(f), READREF(2), READREF(1));
+                PUSHREF(simplify_rec(LOW(f), LOW_d));
+                PUSHREF(simplify_rec(HIGH(f), HIGH_d));
+                res = bdd_makenode(LEVEL_f, READREF(2), READREF(1));
                 POPREF(2);
             }
-        } else if (LEVEL(f) < LEVEL(d)) {
+        } else if (LEVEL_f < LEVEL_d) {
             PUSHREF(simplify_rec(LOW(f), d));
             PUSHREF(simplify_rec(HIGH(f), d));
-            res = bdd_makenode(LEVEL(f), READREF(2), READREF(1));
+            res = bdd_makenode(LEVEL_f, READREF(2), READREF(1));
             POPREF(2);
-        } else /* LEVEL(d) < LEVEL(f) */ {
+        } else /* LEVEL_d < LEVEL_f */ {
             PUSHREF(or_rec(LOW(d), HIGH(d))); /* Exist quant */
             res = simplify_rec(f, READREF(1));
             POPREF(1);
         }
 
-        entry.a = f;
-        entry.b = d;
-        entry.c = bddop_simplify;
-        entry.res = res;
+        entry.set_sid(f, d, bddop_simplify << NODE_BITS, res);
 
         return res;
     }
-
-    static int supportSize = 0;
 
     int bdd_support(int r) {
         int n;
@@ -2325,14 +2515,11 @@ public class JFactory extends BDDFactory {
 
         CHECKa(r, bddfalse);
 
-        if (r < 2)
-            return bddtrue;
+        if (ISCONST(r)) return bddtrue;
 
         /* On-demand allocation of support set */
-        if (supportSize < bddvarnum) {
+        if (supportSet == null || supportSet.length < bddvarnum) {
             supportSet = new int[bddvarnum];
-            //memset(supportSet, 0, bddvarnum*sizeof(int));
-            supportSize = bddvarnum;
             supportID = 0;
         }
 
@@ -2352,7 +2539,7 @@ public class JFactory extends BDDFactory {
         supportMin = LEVEL(r);
         supportMax = supportMin;
 
-        support_rec(r, supportSet);
+        support_rec(r);
         bdd_unmark(r);
 
         bdd_disable_reorder();
@@ -2371,129 +2558,24 @@ public class JFactory extends BDDFactory {
         return res;
     }
 
-    void support_rec(int r, int[] support) {
-
-        if (r < 2)
+    void support_rec(int r) {
+        if (ISCONST(r) ||
+            MARKED(r))
             return;
 
-        if (MARKED(r) || LOW(r) == -1)
-            return;
-
-        support[LEVEL(r)] = supportID;
-
-        if (LEVEL(r) > supportMax)
-            supportMax = LEVEL(r);
-
+        supportSet[LEVEL(r)] = supportID;
+        if (LEVEL(r) > supportMax) supportMax = LEVEL(r);
         SETMARK(r);
 
-        support_rec(LOW(r), support);
-        support_rec(HIGH(r), support);
-    }
-
-    int bdd_appall(int l, int r, int opr, int var) {
-        int res;
-        firstReorder = 1;
-
-        CHECKa(l, bddfalse);
-        CHECKa(r, bddfalse);
-        CHECKa(var, bddfalse);
-
-        if (opr < 0 || opr > bddop_invimp) {
-            bdd_error(BDD_OP);
-            return bddfalse;
-        }
-
-        if (var < 2) /* Empty set */
-            return bdd_apply(l, r, opr);
-
-        if (applycache == null) applycache = BddCacheI_init(cachesize);
-        if (appexcache == null) appexcache = BddCacheI_init(cachesize);
-        if (quantcache == null) quantcache = BddCacheI_init(cachesize);
-        
-        again : for (;;) {
-            if (varset2vartable(var) < 0)
-                return bddfalse;
-            try {
-                INITREF();
-                applyop = bddop_and;
-                appexop = opr;
-                appexid = (var << 5) | (appexop << 1) | 1; /* FIXME: range! */
-                quantid = (appexid << 3) | CACHEID_APPAL;
-
-                if (firstReorder == 0)
-                    bdd_disable_reorder();
-                res = appquant_rec(l, r);
-                if (firstReorder == 0)
-                    bdd_enable_reorder();
-            } catch (BDDException x) {
-                bdd_checkreorder();
-
-                if (firstReorder-- == 1)
-                    continue again;
-                res = BDDZERO;
-                /* avoid warning about res being uninitialized */
-            }
-            break;
-        }
-
-        checkresize();
-        return res;
-    }
-
-    int bdd_appuni(int l, int r, int opr, int var) {
-        int res;
-        firstReorder = 1;
-
-        CHECKa(l, bddfalse);
-        CHECKa(r, bddfalse);
-        CHECKa(var, bddfalse);
-
-        if (opr < 0 || opr > bddop_invimp) {
-            bdd_error(BDD_OP);
-            return bddfalse;
-        }
-
-        if (var < 2) /* Empty set */
-            return bdd_apply(l, r, opr);
-
-        if (applycache == null) applycache = BddCacheI_init(cachesize);
-        if (appexcache == null) appexcache = BddCacheI_init(cachesize);
-        if (quantcache == null) quantcache = BddCacheI_init(cachesize);
-        
-        again : for (;;) {
-            try {
-                INITREF();
-                applyop = bddop_xor;
-                appexop = opr;
-                appexid = (var << 5) | (appexop << 1) | 1; /* FIXME: range! */
-                quantid = (appexid << 3) | CACHEID_APPUN;
-
-                if (firstReorder == 0)
-                    bdd_disable_reorder();
-                res = appuni_rec(l, r, var);
-                if (firstReorder == 0)
-                    bdd_enable_reorder();
-            } catch (BDDException x) {
-                bdd_checkreorder();
-
-                if (firstReorder-- == 1)
-                    continue again;
-                res = BDDZERO;
-                /* avoid warning about res being uninitialized */
-            }
-            break;
-        }
-
-        checkresize();
-        return res;
+        support_rec(LOW(r));
+        support_rec(HIGH(r));
     }
 
     int bdd_satone(int r) {
         int res;
 
         CHECKa(r, bddfalse);
-        if (r < 2)
-            return r;
+        if (ISCONST(r)) return r;
 
         bdd_disable_reorder();
 
@@ -2507,8 +2589,7 @@ public class JFactory extends BDDFactory {
     }
 
     int satone_rec(int r) {
-        if (ISCONST(r))
-            return r;
+        if (ISCONST(r)) return r;
 
         if (ISZERO(LOW(r))) {
             int res = satone_rec(HIGH(r));
@@ -2527,8 +2608,7 @@ public class JFactory extends BDDFactory {
         int res;
 
         CHECKa(r, bddfalse);
-        if (ISZERO(r))
-            return r;
+        if (ISZERO(r)) return r;
         if (!ISCONST(pol)) {
             bdd_error(BDD_ILLBDD);
             return bddfalse;
@@ -2547,41 +2627,45 @@ public class JFactory extends BDDFactory {
     }
 
     int satoneset_rec(int r, int var) {
-        if (ISCONST(r) && ISCONST(var))
-            return r;
+        if (ISCONST(r) && ISCONST(var)) return r;
 
-        if (LEVEL(r) < LEVEL(var)) {
-            if (ISZERO(LOW(r))) {
+        int LEVEL_r = LEVEL(r);
+        int LEVEL_var = LEVEL(var);
+        if (LEVEL_r < LEVEL_var) {
+            int LOW_r = LOW(r);
+            if (ISZERO(LOW_r)) {
                 int res = satoneset_rec(HIGH(r), var);
-                int m = bdd_makenode(LEVEL(r), BDDZERO, res);
+                int m = bdd_makenode(LEVEL_r, BDDZERO, res);
                 PUSHREF(m);
                 return m;
             } else {
-                int res = satoneset_rec(LOW(r), var);
-                int m = bdd_makenode(LEVEL(r), res, BDDZERO);
+                int res = satoneset_rec(LOW_r, var);
+                int m = bdd_makenode(LEVEL_r, res, BDDZERO);
                 PUSHREF(m);
                 return m;
             }
-        } else if (LEVEL(var) < LEVEL(r)) {
+        } else if (LEVEL_var < LEVEL_r) {
             int res = satoneset_rec(r, HIGH(var));
             if (satPolarity == BDDONE) {
-                int m = bdd_makenode(LEVEL(var), BDDZERO, res);
+                int m = bdd_makenode(LEVEL_var, BDDZERO, res);
                 PUSHREF(m);
                 return m;
             } else {
-                int m = bdd_makenode(LEVEL(var), res, BDDZERO);
+                int m = bdd_makenode(LEVEL_var, res, BDDZERO);
                 PUSHREF(m);
                 return m;
             }
-        } else /* LEVEL(r) == LEVEL(var) */ {
-            if (ISZERO(LOW(r))) {
-                int res = satoneset_rec(HIGH(r), HIGH(var));
-                int m = bdd_makenode(LEVEL(r), BDDZERO, res);
+        } else /* LEVEL_r == LEVEL_var */ {
+            int LOW_r = LOW(r);
+            int HIGH_var = HIGH(var);
+            if (ISZERO(LOW_r)) {
+                int res = satoneset_rec(HIGH(r), HIGH_var);
+                int m = bdd_makenode(LEVEL_r, BDDZERO, res);
                 PUSHREF(m);
                 return m;
             } else {
-                int res = satoneset_rec(LOW(r), HIGH(var));
-                int m = bdd_makenode(LEVEL(r), res, BDDZERO);
+                int res = satoneset_rec(LOW_r, HIGH_var);
+                int m = bdd_makenode(LEVEL_r, res, BDDZERO);
                 PUSHREF(m);
                 return m;
             }
@@ -2594,8 +2678,7 @@ public class JFactory extends BDDFactory {
         int v;
 
         CHECKa(r, bddfalse);
-        if (r == 0)
-            return 0;
+        if (ISZERO(r)) return 0;
 
         bdd_disable_reorder();
 
@@ -2613,27 +2696,23 @@ public class JFactory extends BDDFactory {
     }
 
     int fullsatone_rec(int r) {
-        if (r < 2)
-            return r;
+        if (ISCONST(r)) return r;
 
-        if (LOW(r) != 0) {
-            int res = fullsatone_rec(LOW(r));
-            int v;
-
-            for (v = LEVEL(LOW(r)) - 1; v > LEVEL(r); v--) {
+        int LOW_r = LOW(r);
+        int LEVEL_r = LEVEL(r);
+        if (LOW_r != 0) {
+            int res = fullsatone_rec(LOW_r);
+            for (int v = LEVEL(LOW_r) - 1; v > LEVEL_r; v--) {
                 res = PUSHREF(bdd_makenode(v, res, 0));
             }
-
-            return PUSHREF(bdd_makenode(LEVEL(r), res, 0));
+            return PUSHREF(bdd_makenode(LEVEL_r, res, 0));
         } else {
-            int res = fullsatone_rec(HIGH(r));
-            int v;
-
-            for (v = LEVEL(HIGH(r)) - 1; v > LEVEL(r); v--) {
+            int HIGH_r = HIGH(r);
+            int res = fullsatone_rec(HIGH_r);
+            for (int v = LEVEL(HIGH_r) - 1; v > LEVEL_r; v--) {
                 res = PUSHREF(bdd_makenode(v, res, 0));
             }
-
-            return PUSHREF(bdd_makenode(LEVEL(r), 0, res));
+            return PUSHREF(bdd_makenode(LEVEL_r, 0, res));
         }
     }
 
@@ -2644,10 +2723,9 @@ public class JFactory extends BDDFactory {
         bddfreenum = 0;
 
         for (n = bddnodesize - 1; n >= 2; n--) {
-            if (LOW(n) != -1) {
-                int hash2;
-
-                hash2 = NODEHASH(LEVEL(n), LOW(n), HIGH(n));
+            int LOW_n = LOW(n);
+            if (LOW_n != INVALID_BDD) {
+                int hash2 = NODEHASH(LEVEL(n), LOW_n, HIGH(n));
                 SETNEXT(n, HASH(hash2));
                 SETHASH(hash2, n);
             } else {
@@ -2658,21 +2736,21 @@ public class JFactory extends BDDFactory {
         }
     }
 
-    long clock() {
+    final long clock() {
         return System.currentTimeMillis();
     }
 
-    void INITREF() {
+    final void INITREF() {
         bddrefstacktop = 0;
     }
-    int PUSHREF(int a) {
+    final int PUSHREF(int a) {
         bddrefstack[bddrefstacktop++] = a;
         return a;
     }
-    int READREF(int a) {
+    final int READREF(int a) {
         return bddrefstack[bddrefstacktop - a];
     }
-    void POPREF(int a) {
+    final void POPREF(int a) {
         bddrefstacktop -= a;
     }
 
@@ -2704,7 +2782,6 @@ public class JFactory extends BDDFactory {
         CHECK(r);
 
         int[] varprofile = new int[bddvarnum];
-
         varprofile_rec(r, varprofile);
         bdd_unmark(r);
         return varprofile;
@@ -2712,11 +2789,7 @@ public class JFactory extends BDDFactory {
 
     void varprofile_rec(int r, int[] varprofile) {
 
-        if (r < 2)
-            return;
-
-        if (MARKED(r))
-            return;
+        if (ISCONST(r) || MARKED(r)) return;
 
         varprofile[bddlevel2var[LEVEL(r)]]++;
         SETMARK(r);
@@ -2730,29 +2803,29 @@ public class JFactory extends BDDFactory {
 
         miscid = CACHEID_PATHCOU;
 
-        if (countcache == null) countcache = BddCacheD_init(cachesize);
+        if (countcache == null) countcache = new OpCache2(cachesize);
         
         return bdd_pathcount_rec(r);
     }
 
-    double bdd_pathcount_rec(int r) {
-        BddCacheDataD entry;
-        double size;
+    float bdd_pathcount_rec(int r) {
+        OpCache2Entry entry;
+        float size;
 
-        if (ISZERO(r))
-            return 0.0;
-        if (ISONE(r))
-            return 1.0;
+        if (ISZERO(r)) return 0f;
+        if (ISONE(r)) return 1f;
 
-        entry = BddCache_lookupD(countcache, PATHCOUHASH(r));
-        if (entry.a == r && entry.c == miscid)
-            return entry.dres;
+        int res;
+        entry = countcache.lookup(PATHCOUHASH(r));
+        if ((res = entry.get(r, miscid)) != -1) {
+            if (CACHESTATS) countcache.cacheHit++;
+            return Float.intBitsToFloat(res);
+        }
+        if (CACHESTATS) countcache.cacheMiss++;
 
         size = bdd_pathcount_rec(LOW(r)) + bdd_pathcount_rec(HIGH(r));
 
-        entry.a = r;
-        entry.c = miscid;
-        entry.dres = size;
+        entry.set(r, miscid, Float.floatToIntBits(size));
 
         return size;
     }
@@ -2771,7 +2844,6 @@ public class JFactory extends BDDFactory {
 
         allsat_rec(r, result);
 
-        free(allsatProfile);
         allsatProfile = null;
     }
 
@@ -2784,39 +2856,42 @@ public class JFactory extends BDDFactory {
             return;
         }
 
-        if (ISZERO(r))
-            return;
+        if (ISZERO(r)) return;
 
-        if (!ISZERO(LOW(r))) {
+        int LOW_r = LOW(r);
+        int HIGH_r = HIGH(r);
+        int LEVEL_r = LEVEL(r);
+        if (!ISZERO(LOW_r)) {
             int v;
 
-            allsatProfile[bddlevel2var[LEVEL(r)]] = 0;
+            allsatProfile[bddlevel2var[LEVEL_r]] = 0;
 
-            for (v = LEVEL(LOW(r)) - 1; v > LEVEL(r); --v) {
+            for (v = LEVEL(LOW_r) - 1; v > LEVEL_r; --v) {
                 allsatProfile[bddlevel2var[v]] = -1;
             }
 
-            allsat_rec(LOW(r), result);
+            allsat_rec(LOW_r, result);
         }
 
-        if (!ISZERO(HIGH(r))) {
+        if (!ISZERO(HIGH_r)) {
             int v;
 
-            allsatProfile[bddlevel2var[LEVEL(r)]] = 1;
+            allsatProfile[bddlevel2var[LEVEL_r]] = 1;
 
-            for (v = LEVEL(HIGH(r)) - 1; v > LEVEL(r); --v) {
+            for (v = LEVEL(HIGH_r) - 1; v > LEVEL_r; --v) {
                 allsatProfile[bddlevel2var[v]] = -1;
             }
 
-            allsat_rec(HIGH(r), result);
+            allsat_rec(HIGH_r, result);
         }
     }
+    
     double bdd_satcount(int r) {
         double size = 1;
 
         CHECK(r);
 
-        if (countcache == null) countcache = BddCacheD_init(cachesize);
+        if (countcache == null) countcache = new OpCache2(cachesize);
         
         miscid = CACHEID_SATCOU;
         size = Math.pow(2.0, (double) LEVEL(r));
@@ -2839,30 +2914,33 @@ public class JFactory extends BDDFactory {
         return unused >= 1.0 ? unused : 1.0;
     }
 
-    double satcount_rec(int root) {
-        BddCacheDataD entry;
-        double size, s;
+    float satcount_rec(int r) {
+        OpCache2Entry entry;
+        float size, s;
 
-        if (root < 2)
-            return root;
+        if (ISCONST(r)) return r;
 
-        entry = BddCache_lookupD(countcache, SATCOUHASH(root));
-        if (entry.a == root && entry.c == miscid)
-            return entry.dres;
+        int res;
+        entry = countcache.lookup(SATCOUHASH(r));
+        if ((res = entry.get(r, miscid)) != -1) {
+            if (CACHESTATS) countcache.cacheHit++;
+            return Float.intBitsToFloat(res);
+        }
 
         size = 0;
         s = 1;
 
-        s *= Math.pow(2.0, (float) (LEVEL(LOW(root)) - LEVEL(root) - 1));
-        size += s * satcount_rec(LOW(root));
+        int LEVEL_r = LEVEL(r);
+        int LOW_r = LOW(r);
+        int HIGH_r = HIGH(r);
+        s *= Math.pow(2.0, (float) (LEVEL(LOW_r) - LEVEL_r - 1));
+        size += s * satcount_rec(LOW_r);
 
         s = 1;
-        s *= Math.pow(2.0, (float) (LEVEL(HIGH(root)) - LEVEL(root) - 1));
-        size += s * satcount_rec(HIGH(root));
+        s *= Math.pow(2.0, (float) (LEVEL(HIGH_r) - LEVEL_r - 1));
+        size += s * satcount_rec(HIGH_r);
 
-        entry.a = root;
-        entry.c = miscid;
-        entry.dres = size;
+        entry.set(r, miscid, Float.floatToIntBits(size));
 
         return size;
     }
@@ -2872,15 +2950,12 @@ public class JFactory extends BDDFactory {
         int n;
         long c2, c1 = clock();
 
-        //if (gbc_handler != NULL)
-        {
-            gcstats.nodes = bddnodesize;
-            gcstats.freenodes = bddfreenum;
-            gcstats.time = 0;
-            gcstats.sumtime = gbcclock;
-            gcstats.num = gbcollectnum;
-            gbc_handler(true, gcstats);
-        }
+        gcstats.nodes = bddnodesize;
+        gcstats.freenodes = bddfreenum;
+        gcstats.time = 0;
+        gcstats.sumtime = gbcclock;
+        gcstats.num = gbcollectnum;
+        gbc_handler(true, gcstats);
 
         for (r = 0; r < bddrefstacktop; r++)
             bdd_mark(bddrefstack[r]);
@@ -2895,16 +2970,15 @@ public class JFactory extends BDDFactory {
         bddfreenum = 0;
 
         for (n = bddnodesize - 1; n >= 2; n--) {
-
-            if (MARKED(n) && LOW(n) != -1) {
+            int LOW_n = LOW(n);
+            if (MARKED(n) && LOW_n != INVALID_BDD) {
                 int hash2;
-
                 UNMARK(n);
-                hash2 = NODEHASH(LEVEL(n), LOW(n), HIGH(n));
+                hash2 = NODEHASH(LEVEL(n), LOW_n, HIGH(n));
                 SETNEXT(n, HASH(hash2));
                 SETHASH(hash2, n);
             } else {
-                SETLOW(n, -1);
+                SETLOW(n, INVALID_BDD);
                 SETNEXT(n, bddfreepos);
                 bddfreepos = n;
                 bddfreenum++;
@@ -2921,27 +2995,24 @@ public class JFactory extends BDDFactory {
         gbcclock += c2 - c1;
         gbcollectnum++;
 
-        //if (gbc_handler != NULL)
-        {
-            gcstats.nodes = bddnodesize;
-            gcstats.freenodes = bddfreenum;
-            gcstats.time = c2 - c1;
-            gcstats.sumtime = gbcclock;
-            gcstats.num = gbcollectnum;
-            gbc_handler(false, gcstats);
-        }
+        gcstats.nodes = bddnodesize;
+        gcstats.freenodes = bddfreenum;
+        gcstats.time = c2 - c1;
+        gcstats.sumtime = gbcclock;
+        gcstats.num = gbcollectnum;
+        gbc_handler(false, gcstats);
         
         //validate_all();
     }
 
     int bdd_addref(int root) {
-        if (root == -1)
+        if (root == INVALID_BDD)
             bdd_error(BDD_BREAK); /* distinctive */
         if (root < 2 || !bddrunning)
             return root;
         if (root >= bddnodesize)
             return bdd_error(BDD_ILLBDD);
-        if (LOW(root) == -1)
+        if (LOW(root) == INVALID_BDD)
             return bdd_error(BDD_ILLBDD);
 
         INCREF(root);
@@ -2950,13 +3021,13 @@ public class JFactory extends BDDFactory {
     }
 
     int bdd_delref(int root) {
-        if (root == -1)
+        if (root == INVALID_BDD)
             bdd_error(BDD_BREAK); /* distinctive */
         if (root < 2 || !bddrunning)
             return root;
         if (root >= bddnodesize)
             return bdd_error(BDD_ILLBDD);
-        if (LOW(root) == -1)
+        if (LOW(root) == INVALID_BDD)
             return bdd_error(BDD_ILLBDD);
 
         /* if the following line is present, fails there much earlier */
@@ -2969,11 +3040,8 @@ public class JFactory extends BDDFactory {
     }
 
     void bdd_mark(int i) {
-
-        if (i < 2)
-            return;
-
-        if (MARKED(i) || LOW(i) == -1)
+        
+        if (ISCONST(i) || MARKED(i))
             return;
 
         SETMARK(i);
@@ -2982,29 +3050,9 @@ public class JFactory extends BDDFactory {
         bdd_mark(HIGH(i));
     }
 
-    void bdd_mark_upto(int i, int level) {
-
-        if (i < 2)
-            return;
-
-        if (MARKED(i) || LOW(i) == -1)
-            return;
-
-        if (LEVEL(i) > level)
-            return;
-
-        SETMARK(i);
-
-        bdd_mark_upto(LOW(i), level);
-        bdd_mark_upto(LOW(i), level);
-    }
-
     void bdd_markcount(int i, int[] cou) {
 
-        if (i < 2)
-            return;
-
-        if (MARKED(i) || LOW(i) == -1)
+        if (ISCONST(i) || MARKED(i))
             return;
 
         SETMARK(i);
@@ -3016,46 +3064,23 @@ public class JFactory extends BDDFactory {
 
     void bdd_unmark(int i) {
 
-        if (i < 2)
+        if (ISCONST(i) || !MARKED(i))
             return;
-
-        if (!MARKED(i) || LOW(i) == -1)
-            return;
+        
         UNMARK(i);
 
         bdd_unmark(LOW(i));
         bdd_unmark(HIGH(i));
     }
 
-    void bdd_unmark_upto(int i, int level2) {
-
-        if (i < 2)
-            return;
-
-        if (!MARKED(i))
-            return;
-
-        UNMARK(i);
-
-        if (LEVEL(i) > level2)
-            return;
-
-        bdd_unmark_upto(LOW(i), level2);
-        bdd_unmark_upto(HIGH(i), level2);
-    }
-
-    public static final boolean CACHESTATS = false;
-
     int bdd_makenode(int level, int low, int high) {
         int hash2;
         int res;
 
-        if (CACHESTATS)
-            cachestats.uniqueAccess++;
+        if (CACHESTATS) cachestats.uniqueAccess++;
 
         /* check whether childs are equal */
-        if (low == high)
-            return low;
+        if (low == high) return low;
 
         /* Try to find an existing node of this kind */
         hash2 = NODEHASH(level, low, high);
@@ -3063,35 +3088,27 @@ public class JFactory extends BDDFactory {
 
         while (res != 0) {
             if (LEVEL(res) == level && LOW(res) == low && HIGH(res) == high) {
-                if (CACHESTATS)
-                    cachestats.uniqueHit++;
+                if (CACHESTATS) cachestats.uniqueHit++;
                 return res;
             }
-
             res = NEXT(res);
-            if (CACHESTATS)
-                cachestats.uniqueChain++;
+            if (CACHESTATS) cachestats.uniqueChain++;
         }
 
         /* No existing node => build one */
-        if (CACHESTATS)
-            cachestats.uniqueMiss++;
+        if (CACHESTATS) cachestats.uniqueMiss++;
 
         /* Any free nodes to use ? */
         if (bddfreepos == 0) {
-            if (bdderrorcond != 0)
-                return 0;
+            if (bdderrorcond != 0) return 0;
 
             /* Try to allocate more nodes */
             bdd_gbc();
 
-            /*
-            if ((bddnodesize-bddfreenum) >= usednodes_nextreorder  &&
-             bdd_reorder_ready())
-            {
-            longjmp(bddexception,1);
+            if ((bddnodesize-bddfreenum) >= usednodes_nextreorder &&
+                bdd_reorder_ready()) {
+                throw new BDDException("Reordering triggered");
             }
-            */
 
             if ((bddfreenum * 100) / bddnodesize <= minfreenodes) {
                 bdd_noderesize(true);
@@ -3100,8 +3117,8 @@ public class JFactory extends BDDFactory {
 
             /* Panic if that is not possible */
             if (bddfreepos == 0) {
-                bdd_error(BDD_NODENUM);
                 bdderrorcond = Math.abs(BDD_NODENUM);
+                bdd_error(BDD_NODENUM);
                 return 0;
             }
         }
@@ -3112,12 +3129,7 @@ public class JFactory extends BDDFactory {
         bddfreenum--;
         bddproduced++;
 
-        SETLEVELANDMARK(res, level);
-        SETLOW(res, low);
-        SETHIGH(res, high);
-
-        /* Insert node */
-        SETNEXT(res, HASH(hash2));
+        INIT_NODE(res, level, low, high, HASH(hash2));
         SETHASH(hash2, res);
 
         return res;
@@ -3180,10 +3192,7 @@ public class JFactory extends BDDFactory {
                 SETHASH(n, 0);
 
         for (n = oldsize; n < bddnodesize; n++) {
-            SETLOW(n, -1);
-            //SETREFCOU(n, 0);
-            //SETHASH(n, 0);
-            //SETLEVEL(n, 0);
+            SETLOW(n, INVALID_BDD);
             SETNEXT(n, n+1);
         }
         SETNEXT(bddnodesize-1, bddfreepos);
@@ -3214,10 +3223,7 @@ public class JFactory extends BDDFactory {
         bddresized = false;
 
         for (n = 0; n < bddnodesize; n++) {
-            SETLOW(n, -1);
-            //SETREFCOU(n, 0);
-            //SETHASH(n, 0);
-            //SETLEVEL(n, 0);
+            SETLOW(n, INVALID_BDD);
             SETNEXT(n, n+1);
         }
         SETNEXT(bddnodesize-1, 0);
@@ -3241,13 +3247,6 @@ public class JFactory extends BDDFactory {
 
         bdderrorcond = 0;
 
-        if (CACHESTATS) {
-            //cachestats = new CacheStats();
-        }
-
-        //bdd_gbc_hook(bdd_default_gbchandler);
-        //bdd_error_hook(bdd_default_errhandler);
-        //bdd_resize_hook(NULL);
         bdd_pairs_init();
         bdd_reorder_init();
 
@@ -3256,15 +3255,13 @@ public class JFactory extends BDDFactory {
 
     /* Hash value modifiers to distinguish between entries in misccache */
     static final int CACHEID_CONSTRAIN = 0x0;
-    static final int CACHEID_RESTRICT = 0x1;
     static final int CACHEID_SATCOU = 0x2;
     static final int CACHEID_SATCOULN = 0x3;
     static final int CACHEID_PATHCOU = 0x4;
 
-    /* Hash value modifiers for replace/compose */
+    /* Hash value modifiers for replace/veccompose */
     static final int CACHEID_REPLACE = 0x0;
-    static final int CACHEID_COMPOSE = 0x1;
-    static final int CACHEID_VECCOMPOSE = 0x2;
+    static final int CACHEID_VECCOMPOSE = 0x1;
 
     /* Hash value modifiers for quantification */
     static final int CACHEID_EXIST = 0x0;
@@ -3273,9 +3270,8 @@ public class JFactory extends BDDFactory {
     static final int CACHEID_APPEX = 0x3;
     static final int CACHEID_APPAL = 0x4;
     static final int CACHEID_APPUN = 0x5;
-
-    /* Number of boolean operators */
-    static final int OPERATOR_NUM = 11;
+    static final int CACHEID_RESTRICT = 0x6;
+    static final int CACHEID_COMPOSE = 0x7;
 
     /* Operator results - entry = left<<1 | right  (left,right in {0,1}) */
     static int oprres[][] =
@@ -3308,33 +3304,24 @@ public class JFactory extends BDDFactory {
     int supportMin; /* Min. used level in support calc. */
     int supportMax; /* Max. used level in support calc. */
     int[] supportSet; /* The found support set */
-    BddCache applycache; /* Cache for apply results */
-    BddCache itecache; /* Cache for ITE results */
-    BddCache quantcache; /* Cache for exist/forall results */
-    BddCache appexcache; /* Cache for appex/appall results */
-    BddCache replacecache; /* Cache for replace results */
-    BddCache misccache; /* Cache for other results */
-    BddCache countcache; /* Cache for count results */
     int cacheratio;
     int satPolarity;
-    int firstReorder;
-    /* Used instead of local variable in order
-                   to avoid compiler warning about 'first'
-                   being clobbered by setjmp */
 
     byte[] allsatProfile; /* Variable profile for bdd_allsat() */
 
+    OpCache1 singlecache;  /* not(), exist(), forAll() */
+    OpCache2 replacecache; /* replace(), veccompose() */
+    OpCache2 andcache;     /* and() */
+    OpCache2 orcache;      /* or() */
+    OpCache2 applycache;   /* xor(), imp(), etc. */
+    OpCache2 relprodcache; /* relprod() */
+    OpCache2 quantcache;   /* exist(), forall(), unique(), restrict() */
+    OpCache3 appexcache;   /* appex(), appall(), appuni(), constrain(), compose() */
+    OpCache3 itecache;     /* ite() */
+    OpCache2 countcache;   /* satcount() */
+    OpCache2 misccache;    /* other functions */
+    
     void bdd_operator_init(int cachesize) {
-        if (false) {
-            applycache = BddCacheI_init(cachesize);
-            itecache = BddCacheI_init(cachesize);
-            quantcache = BddCacheI_init(cachesize);
-            appexcache = BddCacheI_init(cachesize);
-            replacecache = BddCacheI_init(cachesize);
-            misccache = BddCacheI_init(cachesize);
-            countcache = BddCacheD_init(cachesize);
-        }
-
         quantvarsetID = 0;
         quantvarset = null;
         cacheratio = 0;
@@ -3342,224 +3329,92 @@ public class JFactory extends BDDFactory {
     }
 
     void bdd_operator_done() {
-        if (quantvarset != null) {
-            free(quantvarset);
-            quantvarset = null;
-        }
-
-        BddCache_done(applycache); applycache = null;
-        BddCache_done(itecache); itecache = null;
-        BddCache_done(quantcache); quantcache = null;
-        BddCache_done(appexcache); appexcache = null;
-        BddCache_done(replacecache); replacecache = null;
-        BddCache_done(misccache); misccache = null;
-        BddCache_done(countcache); countcache = null;
-
-        if (supportSet != null) {
-            free(supportSet);
-            supportSet = null;
-        }
+        quantvarset = null;
+        supportSet = null;
+        
+        singlecache = null;
+        replacecache = null;
+        andcache = null;
+        orcache = null;
+        applycache = null;
+        relprodcache = null;
+        quantcache = null;
+        appexcache = null;
+        itecache = null;
+        countcache = null;
+        misccache = null;
     }
 
     void bdd_operator_reset() {
-        BddCache_reset(applycache);
-        BddCache_reset(itecache);
-        BddCache_reset(quantcache);
-        BddCache_reset(appexcache);
-        BddCache_reset(replacecache);
-        BddCache_reset(misccache);
-        BddCache_reset(countcache);
+        singlecache.reset();
+        replacecache.reset();
+        andcache.reset();
+        orcache.reset();
+        applycache.reset();
+        relprodcache.reset();
+        quantcache.reset();
+        appexcache.reset();
+        itecache.reset();
+        countcache.reset();
+        misccache.reset();
     }
 
     void bdd_operator_clean() {
-        BddCache_clean_ab(applycache);
-        BddCache_clean_abc(itecache);
-        BddCache_clean_a(quantcache);
-        BddCache_clean_ab(appexcache);
-        BddCache_clean_ab(replacecache);
-        BddCache_clean_ab(misccache);
-        BddCache_clean_d(countcache);
+        singlecache.clean();
+        replacecache.clean();
+        andcache.clean();
+        orcache.clean();
+        applycache.clean();
+        relprodcache.clean();
+        quantcache.clean();
+        appexcache.clean();
+        itecache.clean();
+        countcache.clean();
+        misccache.clean();
     }
     
     void bdd_operator_varresize() {
-        if (quantvarset != null)
-            free(quantvarset);
-
         quantvarset = new int[bddvarnum];
-
-        //memset(quantvarset, 0, sizeof(int)*bddvarnum);
         quantvarsetID = 0;
-        
-        BddCache_reset(countcache);
+        countcache.reset();
     }
 
     public int setCacheSize(int newcachesize) {
         int old = cachesize;
-        BddCache_resize(applycache, newcachesize);
-        BddCache_resize(itecache, newcachesize);
-        BddCache_resize(quantcache, newcachesize);
-        BddCache_resize(appexcache, newcachesize);
-        BddCache_resize(replacecache, newcachesize);
-        BddCache_resize(misccache, newcachesize);
-        BddCache_resize(countcache, newcachesize);
+        cachesize = bdd_prime_lte(cachesize);
+        singlecache = null;
+        replacecache = null;
+        andcache = null;
+        orcache = null;
+        applycache = null;
+        relprodcache = null;
+        quantcache = null;
+        appexcache = null;
+        itecache = null;
+        countcache = null;
+        misccache = null;
         return old;
     }
     
     void bdd_operator_noderesize() {
         if (cacheratio > 0) {
-            int newcachesize = bddnodesize / cacheratio;
-
-            BddCache_resize(applycache, newcachesize);
-            BddCache_resize(itecache, newcachesize);
-            BddCache_resize(quantcache, newcachesize);
-            BddCache_resize(appexcache, newcachesize);
-            BddCache_resize(replacecache, newcachesize);
-            BddCache_resize(misccache, newcachesize);
-            BddCache_resize(countcache, newcachesize);
+            cachesize = bddnodesize / cacheratio;
+            singlecache = null;
+            replacecache = null;
+            andcache = null;
+            orcache = null;
+            applycache = null;
+            relprodcache = null;
+            quantcache = null;
+            appexcache = null;
+            itecache = null;
+            countcache = null;
+            misccache = null;
         }
     }
 
-    BddCache BddCacheI_init(int size) {
-        int n;
-
-        size = bdd_prime_gte(size);
-
-        BddCache cache = new BddCache();
-        cache.table = new BddCacheDataI[size];
-
-        for (n = 0; n < size; n++) {
-            cache.table[n] = new BddCacheDataI();
-            cache.table[n].a = -1;
-        }
-        cache.tablesize = size;
-
-        return cache;
-    }
-
-    BddCache BddCacheD_init(int size) {
-        int n;
-
-        size = bdd_prime_gte(size);
-
-        BddCache cache = new BddCache();
-        cache.table = new BddCacheDataD[size];
-
-        for (n = 0; n < size; n++) {
-            cache.table[n] = new BddCacheDataD();
-            cache.table[n].a = -1;
-        }
-        cache.tablesize = size;
-
-        return cache;
-    }
-
-    void BddCache_done(BddCache cache) {
-        if (cache == null) return;
-        
-        free(cache.table);
-        cache.table = null;
-        cache.tablesize = 0;
-    }
-
-    int BddCache_resize(BddCache cache, int newsize) {
-        if (cache == null) return 0;
-        int n;
-
-        free(cache.table);
-        cache.table = null;
-
-        newsize = bdd_prime_gte(newsize);
-
-        boolean is_d = cache.table instanceof BddCacheDataD[];
-
-        if (is_d)
-            cache.table = new BddCacheDataD[newsize];
-        else
-            cache.table = new BddCacheDataI[newsize];
-
-        for (n = 0; n < newsize; n++) {
-            if (is_d)
-                cache.table[n] = new BddCacheDataD();
-            else
-                cache.table[n] = new BddCacheDataI();
-            cache.table[n].a = -1;
-        }
-        cache.tablesize = newsize;
-
-        return 0;
-    }
-
-    BddCacheDataI BddCache_lookupI(BddCache cache, int hash) {
-        return (BddCacheDataI) cache.table[Math.abs(hash % cache.tablesize)];
-    }
-
-    BddCacheDataD BddCache_lookupD(BddCache cache, int hash) {
-        return (BddCacheDataD) cache.table[Math.abs(hash % cache.tablesize)];
-    }
-
-    void BddCache_reset(BddCache cache) {
-        if (cache == null) return;
-        int n;
-        for (n = 0; n < cache.tablesize; n++)
-            cache.table[n].a = -1;
-    }
-
-    void BddCache_clean_d(BddCache cache) {
-        if (cache == null) return;
-        int n;
-        for (n = 0; n < cache.tablesize; n++) {
-            int a = cache.table[n].a;
-            if (a >= 0 && LOW(a) == -1) {
-                cache.table[n].a = -1;
-            }
-        }
-    }
-    
-    void BddCache_clean_a(BddCache cache) {
-        if (cache == null) return;
-        int n;
-        for (n = 0; n < cache.tablesize; n++) {
-            int a = cache.table[n].a;
-            if (a < 0) continue;
-            if (LOW(a) == -1 ||
-                LOW(((BddCacheDataI)cache.table[n]).res) == -1) {
-                cache.table[n].a = -1;
-            }
-        }
-    }
-    
-    void BddCache_clean_ab(BddCache cache) {
-        if (cache == null) return;
-        int n;
-        for (n = 0; n < cache.tablesize; n++) {
-            int a = cache.table[n].a;
-            if (a < 0) continue;
-            if (LOW(a) == -1 ||
-                (cache.table[n].b != 0 && LOW(cache.table[n].b) == -1) ||
-                LOW(((BddCacheDataI)cache.table[n]).res) == -1) {
-                cache.table[n].a = -1;
-            }
-        }
-    }
-    
-    void BddCache_clean_abc(BddCache cache) {
-        if (cache == null) return;
-        int n;
-        for (n = 0; n < cache.tablesize; n++) {
-            int a = cache.table[n].a;
-            if (a < 0) continue;
-            if (LOW(a) == -1 ||
-                LOW(cache.table[n].b) == -1 ||
-                LOW(cache.table[n].c) == -1 ||
-                LOW(((BddCacheDataI)cache.table[n]).res) == -1) {
-                cache.table[n].a = -1;
-            }
-        }
-    }
-    
     void bdd_setpair(bddPair pair, int oldvar, int newvar) {
-        if (pair == null)
-            return;
+        if (pair == null) return;
 
         if (oldvar < 0 || oldvar > bddvarnum - 1)
             bdd_error(BDD_VAR);
@@ -3573,14 +3428,12 @@ public class JFactory extends BDDFactory {
         if (bddvar2level[oldvar] > pair.last)
             pair.last = bddvar2level[oldvar];
 
-        return;
     }
 
     void bdd_setbddpair(bddPair pair, int oldvar, int newvar) {
         int oldlevel;
 
-        if (pair == null)
-            return;
+        if (pair == null) return;
 
         CHECK(newvar);
         if (oldvar < 0 || oldvar >= bddvarnum)
@@ -3594,14 +3447,13 @@ public class JFactory extends BDDFactory {
         if (oldlevel > pair.last)
             pair.last = oldlevel;
 
-        return;
     }
 
     void bdd_resetpair(bddPair p) {
-        int n;
-
-        for (n = 0; n < bddvarnum; n++)
+        for (int n = 0; n < bddvarnum; n++) {
+            bdd_delref(p.result[n]);
             p.result[n] = bdd_ithvar(n);
+        }
         p.last = 0;
     }
 
@@ -3634,9 +3486,6 @@ public class JFactory extends BDDFactory {
     bddPair pairs; /* List of all replacement pairs in use */
     int pairsid; /* Pair identifier */
 
-    static final void free(Object o) {
-    }
-
     /*************************************************************************
     *************************************************************************/
 
@@ -3654,8 +3503,6 @@ public class JFactory extends BDDFactory {
             for (n = 0; n < bddvarnum; n++)
                 bdd_delref(p.result[n]);
             p.result = null;
-            free(p.result);
-            free(p);
             p = next;
         }
     }
@@ -3663,13 +3510,13 @@ public class JFactory extends BDDFactory {
     int update_pairsid() {
         pairsid++;
 
-        if (pairsid == (INT_MAX >> 2)) {
-            bddPair p;
+        if (pairsid == MAX_PAIRSID) {
             pairsid = 0;
-            for (p = pairs; p != null; p = p.next)
+            for (bddPair p = pairs; p != null; p = p.next)
                 p.id = pairsid++;
-            //bdd_operator_reset();
-            BddCache_reset(replacecache);
+            if (pairsid >= MAX_PAIRSID)
+                throw new BDDException("Too many pairs!");
+            replacecache.reset();
         }
 
         return pairsid;
@@ -3727,8 +3574,7 @@ public class JFactory extends BDDFactory {
          * even more nodes (upto twice as many again) have been used */
         if (bdd_reorder_gain() < 20)
             usednodes_nextreorder
-                += (usednodes_nextreorder * (20 - bdd_reorder_gain()))
-                / 20;
+                += (usednodes_nextreorder * (20 - bdd_reorder_gain())) / 20;
     }
 
     boolean bdd_reorder_ready() {
@@ -3761,7 +3607,6 @@ public class JFactory extends BDDFactory {
         
                 reorder_block(top, method);
                 vartree = top.nextlevel;
-                free(top);
         
                 usednum_after = bddnodesize - bddfreenum;
         
@@ -4258,8 +4103,6 @@ public class JFactory extends BDDFactory {
         for (dis = t; dis.prev != null; dis = dis.prev)
             /* nil */;
 
-        free(seq);
-
         if (verbose != 0)
             System.out.println("Random order: " + reorder_nodenum() + " nodes");
         return dis;
@@ -4318,9 +4161,6 @@ public class JFactory extends BDDFactory {
 
         /* Do the sifting on this sequence */
         t = reorder_sift_seq(t, seq, num);
-
-        free(seq);
-        free(p);
 
         return t;
     }
@@ -4472,15 +4312,11 @@ public class JFactory extends BDDFactory {
         //bdd_reorder_done();
         bdd_pairs_done();
 
-        free(bddnodes);
-        free(bddrefstack);
-        free(bddvarset);
-        free(bddvar2level);
-        free(bddlevel2var);
-
         bddnodes = null;
         bddrefstack = null;
         bddvarset = null;
+        bddvar2level = null;
+        bddlevel2var = null;
 
         bdd_operator_done();
 
@@ -4646,8 +4482,6 @@ public class JFactory extends BDDFactory {
             bddvar2level = bddvar2level2;
         }
 
-        if (bddrefstack != null)
-            free(bddrefstack);
         bddrefstack = new int[num * 2 + 1];
         bddrefstacktop = 0;
 
@@ -4667,8 +4501,8 @@ public class JFactory extends BDDFactory {
             bddvar2level[bddvarnum] = bddvarnum;
         }
 
-        SETLEVELANDMARK(0, num);
-        SETLEVELANDMARK(1, num);
+        SETLEVEL(0, num);
+        SETLEVEL(1, num);
         bddvar2level[num] = num;
         bddlevel2var[num] = num;
 
@@ -4940,10 +4774,7 @@ public class JFactory extends BDDFactory {
 
         bddtree_del(t.nextlevel);
         bddtree_del(t.next);
-        if (t.seq != null)
-            free(t.seq);
         t.seq = null;
-        free(t);
     }
 
     void bdd_clrvarblocks() {
@@ -5092,7 +4923,7 @@ public class JFactory extends BDDFactory {
                     DECREF(LOW(r));
                     DECREF(HIGH(r));
 
-                    SETLOW(r, -1);
+                    SETLOW(r, INVALID_BDD);
                     SETNEXT(r, bddfreepos);
                     bddfreepos = r;
                     levels[var1].nodenum--;
@@ -5219,7 +5050,7 @@ public class JFactory extends BDDFactory {
                     DECREF(LOW(r));
                     DECREF(HIGH(r));
 
-                    SETLOW(r, -1);
+                    SETLOW(r, INVALID_BDD);
                     SETNEXT(r, bddfreepos);
                     bddfreepos = r;
                     levels[var1].nodenum--;
@@ -5425,9 +5256,8 @@ public class JFactory extends BDDFactory {
         int n;
 
         for (n = 2, extrootsize = 0; n < bddnodesize; n++) {
-            /* This is where we go from .level to .var!
-            * - Do NOT use the LEVEL macro here. */
-            SETLEVELANDMARK(n, bddlevel2var[LEVELANDMARK(n)]);
+            /* This is where we go from .level to .var! */
+            SETVARr(n, bddlevel2var[LEVEL(n)]);
 
             if (HASREF(n)) {
                 SETMARK(n);
@@ -5464,7 +5294,6 @@ public class JFactory extends BDDFactory {
         SETHASH(0, 0);
         SETHASH(1, 0);
 
-        free(dep);
         return 0;
     }
 
@@ -5546,7 +5375,7 @@ public class JFactory extends BDDFactory {
                 SETHASH(hash, n);
 
             } else {
-                SETLOW(n, -1);
+                SETLOW(n, INVALID_BDD);
                 SETNEXT(n, bddfreepos);
                 bddfreepos = n;
                 bddfreenum++;
@@ -5565,13 +5394,10 @@ public class JFactory extends BDDFactory {
             else
                 CLEARREF(n);
 
-            /* This is where we go from .var to .level again!
-            * - Do NOT use the LEVEL macro here. */
-            SETLEVELANDMARK(n, bddvar2level[LEVELANDMARK(n)]);
+            /* This is where we go from .var to .level again! */
+            SETLEVEL(n, bddvar2level[VARr(n)]);
         }
 
-        free(extroots);
-        free(levels);
         imatrixDelete(iactmtx);
         bdd_gbc();
         
@@ -5582,19 +5408,15 @@ public class JFactory extends BDDFactory {
         int n;
 
         for (n = 0; n < mtx.size; n++) {
-            free(mtx.rows[n]);
             mtx.rows[n] = null;
         }
-        free(mtx.rows);
         mtx.rows = null;
-        free(mtx);
     }
 
     /* (non-Javadoc)
      * @see net.sf.javabdd.BDDFactory#addVarBlock(net.sf.javabdd.BDD, boolean)
      */
     public void addVarBlock(BDD var, boolean fixed) {
-        //int x = ((bdd) var)._index;
         int[] set = var.scanSet();
         bdd_addvarblock(set, fixed);
     }
@@ -5749,7 +5571,7 @@ public class JFactory extends BDDFactory {
         int n;
 
         for (n = 0; n < bddnodesize; n++) {
-            if (LOW(n) != -1) {
+            if (LOW(n) != INVALID_BDD) {
                 out.print(
                     "["
                         + right(n, 5)
@@ -5830,9 +5652,7 @@ public class JFactory extends BDDFactory {
         for (n = 0; n < lh_nodenum; n++)
             bdd_delref(lh_table[n].data);
 
-        free(lh_table);
         lh_table = null;
-        free(loadvar2level);
         loadvar2level = null;
 
         root = tmproot;
@@ -6196,7 +6016,7 @@ public class JFactory extends BDDFactory {
          * @see net.sf.javabdd.BDDDomain#getFactory()
          */
         public BDDFactory getFactory() {
-            return JFactory.this;
+            return MicroFactory.this;
         }
 
     }
@@ -6221,7 +6041,7 @@ public class JFactory extends BDDFactory {
          * @see net.sf.javabdd.BDDBitVector#getFactory()
          */
         public BDDFactory getFactory() {
-            return JFactory.this;
+            return MicroFactory.this;
         }
 
     }
@@ -6345,8 +6165,8 @@ public class JFactory extends BDDFactory {
         return src;
     }
 
-    public JFactory cloneFactory() {
-        JFactory INSTANCE = new JFactory();
+    public MicroFactory cloneFactory() {
+        MicroFactory INSTANCE = new MicroFactory();
         INSTANCE.applycache = this.applycache.copy();
         INSTANCE.itecache = this.itecache.copy();
         INSTANCE.quantcache = this.quantcache.copy();
@@ -6406,5 +6226,11 @@ public class JFactory extends BDDFactory {
     public BDD copyNode(BDD that) {
         bdd b = (bdd) that;
         return makeBDD(b._index);
+    }
+    
+    public static final String REVISION = "$Revision$";
+    
+    public String getVersion() {
+        return "MicroFactory "+REVISION.substring(11, REVISION.length()-2);
     }
 }

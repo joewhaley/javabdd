@@ -67,6 +67,8 @@ public abstract class BDDFactory {
                 return CALFactory.init(nodenum, cachesize);
             if (bddpackage.equals("j") || bddpackage.equals("java"))
                 return JFactory.init(nodenum, cachesize);
+            if (bddpackage.equals("u") || bddpackage.equals("micro"))
+                return MicroFactory.init(nodenum, cachesize);
             if (bddpackage.equals("jdd"))
                 return JDDFactory.init(nodenum, cachesize);
             if (bddpackage.equals("test"))
