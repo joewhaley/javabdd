@@ -2002,7 +2002,7 @@ public class JavaFactory extends BDDFactory {
         CHECKa(r, bddfalse);
 
         if (r < 2)
-            return bddfalse;
+            return bddtrue;
 
         /* On-demand allocation of support set */
         if (supportSize < bddvarnum) {

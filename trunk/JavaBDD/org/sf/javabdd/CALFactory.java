@@ -211,22 +211,6 @@ public class CALFactory extends BDDFactory {
     }
 
     /* (non-Javadoc)
-     * @see org.sf.javabdd.BDDFactory#load(java.lang.String)
-     */
-    public BDD load(String filename) {
-        // TODO Implement this.
-        throw new UnsupportedOperationException();
-    }
-
-    /* (non-Javadoc)
-     * @see org.sf.javabdd.BDDFactory#save(java.lang.String, org.sf.javabdd.BDD)
-     */
-    public void save(String filename, BDD var) {
-        // TODO Implement this.
-        throw new UnsupportedOperationException();
-    }
-
-    /* (non-Javadoc)
      * @see org.sf.javabdd.BDDFactory#level2Var(int)
      */
     public int level2Var(int level) {
