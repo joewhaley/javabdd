@@ -7,7 +7,7 @@
   <logo>/images/logo2_mid.jpg</logo> 
   <organization>
     <name>John Whaley</name>
-    <url>http://www.stanford.edu/~jwhaley</url>
+    <url>http://sourceforge.net</url>
     <logo>http://sourceforge.net/sflogo.php?group_id=72725&amp;type=5</logo>
   </organization>
   <inceptionYear>2003</inceptionYear>
@@ -42,7 +42,7 @@
 
   <url>http://javabdd.sourceforge.net/</url>
   <issueTrackingUrl>
-    http://www.sourceforge.net/tracker/?group_id=72725
+    http://sourceforge.net/tracker/?group_id=72725
   </issueTrackingUrl>
   <siteAddress>javabdd.sourceforge.net</siteAddress>
   <siteDirectory>
