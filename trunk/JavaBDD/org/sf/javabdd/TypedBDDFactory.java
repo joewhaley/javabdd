@@ -938,6 +938,18 @@ public class TypedBDDFactory extends BDDFactory {
         }
 
         /* (non-Javadoc)
+         * @see org.sf.javabdd.BDD#satCount(org.sf.javabdd.BDD)
+         */
+        public double satCount(BDD set) {
+            TypedBDD bdd1 = (TypedBDD) set;
+            if (!bdd1.dom.equals(dom)) {
+                out.println("Warning! satCount on the wrong domains: "+domainNames(dom)+" != "+domainNames(bdd1.dom));
+                new Exception().printStackTrace();
+            }
+            return bdd.satCount(bdd1.bdd);
+        }
+        
+        /* (non-Javadoc)
          * @see org.sf.javabdd.BDD#varProfile()
          */
         public int[] varProfile() {
@@ -962,10 +974,18 @@ public class TypedBDDFactory extends BDDFactory {
             return bdd.hashCode();
         }
 
+        public Iterator iterator(BDD var) {
+            TypedBDD bdd1 = (TypedBDD) var;
+            if (!bdd1.dom.equals(dom)) {
+                out.println("Warning! iterator on the wrong domains: "+domainNames(dom)+" != "+domainNames(bdd1.dom));
+            }
+            return super.iterator(var);
+        }
+        
         public Iterator iterator() {
             Set newDom = makeSet();
             newDom.addAll(dom);
-            return iterator(new TypedBDD(getDomains(), newDom));
+            return super.iterator(new TypedBDD(getDomains(), newDom));
         }
         
         /* (non-Javadoc)
