@@ -1,0 +1,144 @@
+#
+# Makefile to create Java JNI library.
+# On Windows, uses Cygwin b20.1 tools with Mingw runtime. 
+# 
+# Things you may need to change, or redefine on the command line:
+#   CUDD_SRC     -- location of CUDD source code
+#   JDK_ROOT     -- location where you installed JDK
+#
+
+CUDD_SRC = cudd-2.3.1
+
+ifeq (${OS},Windows_NT)
+  JDK_ROOT = c:/j2sdk1.4.1_02
+  CC = gcc
+  CFLAGS = -Wall -O3 -mno-cygwin
+  OBJECT_OUTPUT_OPTION = -o$(space)
+  LINK = dllwrap
+  LINKFLAGS = -s -mno-cygwin -mwindows --target=i386-mingw32 \
+              --add-stdcall-alias --driver-name gcc
+  DLL_OUTPUT_OPTION = -o$(space)
+  INCLUDES = -I. -I$(JDK_ROOT)/include \
+             -I$(CUDD_SRC)/cudd \
+             -I$(CUDD_SRC)/epd \
+             -I$(CUDD_SRC)/mtr \
+             -I$(CUDD_SRC)/st \
+             -I$(CUDD_SRC)/util \
+             -I$(JDK_ROOT)/include/win32
+  DLL_NAME = cudd.dll
+  ifeq (${CC},icl)    # Intel Windows compiler
+    CFLAGS = -O3
+    OBJECT_OUTPUT_OPTION = -Fo
+    LINK = icl
+    LINKFLAGS = -MLd -LDd -Zi /link /libpath:$(JDK_ROOT)/lib user32.lib gdi32.lib
+    DLL_OUTPUT_OPTION = -Fe
+  endif
+  ifeq (${CC},cl)     # Microsoft Visual C++ compiler
+    CFLAGS = -O2
+    OBJECT_OUTPUT_OPTION = -Fo
+    LINK = cl
+    LINKFLAGS = -MLd -LDd -Zi /link /libpath:$(JDK_ROOT)/lib user32.lib gdi32.lib
+    DLL_OUTPUT_OPTION = -Fe
+  endif
+else
+  JDK_ROOT = /usr/java/j2sdk1.4.2
+  CFLAGS = -D_REENTRANT -D_GNU_SOURCE -O3
+  OBJECT_OUTPUT_OPTION = -o$(space)
+  LINK = $(CC)
+  LINKFLAGS = -shared
+  DLL_OUTPUT_OPTION = -o$(space)
+  INCLUDES = -I. -I$(JDK_ROOT)/include -I$(CUDD_SRC)/cudd -I$(CUDD_SRC)/util \
+             -I$(JDK_ROOT)/include/linux
+  DLL_NAME = libcudd.so
+  ifeq (${CC},icc)    # Intel Linux compiler
+    LINKFLAGS = -shared -static-libcxa
+  endif
+endif
+
+# The java tools:
+JAVAC = $(JDK_ROOT)/bin/javac
+JAVA = $(JDK_ROOT)/bin/java
+JAVAH = $(JDK_ROOT)/bin/javah
+JAVADOC = $(JDK_ROOT)/bin/javadoc
+JAR = $(JDK_ROOT)/bin/jar
+
+# The java source code
+JAVA_SOURCES = org/sf/javabdd/BDD.java \
+	org/sf/javabdd/BDDException.java \
+	org/sf/javabdd/BDDFactory.java \
+	org/sf/javabdd/BDDDomain.java \
+	org/sf/javabdd/BDDPairing.java \
+	org/sf/javabdd/CUDDFactory.java
+JAVA_CLASSFILES = org/sf/javabdd/*.class
+JAVA_PACKAGES = org.sf.javabdd
+JNI_CLASSFILE = org/sf/javabdd/CUDDFactory.class
+JNI_CLASSNAMES = org.sf.javabdd.CUDDFactory \
+	org.sf.javabdd.CUDDFactory\$$CUDDBDD \
+	org.sf.javabdd.CUDDFactory\$$CUDDBDDDomain \
+	org.sf.javabdd.CUDDFactory\$$CUDDBDDPairing
+JNI_INCLUDE = cudd_jni.h
+EXAMPLE_SOURCES = NQueens.java
+EXAMPLE_CLASSFILES = $(EXAMPLE_SOURCES:%.java=%.class)
+JAR_NAME = javabdd_0.4.jar
+
+DLL_SRCS  = cudd_jni.c \
+	  $(CUDD_SRC)/cudd/cuddAPI.c $(CUDD_SRC)/cudd/cuddAddAbs.c $(CUDD_SRC)/cudd/cuddAddApply.c $(CUDD_SRC)/cudd/cuddAddFind.c $(CUDD_SRC)/cudd/cuddAddIte.c \
+	  $(CUDD_SRC)/cudd/cuddAddInv.c $(CUDD_SRC)/cudd/cuddAddNeg.c $(CUDD_SRC)/cudd/cuddAddWalsh.c $(CUDD_SRC)/cudd/cuddAndAbs.c \
+	  $(CUDD_SRC)/cudd/cuddAnneal.c $(CUDD_SRC)/cudd/cuddApa.c $(CUDD_SRC)/cudd/cuddApprox.c $(CUDD_SRC)/cudd/cuddBddAbs.c $(CUDD_SRC)/cudd/cuddBddCorr.c \
+	  $(CUDD_SRC)/cudd/cuddBddIte.c $(CUDD_SRC)/cudd/cuddBridge.c $(CUDD_SRC)/cudd/cuddCache.c $(CUDD_SRC)/cudd/cuddCheck.c $(CUDD_SRC)/cudd/cuddClip.c \
+	  $(CUDD_SRC)/cudd/cuddCof.c $(CUDD_SRC)/cudd/cuddCompose.c $(CUDD_SRC)/cudd/cuddDecomp.c $(CUDD_SRC)/cudd/cuddEssent.c \
+	  $(CUDD_SRC)/cudd/cuddExact.c $(CUDD_SRC)/cudd/cuddExport.c $(CUDD_SRC)/cudd/cuddGenCof.c $(CUDD_SRC)/cudd/cuddGenetic.c \
+	  $(CUDD_SRC)/cudd/cuddGroup.c $(CUDD_SRC)/cudd/cuddHarwell.c $(CUDD_SRC)/cudd/cuddInit.c $(CUDD_SRC)/cudd/cuddInteract.c \
+	  $(CUDD_SRC)/cudd/cuddLCache.c $(CUDD_SRC)/cudd/cuddLevelQ.c \
+	  $(CUDD_SRC)/cudd/cuddLinear.c $(CUDD_SRC)/cudd/cuddLiteral.c $(CUDD_SRC)/cudd/cuddMatMult.c $(CUDD_SRC)/cudd/cuddPriority.c \
+	  $(CUDD_SRC)/cudd/cuddRead.c $(CUDD_SRC)/cudd/cuddRef.c $(CUDD_SRC)/cudd/cuddReorder.c $(CUDD_SRC)/cudd/cuddSat.c $(CUDD_SRC)/cudd/cuddSign.c \
+	  $(CUDD_SRC)/cudd/cuddSolve.c $(CUDD_SRC)/cudd/cuddSplit.c $(CUDD_SRC)/cudd/cuddSubsetHB.c $(CUDD_SRC)/cudd/cuddSubsetSP.c $(CUDD_SRC)/cudd/cuddSymmetry.c \
+	  $(CUDD_SRC)/cudd/cuddTable.c $(CUDD_SRC)/cudd/cuddUtil.c $(CUDD_SRC)/cudd/cuddWindow.c $(CUDD_SRC)/cudd/cuddZddCount.c $(CUDD_SRC)/cudd/cuddZddFuncs.c \
+	  $(CUDD_SRC)/cudd/cuddZddGroup.c $(CUDD_SRC)/cudd/cuddZddIsop.c $(CUDD_SRC)/cudd/cuddZddLin.c $(CUDD_SRC)/cudd/cuddZddMisc.c \
+	  $(CUDD_SRC)/cudd/cuddZddPort.c $(CUDD_SRC)/cudd/cuddZddReord.c $(CUDD_SRC)/cudd/cuddZddSetop.c $(CUDD_SRC)/cudd/cuddZddSymm.c \
+	  $(CUDD_SRC)/cudd/cuddZddUtil.c \
+	  $(CUDD_SRC)/epd/epd.c \
+	  $(CUDD_SRC)/mtr/mtrBasic.c $(CUDD_SRC)/mtr/mtrGroup.c \
+	  $(CUDD_SRC)/st/st.c \
+	  $(CUDD_SRC)/util/cpu_time.c $(CUDD_SRC)/util/datalimit.c $(CUDD_SRC)/util/safe_mem.c
+DLL_OBJS  = $(DLL_SRCS:.c=.o)
+
+all: $(DLL_NAME)
+
+$(DLL_NAME): $(DLL_OBJS)
+	$(LINK) $(DLL_OUTPUT_OPTION)$@ $(DLL_OBJS) $(LINKFLAGS)
+
+cudd_jni.o: cudd_jni.c $(JNI_INCLUDE)
+	$(CC) $(CFLAGS) $(INCLUDES) -c $(OBJECT_OUTPUT_OPTION)$@ $<
+
+.c.o:
+	$(CC) $(CFLAGS) $(INCLUDES) -c $(OBJECT_OUTPUT_OPTION)$@ $<
+
+$(JNI_INCLUDE): $(JNI_CLASSFILE)
+	$(JAVAH) -jni -o $(JNI_INCLUDE) $(JNI_CLASSNAMES)
+
+$(JNI_CLASSFILE): $(JAVA_SOURCES)
+	$(JAVAC) $(JAVA_SOURCES)
+
+$(EXAMPLE_CLASSFILES): $(EXAMPLE_SOURCES)
+	$(JAVAC) $(EXAMPLE_SOURCES)
+
+examples: $(EXAMPLE_CLASSFILES)
+
+javadoc: $(JAVA_SOURCES)
+	$(JAVADOC) -d javadoc -breakiterator $(JAVA_PACKAGES)
+
+jar: $(JAR_NAME)
+
+$(JAR_NAME): $(JNI_CLASSFILE) $(EXAMPLE_CLASSFILES)
+	$(JAR) cvfm $(JAR_NAME) javabddManifest $(JAVA_CLASSFILES) $(EXAMPLE_CLASSFILES)
+
+test:	$(DLL_NAME) $(EXAMPLE_CLASSFILES)
+	$(JAVA) -Djava.library.path=. NQueens 8
+
+clean:
+	$(RM) -f $(JAVA_CLASSFILES) $(JNI_INCLUDE) $(DLL_OBJS) $(DLL_NAME) $(EXAMPLE_CLASSFILES) $(JAR_NAME)
+	$(RM) -rf javadoc
+
+empty := 
+space := $(empty) $(empty)
