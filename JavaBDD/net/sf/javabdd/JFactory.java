@@ -1488,8 +1488,10 @@ public class JFactory extends BDDFactory {
             quantvarsetID = 1;
         }
 
+        quantlast = -1;
         for (n = r; n > 1; n = HIGH(n)) {
             quantvarset[LEVEL(n)] = quantvarsetID;
+            if (VERIFY_ASSERTIONS) _assert(quantlast < LEVEL(n));
             quantlast = LEVEL(n);
         }
 
@@ -1512,6 +1514,7 @@ public class JFactory extends BDDFactory {
             quantvarsetID = 1;
         }
 
+        quantlast = 0;
         for (n = r; !ISCONST(n);) {
             if (ISZERO(LOW(n))) {
                 quantvarset[LEVEL(n)] = quantvarsetID;
@@ -1520,6 +1523,7 @@ public class JFactory extends BDDFactory {
                 quantvarset[LEVEL(n)] = -quantvarsetID;
                 n = LOW(n);
             }
+            if (VERIFY_ASSERTIONS) _assert(quantlast < LEVEL(n));
             quantlast = LEVEL(n);
         }
 
@@ -5337,7 +5341,7 @@ public class JFactory extends BDDFactory {
         if (r < 2)
             return;
 
-        if (!HASREF(r)) {
+        if (!HASREF(r) || MARKED(r)) {
             bddfreenum--;
 
             /* Detect variable dependencies for the interaction matrix */
