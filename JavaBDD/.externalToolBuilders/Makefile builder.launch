@@ -7,7 +7,9 @@
     <stringAttribute
         key="org.eclipse.ui.externaltools.ATTR_REFRESH_SCOPE" value="${project}"/>
     <stringAttribute
+        key="org.eclipse.ui.externaltools.ATTR_RUN_BUILD_KINDS" value="full,incremental,"/>
+    <stringAttribute
         key="org.eclipse.ui.externaltools.ATTR_WORKING_DIRECTORY" value="${resource_loc:/JavaBDD}"/>
-    <stringAttribute key="org.eclipse.ui.externaltools.ATTR_LOCATION" value="C:\cygwin\bin\make.exe"/>
+    <stringAttribute key="org.eclipse.ui.externaltools.ATTR_LOCATION" value="/usr/bin/make"/>
     <stringAttribute key="org.eclipse.debug.ui.target_run_perspective" value="perspective_none"/>
 </launchConfiguration>

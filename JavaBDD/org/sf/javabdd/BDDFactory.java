@@ -49,6 +49,8 @@ public abstract class BDDFactory {
                 return BuDDyFactory.init(nodenum, cachesize);
             if (bddpackage.equals("cudd"))
                 return CUDDFactory.init(nodenum, cachesize);
+            if (bddpackage.equals("cal"))
+                return CALFactory.init(nodenum, cachesize);
             if (bddpackage.equals("java"))
                 return JavaFactory.init(nodenum, cachesize);
             if (bddpackage.equals("test"))
