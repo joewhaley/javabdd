@@ -133,8 +133,10 @@ static BDD    apply_rec0(BDD, BDD);
 static BDD    ite_rec(BDD, BDD, BDD);
 static int    simplify_rec(BDD, BDD);
 static int    quant_rec(int);
+static int    unique_rec(int, int);
 static int    appquant_rec(int, int);
 static int    appquant_rec0(int, int);
+static int    appuni_rec(int, int, int);
 static int    restrict_rec(int);
 static BDD    constrain_rec(BDD, BDD);
 static BDD    replace_rec(BDD);
@@ -2157,16 +2159,13 @@ BDD bdd_unique(BDD r, BDD var)
  again:
    if (setjmp(bddexception) == 0)
    {
-      if (varset2vartable(var) < 0)
-	 RETURN_BDD(bddfalse);
-
       INITREF;
       quantid = (var << 3) | CACHEID_UNIQUE;
       applyop = bddop_xor;
       
       if (!firstReorder)
 	 bdd_disable_reorder();
-      res = quant_rec(r);
+      res = unique_rec(r, var);
       if (!firstReorder)
 	 bdd_enable_reorder();
    }
@@ -2220,6 +2219,48 @@ static int quant_rec(int r)
    entry->res = res;
 
    return res;
+}
+
+static int unique_rec(int r, int q) {
+    BddCacheData3 *entry;
+    int res;
+    int LEVEL_r, LEVEL_q;
+
+    LEVEL_r = LEVEL(r);
+    LEVEL_q = LEVEL(q);
+    if (LEVEL_r > LEVEL_q) {
+        // Skipped a quantified node, answer is zero.
+        return BDDZERO;
+    }
+        
+    if (r < 2 || q < 2)
+        return r;
+        
+    entry = BddCache_lookup(&quantcache, QUANTHASH(r));
+    if (entry->a == r  &&  entry->b == quantid) {
+#ifdef CACHESTATS
+        bddcachestats.opHit++;
+#endif
+        return entry->res;
+    }
+#ifdef CACHESTATS
+    bddcachestats.opMiss++;
+#endif
+    if (LEVEL_r == LEVEL_q) {
+        PUSHREF(unique_rec(LOW(r), HIGH(q)));
+        PUSHREF(unique_rec(HIGH(r), HIGH(q)));
+        res = apply_rec(READREF(2), READREF(1));
+    } else {
+        PUSHREF(unique_rec(LOW(r), q));
+        PUSHREF(unique_rec(HIGH(r), q));
+        res = bdd_makenode(LEVEL(r), READREF(2), READREF(1));
+    }
+    POPREF(2);
+
+    entry->a = r;
+    entry->b = quantid;
+    entry->res = res;
+    return res;
 }
 
 
@@ -2421,13 +2462,12 @@ BDD bdd_appuni(BDD l, BDD r, int opr, BDD var)
 
      if (quantcache.table == NULL && BddCache3_init(&quantcache,cachesize) < 0)
        return bdd_error(BDD_MEMORY);
+     if (appexcache.table == NULL && BddCache4_init(&appexcache,cachesize) < 0)
+       return bdd_error(BDD_MEMORY);
 
  again:
    if (setjmp(bddexception) == 0)
    {
-      if (varset2vartable(var) < 0)
-	 RETURN_BDD(bddfalse);
-
       INITREF;
       applyop = bddop_xor;
       appexop = opr;
@@ -2436,7 +2476,7 @@ BDD bdd_appuni(BDD l, BDD r, int opr, BDD var)
       
       if (!firstReorder)
 	 bdd_disable_reorder();
-      res = appquant_rec(l, r);
+      res = appuni_rec(l, r, var);
       if (!firstReorder)
 	 bdd_enable_reorder();
    }
@@ -2585,6 +2625,87 @@ static int appquant_rec0(int l, int r)
    }
 
    return res;
+}
+
+static int appuni_rec(int l, int r, int var) {
+    BddCacheData4 *entry;
+    int res;
+
+    int LEVEL_l, LEVEL_r, LEVEL_var;
+    LEVEL_l = LEVEL(l);
+    LEVEL_r = LEVEL(r);
+    LEVEL_var = LEVEL(var);
+
+    if (LEVEL_l > LEVEL_var && LEVEL_r > LEVEL_var) {
+        // Skipped a quantified node, answer is zero.
+        return BDDZERO;
+    }
+
+    if (ISCONST(l) && ISCONST(r))
+        res = oprres[appexop][(l << 1) | r];
+    else if (ISCONST(var)) {
+        int oldop = applyop;
+        applyop = appexop;
+        res = apply_rec(l, r);
+        applyop = oldop;
+    } else {
+        int lev;
+        entry = BddCache_lookup(&appexcache, APPEXHASH(l,r,appexop));
+        if (entry->a == l  &&  entry->b == r  &&  entry->r.c == appexid) {
+#ifdef CACHESTATS
+            bddcachestats.opHit++;
+#endif
+            return entry->r.res;
+        }
+#ifdef CACHESTATS
+        bddcachestats.opMiss++;
+#endif
+
+        if (LEVEL_l == LEVEL_r) {
+            if (LEVEL_l == LEVEL_var) {
+                lev = -1;
+                var = HIGH(var);
+            } else {
+                lev = LEVEL_l;
+            }
+            PUSHREF(appuni_rec(LOW(l), LOW(r), var));
+            PUSHREF(appuni_rec(HIGH(l), HIGH(r), var));
+            lev = LEVEL_l;
+        } else if (LEVEL_l < LEVEL_r) {
+            if (LEVEL_l == LEVEL_var) {
+                lev = -1;
+                var = HIGH(var);
+            } else {
+                lev = LEVEL_l;
+            }
+            PUSHREF(appuni_rec(LOW(l), r, var));
+            PUSHREF(appuni_rec(HIGH(l), r, var));
+        } else {
+            if (LEVEL_r == LEVEL_var) {
+                lev = -1;
+                var = HIGH(var);
+            } else {
+                lev = LEVEL_r;
+            }
+            PUSHREF(appuni_rec(l, LOW(r), var));
+            PUSHREF(appuni_rec(l, HIGH(r), var));
+        }
+        if (lev == -1) {
+            int r2 = READREF(2), r1 = READREF(1);
+            res = apply_rec(r2, r1);
+        } else {
+            res = bdd_makenode(lev, READREF(2), READREF(1));
+        }
+
+        POPREF(2);
+
+        entry->a = l;
+        entry->b = r;
+        entry->r.c = appexid;
+        entry->r.res = res;
+        }
+
+    return res;
 }
 
 #if defined(SPECIALIZE_RELPROD)
