@@ -63,11 +63,16 @@ public class NQueens {
 
         /* Print the results */
         System.out.println("There are " + (long) queen.satCount() + " solutions.");
-        System.out.println("one is:");
-
         BDD solution = queen.satOne();
+        System.out.println("Here is "+(long) solution.satCount() + " solution:");
         solution.printSet();
         System.out.println();
+
+        queen.free();
+        solution.free();
+        for (i = 0; i < N; i++)
+            for (j = 0; j < N; j++)
+                X[i][j].free();
 
         B.done();
 

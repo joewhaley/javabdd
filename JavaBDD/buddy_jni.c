@@ -632,10 +632,10 @@ JNIEXPORT jint JNICALL Java_org_sf_javabdd_BuDDyFactory_level2Var
 
 /*
  * Class:     org_sf_javabdd_BuDDyFactory
- * Method:    var2level
+ * Method:    var2Level
  * Signature: (I)I
  */
-JNIEXPORT jint JNICALL Java_org_sf_javabdd_BuDDyFactory_var2level
+JNIEXPORT jint JNICALL Java_org_sf_javabdd_BuDDyFactory_var2Level
   (JNIEnv *env, jobject o, jint var)
 {
 #if defined(TRACE_BUDDYLIB)

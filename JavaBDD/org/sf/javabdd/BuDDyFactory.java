@@ -175,9 +175,9 @@ public class BuDDyFactory extends BDDFactory {
     public native int level2Var(int level);
 
     /**
-     * @see org.sf.javabdd.BDDFactory#var2level(int)
+     * @see org.sf.javabdd.BDDFactory#var2Level(int)
      */
-    public native int var2level(int var);
+    public native int var2Level(int var);
 
     /**
      * @see org.sf.javabdd.BDDFactory#reorder(org.sf.javabdd.BDDFactory.ReorderMethod)
@@ -331,6 +331,13 @@ public class BuDDyFactory extends BDDFactory {
         private BuDDyBDD(int id) {
             this._id = id;
             this.addRef();
+        }
+        
+        /* (non-Javadoc)
+         * @see org.sf.javabdd.BDD#getFactory()
+         */
+        public BDDFactory getFactory() {
+            return INSTANCE;
         }
         
         /**
