@@ -41,7 +41,7 @@
 unsigned int bdd_prime_gte(unsigned int src);
 unsigned int bdd_prime_lte(unsigned int src);
 
-#ifdef _MSC_VER
+#if defined(_MSC_VER) || defined(WIN32)
 #define srand48(x) srand(x)
 #define lrand48(x) rand(x)
 #endif
