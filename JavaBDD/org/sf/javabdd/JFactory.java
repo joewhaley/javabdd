@@ -4245,6 +4245,20 @@ public class JFactory extends BDDFactory {
     }
 
     /* (non-Javadoc)
+     * @see org.sf.javabdd.BDDFactory#setError(int)
+     */
+    public void setError(int code) {
+        bdderrorcond = code;
+    }
+    
+    /* (non-Javadoc)
+     * @see org.sf.javabdd.BDDFactory#clearError()
+     */
+    public void clearError() {
+        bdderrorcond = 0;
+    }
+   
+    /* (non-Javadoc)
      * @see org.sf.javabdd.BDDFactory#setMaxNodeNum(int)
      */
     public int setMaxNodeNum(int size) {
