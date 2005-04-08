@@ -4941,6 +4941,36 @@ public class MicroFactory extends BDDFactory {
         return bdd_setvarnum(num);
     }
 
+    /* (non-Javadoc)
+     * @see net.sf.javabdd.BDDFactory#duplicateVar(int)
+     */
+    public int duplicateVar(int var) {
+        if (var < 0 || var >= bddvarnum) {
+            bdd_error(BDD_VAR);
+            return bddfalse;
+        }
+        
+        bdd_disable_reorder();
+        
+        int newVar = bddvarnum;
+        int lev = bddvar2level[var];
+        bdd_setvarnum(bddvarnum+1);
+        insert_level(lev, true, 0);
+        for (int i = 0; i < bddvar2level.length; ++i) {
+            if (bddvar2level[i] > lev && bddvar2level[i] < bddvarnum)
+                ++bddvar2level[i];
+        }
+        bddvar2level[newVar] = lev+1;
+        for (int i = bddvarnum-2; i > lev; --i) {
+            bddlevel2var[i+1] = bddlevel2var[i];
+        }
+        bddlevel2var[lev+1] = newVar;
+        
+        bdd_enable_reorder();
+        
+        return newVar;
+    }
+    
     int bdd_setvarnum(int num) {
         int bdv;
         int oldbddvarnum = bddvarnum;
@@ -5748,6 +5778,64 @@ public class MicroFactory extends BDDFactory {
         return 0;
     }
 
+    void insert_level(int levToInsert, boolean dupLevel, int val) {
+        for (int n = 2; n < bddnodesize; n++) {
+            if (LOW(n) == INVALID_BDD) continue;
+            int lev = LEVEL(n);
+            if (lev < levToInsert || lev == bddvarnum-1) {
+                // Stays the same.
+                continue;
+            }
+            int lo, hi, newLev;
+            if (dupLevel && lev == levToInsert) {
+                // Duplicate this node.
+                int n_low, n_high;
+                bdd_addref(n);
+                // 0 = var is zero, 1 = var is one, -1 = var equals other
+                n_low = bdd_makenode(levToInsert+1, val<=0 ? LOW(n) : 0, val<=0 ? 0 : LOW(n));
+                n_high = bdd_makenode(levToInsert+1, val==0 ? HIGH(n) : 0, val==0 ? 0 : HIGH(n));
+                bdd_delref(n);
+                lo = LOW(n);
+                hi = HIGH(n);
+                newLev = lev;
+                SETLOW(n, n_low);
+                SETHIGH(n, n_high);
+            } else {
+                // Need to increase level by one.
+                lo = LOW(n);
+                hi = HIGH(n);
+                newLev = lev+1;
+            }
+            
+            // Find this node in its hash chain.
+            int hash = NODEHASH(lev, lo, hi);
+            int r = HASH(hash), r2 = 0;
+            while (r != n && r != 0) {
+                r2 = r;
+                r = NEXT(r);
+            }
+            if (r == 0) {
+                // Cannot find node in the hash chain ?!
+                throw new InternalError();
+            }
+            // Remove from this hash chain.
+            int NEXT_r = NEXT(r);
+            if (r2 == 0) {
+                SETHASH(hash, NEXT_r);
+            } else {
+                SETNEXT(r2, NEXT_r);
+            }
+            // Set level of this node.
+            SETLEVEL(n, newLev);
+            lo = LOW(n); hi = HIGH(n);
+            // Add to new hash chain.
+            hash = NODEHASH(newLev, lo, hi);
+            r = HASH(hash);
+            SETHASH(hash, n);
+            SETNEXT(n, r);
+        }
+    }
+    
     int mark_roots() {
         boolean[] dep = new boolean[bddvarnum];
         int n;

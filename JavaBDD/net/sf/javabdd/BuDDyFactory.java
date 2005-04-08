@@ -298,6 +298,14 @@ public class BuDDyFactory extends BDDFactory {
     private static native int setVarNum0(int num);
     
     /* (non-Javadoc)
+     * @see net.sf.javabdd.BDDFactory#duplicateVar(int)
+     */
+    public int duplicateVar(int var) {
+        return duplicateVar0(var);
+    }
+    private static native int duplicateVar0(int var);
+    
+    /* (non-Javadoc)
      * @see net.sf.javabdd.BDDFactory#extVarNum(int)
      */
     public int extVarNum(int num) {

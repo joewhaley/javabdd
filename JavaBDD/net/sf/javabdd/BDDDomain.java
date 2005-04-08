@@ -298,6 +298,40 @@ public abstract class BDDDomain {
         return this.ivar;
     }
     
+    public int ensureCapacity(long range) {
+        return ensureCapacity(BigInteger.valueOf(range));
+    }
+    public int ensureCapacity(BigInteger range) {
+        BigInteger calcsize = BigInteger.valueOf(2L);
+        if (range.signum() < 0)
+            throw new BDDException();
+        if (range.compareTo(realsize) < 0)
+            return ivar.length;
+        this.realsize = range;
+        int binsize = 1;
+        while (calcsize.compareTo(range) < 0) {
+           binsize++;
+           calcsize = calcsize.shiftLeft(1);
+        }
+        if (ivar.length == binsize) return binsize;
+        
+        int[] new_ivar = new int[binsize];
+        System.arraycopy(ivar, 0, new_ivar, 0, ivar.length);
+        BDDFactory factory = getFactory();
+        for (int i = ivar.length; i < new_ivar.length; ++i) {
+            int newVar = factory.duplicateVar(new_ivar[i-1]);
+            new_ivar[i] = newVar;
+        }
+        this.ivar = new_ivar;
+        this.var.free();
+        BDD nvar = factory.one();
+        for (int i = 0; i < ivar.length; ++i) {
+            nvar.andWith(factory.ithVar(ivar[i]));
+        }
+        this.var = nvar;
+        return binsize;
+    }
+    
     /* (non-Javadoc)
      * @see java.lang.Object#toString()
      */
@@ -312,11 +346,11 @@ public abstract class BDDDomain {
      * of length 'k' with elements [i_1,...,i_k].
      * <p>
      * Be careful when using this method for BDDs with a large number
-     * of entries, as it allocates a long[] array of dimension k.
+     * of entries, as it allocates a BigInteger[] array of dimension k.
      *
      * @param bdd bdd that is the disjunction of domain indices
      * @see #getVarIndices(BDD,int)
-     * @see #ithVar(long)
+     * @see #ithVar(BigInteger)
      */
     public BigInteger[] getVarIndices(BDD bdd) {
         return getVarIndices(bdd, -1);

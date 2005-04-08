@@ -160,6 +160,13 @@ public class TypedBDDFactory extends BDDFactory {
         return factory.setVarNum(num);
     }
 
+    /* (non-Javadoc)
+     * @see net.sf.javabdd.BDDFactory#duplicateVar(int)
+     */
+    public int duplicateVar(int var) {
+        return factory.duplicateVar(var);
+    }
+    
     public BDDDomain whichDomain(int var) {
         for (int i = 0; i < numberOfDomains(); ++i) {
             int[] vars = getDomain(i).vars();

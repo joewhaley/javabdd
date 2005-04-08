@@ -1377,7 +1377,6 @@ void bdd_unmark_upto(int i, int level)
 
 int bdd_makenode(unsigned int level, int low, int high)
 {
-   register BddNode *node;
    register unsigned int hash;
    register int res;
 
@@ -1527,7 +1526,6 @@ int bdd_noderesize(int doRehash)
 {
    int oldsize = bddnodesize;
    int newsize;
-   int n;
 
    if (bddnodesize >= bddmaxnodesize  &&  bddmaxnodesize > 0)
       return -1;
@@ -1660,5 +1658,88 @@ BDD bdd_makeset(int *varset, int varnum)
    RETURN_BDD(res);
 }
 
+static void insert_level(int levToInsert, int dupLevel, int val)
+{
+    int n, lev;
+    for (n = 2; n < bddnodesize; n++) {
+        int lo, hi, newLev, hash, r, r2, NEXT_r;
+        if (LOW(n) == INVALID_BDD) continue;
+        lev = LEVEL(n);
+        if (lev < levToInsert || lev == bddvarnum-1) {
+            // Stays the same.
+            continue;
+        }
+        if (dupLevel && lev == levToInsert) {
+            // Duplicate this node.
+            int n_low, n_high;
+            bdd_addref(n);
+            // 0 = var is zero, 1 = var is one, -1 = var equals other
+            n_low = bdd_makenode(levToInsert+1, val<=0 ? LOW(n) : 0, val<=0 ? 0 : LOW(n));
+            n_high = bdd_makenode(levToInsert+1, val==0 ? HIGH(n) : 0, val==0 ? 0 : HIGH(n));
+            bdd_delref(n);
+            lo = LOW(n);
+            hi = HIGH(n);
+            newLev = lev;
+            SETLOW(n, n_low);
+            SETHIGH(n, n_high);
+        } else {
+            // Need to increase level by one.
+            lo = LOW(n);
+            hi = HIGH(n);
+            newLev = lev+1;
+        }
+        
+        // Find this node in its hash chain.
+        hash = NODEHASH(lev, lo, hi);
+        r = HASH(hash), r2 = 0;
+        while (r != n) {
+            r2 = r;
+            r = NEXT(r);
+        }
+        // Remove from this hash chain.
+        NEXT_r = NEXT(r);
+        if (r2 == 0) {
+            SETHASH(hash, NEXT_r);
+        } else {
+            SETNEXT(r2, NEXT_r);
+        }
+        // Set level of this node.
+        SETLEVEL(n, newLev);
+        lo = LOW(n); hi = HIGH(n);
+        // Add to new hash chain.
+        hash = NODEHASH(newLev, lo, hi);
+        r = HASH(hash);
+        SETHASH(hash, n);
+        SETNEXT(n, r);
+    }
+}
+
+int bdd_duplicatevar(int var) {
+    int newVar, lev, i;
+    if (var < 0 || var >= bddvarnum) {
+        bdd_error(BDD_VAR);
+        return bddfalse;
+    }
+    
+    bdd_disable_reorder();
+    
+    newVar = bddvarnum;
+    lev = bddvar2level[var];
+    bdd_setvarnum(bddvarnum+1);
+    insert_level(lev, 1, 0);
+    for (i = 0; i <= bddvarnum; ++i) {
+        if (bddvar2level[i] > lev && bddvar2level[i] < bddvarnum)
+            ++bddvar2level[i];
+    }
+    bddvar2level[newVar] = lev+1;
+    for (i = bddvarnum-2; i > lev; --i) {
+        bddlevel2var[i+1] = bddlevel2var[i];
+    }
+    bddlevel2var[lev+1] = newVar;
+    
+    bdd_enable_reorder();
+    
+    return newVar;
+}
 
 /* EOF */

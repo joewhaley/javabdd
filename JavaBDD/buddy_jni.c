@@ -41,7 +41,7 @@ static void bdd_errhandler(int errcode)
 #if defined(TRACE_BUDDYLIB)
   printf("bdd_errstring(%d)\n", errcode);
 #endif
-  printf("BuDDy error: %s\n", bdd_errstring(errcode));
+  //printf("BuDDy error: %s\n", bdd_errstring(errcode));
   bdd_error = errcode;
 #if defined(TRACE_BUDDYLIB)
   printf("bdd_clear_error()\n");
@@ -504,6 +504,24 @@ JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_setVarNum0
   printf("bdd_setvarnum(%d)\n", num);
 #endif
   result = bdd_setvarnum(num);
+  check_error(env);
+  return result;
+}
+
+/*
+ * Class:     net_sf_javabdd_BuDDyFactory
+ * Method:    duplicateVar0
+ * Signature: (I)I
+ */
+JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_duplicateVar0
+  (JNIEnv *env, jclass cl, jint var)
+{
+  int result;
+  jnienv = env;
+#if defined(TRACE_BUDDYLIB)
+  printf("bdd_duplicatevar(%d)\n", var);
+#endif
+  result = bdd_duplicatevar(var);
   check_error(env);
   return result;
 }
