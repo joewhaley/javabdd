@@ -639,6 +639,16 @@ public class TestBDDFactory extends BDDFactory {
     }
 
     /* (non-Javadoc)
+     * @see net.sf.javabdd.BDDFactory#duplicateVar(int)
+     */
+    public int duplicateVar(int var) {
+        int r1 = f1.duplicateVar(var);
+        int r2 = f2.duplicateVar(var);
+        assertSame(r1 == r2, "duplicateVar");
+        return r1;
+    }
+    
+    /* (non-Javadoc)
      * @see net.sf.javabdd.BDDFactory#ithVar(int)
      */
     public BDD ithVar(int var) {

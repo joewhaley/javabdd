@@ -896,7 +896,13 @@ public abstract class BDDFactory {
      */
     public abstract void swapVar(int v1, int v2);
     
-    
+    /**
+     * Duplicate a BDD variable.
+     * 
+     * @param var  var to duplicate
+     * @return  index of new variable
+     */
+    public abstract int duplicateVar(int var);
     
     /**** VARIABLE BLOCKS ****/
     

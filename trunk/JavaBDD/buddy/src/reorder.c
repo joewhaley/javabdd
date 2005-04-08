@@ -1664,7 +1664,6 @@ void bdd_reorder_auto(void)
    
 }
 
-
 static int reorder_init(void)
 {
    int n;

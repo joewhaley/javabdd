@@ -203,6 +203,14 @@ public class CUDDFactory extends BDDFactory {
     private static native int setVarNum0(int num);
 
     /* (non-Javadoc)
+     * @see net.sf.javabdd.BDDFactory#duplicateVar(int)
+     */
+    public int duplicateVar(int var) {
+        // TODO Implement this.
+        throw new UnsupportedOperationException();
+    }
+    
+    /* (non-Javadoc)
      * @see net.sf.javabdd.BDDFactory#ithVar(int)
      */
     public BDD ithVar(int var) {

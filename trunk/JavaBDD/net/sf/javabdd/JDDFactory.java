@@ -666,6 +666,14 @@ public class JDDFactory extends BDDFactory {
     }
 
     /* (non-Javadoc)
+     * @see net.sf.javabdd.BDDFactory#duplicateVar(int)
+     */
+    public int duplicateVar(int var) {
+        // TODO Implement this.
+        throw new UnsupportedOperationException();
+    }
+    
+    /* (non-Javadoc)
      * @see net.sf.javabdd.BDDFactory#ithVar(int)
      */
     public BDD ithVar(int var) {
