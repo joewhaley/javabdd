@@ -307,9 +307,9 @@ public abstract class BDDDomain {
             throw new BDDException();
         if (range.compareTo(realsize) < 0)
             return ivar.length;
-        this.realsize = range;
+        this.realsize = range.add(BigInteger.ONE);
         int binsize = 1;
-        while (calcsize.compareTo(range) < 0) {
+        while (calcsize.compareTo(range) <= 0) {
            binsize++;
            calcsize = calcsize.shiftLeft(1);
         }
@@ -320,6 +320,7 @@ public abstract class BDDDomain {
         BDDFactory factory = getFactory();
         for (int i = ivar.length; i < new_ivar.length; ++i) {
             int newVar = factory.duplicateVar(new_ivar[i-1]);
+            factory.firstbddvar++;
             new_ivar[i] = newVar;
         }
         this.ivar = new_ivar;

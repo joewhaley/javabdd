@@ -1524,6 +1524,12 @@ public abstract class BDDFactory {
                 if (bitNumber < d.varNum()) {
                     int di = d.getIndex();
                     int local = localOrders[di][bitNumber];
+                    if (local >= d.vars().length) {
+                        System.out.println("bug!");
+                    }
+                    if (bitIndex >= varorder.length) {
+                        System.out.println("bug2!");
+                    }
                     varorder[bitIndex++] = d.vars()[local];
                 }
             }
