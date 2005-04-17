@@ -4469,6 +4469,8 @@ public class JFactory extends BDDFactory {
         bddnodes = null;
         bddrefstack = null;
         bddvarset = null;
+        bddvar2level = null;
+        bddlevel2var = null;
 
         bdd_operator_done();
 
@@ -4609,7 +4611,8 @@ public class JFactory extends BDDFactory {
         // Increase the size of the various data structures.
         bdd_setvarnum(bddvarnum+1);
         // Actually duplicate the var in all BDDs.
-        insert_level(lev, true, 0);
+        insert_level(lev);
+        dup_level(lev, 0);
         // Fix up bddvar2level
         for (int i = 0; i < bddvarnum; ++i) {
             if (bddvar2level[i] > lev && bddvar2level[i] < bddvarnum)
@@ -4628,7 +4631,7 @@ public class JFactory extends BDDFactory {
             POPREF(1);
 
             SETMAXREF(bddvarset[bdv * 2]);
-            SETMAXREF(bddvarset[bdv * 2] + 1);
+            SETMAXREF(bddvarset[bdv * 2 + 1]);
         }
         // Fix up pairs
         for (bddPair pair = pairs; pair != null; pair = pair.next) {
@@ -4706,7 +4709,7 @@ public class JFactory extends BDDFactory {
             }
 
             SETMAXREF(bddvarset[bddvarnum * 2]);
-            SETMAXREF(bddvarset[bddvarnum * 2] + 1);
+            SETMAXREF(bddvarset[bddvarnum * 2 + 1]);
             bddlevel2var[bddvarnum] = bddvarnum;
             bddvar2level[bddvarnum] = bddvarnum;
         }
@@ -5464,34 +5467,19 @@ public class JFactory extends BDDFactory {
         return 0;
     }
 
-    void insert_level(int levToInsert, boolean dupLevel, int val) {
+    void insert_level(int levToInsert) {
         for (int n = 2; n < bddnodesize; n++) {
             if (LOW(n) == INVALID_BDD) continue;
             int lev = LEVEL(n);
-            if (lev < levToInsert || lev == bddvarnum-1) {
+            if (lev <= levToInsert || lev == bddvarnum-1) {
                 // Stays the same.
                 continue;
             }
             int lo, hi, newLev;
-            if (dupLevel && lev == levToInsert) {
-                // Duplicate this node.
-                int n_low, n_high;
-                bdd_addref(n);
-                // 0 = var is zero, 1 = var is one, -1 = var equals other
-                n_low = bdd_makenode(levToInsert+1, val<=0 ? LOW(n) : 0, val<=0 ? 0 : LOW(n));
-                n_high = bdd_makenode(levToInsert+1, val==0 ? HIGH(n) : 0, val==0 ? 0 : HIGH(n));
-                bdd_delref(n);
-                lo = LOW(n);
-                hi = HIGH(n);
-                newLev = lev;
-                SETLOW(n, n_low);
-                SETHIGH(n, n_high);
-            } else {
-                // Need to increase level by one.
-                lo = LOW(n);
-                hi = HIGH(n);
-                newLev = lev+1;
-            }
+            lo = LOW(n);
+            hi = HIGH(n);
+            // Need to increase level by one.
+            newLev = lev+1;
             
             // Find this node in its hash chain.
             int hash = NODEHASH(lev, lo, hi);
@@ -5521,7 +5509,61 @@ public class JFactory extends BDDFactory {
             SETNEXT(n, r);
         }
     }
-    
+
+    void dup_level(int levToInsert, int val) {
+        for (int n = 2; n < bddnodesize; n++) {
+            if (LOW(n) == INVALID_BDD) continue;
+            int lev = LEVEL(n);
+            if (lev != levToInsert || lev == bddvarnum-1) {
+                // Stays the same.
+                continue;
+            }
+            int lo, hi, newLev;
+            lo = LOW(n);
+            hi = HIGH(n);
+            // Duplicate this node.
+            _assert(LEVEL(lo) > levToInsert + 1);
+            _assert(LEVEL(hi) > levToInsert + 1);
+            int n_low, n_high;
+            bdd_addref(n);
+            // 0 = var is zero, 1 = var is one, -1 = var equals other
+            n_low = bdd_makenode(levToInsert+1, val<=0 ? lo : 0, val<=0 ? 0 : lo);
+            n_high = bdd_makenode(levToInsert+1, val==0 ? hi : 0, val==0 ? 0 : hi);
+            bdd_delref(n);
+            //System.out.println("Lev = "+lev+" old low = "+lo+" old high = "+hi+" new low = "+n_low+" ("+new bdd(n_low)+") new high = "+n_high+" ("+new bdd(n_high)+")");
+            newLev = lev;
+            SETLOW(n, n_low);
+            SETHIGH(n, n_high);
+            
+            // Find this node in its hash chain.
+            int hash = NODEHASH(lev, lo, hi);
+            int r = HASH(hash), r2 = 0;
+            while (r != n && r != 0) {
+                r2 = r;
+                r = NEXT(r);
+            }
+            if (r == 0) {
+                // Cannot find node in the hash chain ?!
+                throw new InternalError();
+            }
+            // Remove from this hash chain.
+            int NEXT_r = NEXT(r);
+            if (r2 == 0) {
+                SETHASH(hash, NEXT_r);
+            } else {
+                SETNEXT(r2, NEXT_r);
+            }
+            // Set level of this node.
+            SETLEVEL(n, newLev);
+            lo = LOW(n); hi = HIGH(n);
+            // Add to new hash chain.
+            hash = NODEHASH(newLev, lo, hi);
+            r = HASH(hash);
+            SETHASH(hash, n);
+            SETNEXT(n, r);
+        }
+    }
+
     int mark_roots() {
         boolean[] dep = new boolean[bddvarnum];
         int n;
@@ -6015,6 +6057,7 @@ public class JFactory extends BDDFactory {
         bdd_save_rec(out, r);
         bdd_unmark(r);
 
+        out.flush();
         return;
     }
 

@@ -267,6 +267,9 @@ public abstract class BDDFactory {
     public void reset() {
         int nodes = getNodeTableSize();
         int cache = getCacheSize();
+        domain = null;
+        fdvarnum = 0;
+        firstbddvar = 0;
         done();
         initialize(nodes, cache);
     }
