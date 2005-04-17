@@ -449,6 +449,8 @@ extern int    bdd_reorder_varup(int);
 
 extern void   bdd_cpp_init(void);
 
+extern void   fixup_pairs(int,int);
+
 #ifdef CPLUSPLUS
 }
 #endif

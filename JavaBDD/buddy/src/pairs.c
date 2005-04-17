@@ -359,6 +359,22 @@ void bdd_resetpair(bddPair *p)
    RETURN();
 }
 
+void fixup_pairs(int lev, int newVar)
+{
+    bddPair* pair;
+	for (pair = pairs; pair != NULL; pair = pair->next) {
+		int i;
+        bdd_delref(pair->result[bddvarnum-1]);
+        for (i = bddvarnum-1; i > lev+1; --i) {
+            pair->result[i] = pair->result[i-1];
+            if (i != LEVEL(pair->result[i]) && i > pair->last) {
+                pair->last = i;
+            }
+        }
+        pair->result[lev+1] = bdd_ithvar(newVar);
+    }
+}
+
 
 /* EOF */
 

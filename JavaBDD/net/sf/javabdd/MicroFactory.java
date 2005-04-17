@@ -4954,17 +4954,43 @@ public class MicroFactory extends BDDFactory {
         
         int newVar = bddvarnum;
         int lev = bddvar2level[var];
+        // Increase the size of the various data structures.
         bdd_setvarnum(bddvarnum+1);
-        insert_level(lev, true, 0);
-        for (int i = 0; i < bddvar2level.length; ++i) {
+        // Actually duplicate the var in all BDDs.
+        insert_level(lev);
+        dup_level(lev, 0);
+        // Fix up bddvar2level
+        for (int i = 0; i < bddvarnum; ++i) {
             if (bddvar2level[i] > lev && bddvar2level[i] < bddvarnum)
                 ++bddvar2level[i];
         }
         bddvar2level[newVar] = lev+1;
+        // Fix up bddlevel2var
         for (int i = bddvarnum-2; i > lev; --i) {
             bddlevel2var[i+1] = bddlevel2var[i];
         }
         bddlevel2var[lev+1] = newVar;
+        // Fix up bddvarset
+        for (int bdv = 0; bdv < bddvarnum; bdv++) {
+            bddvarset[bdv * 2] = PUSHREF(bdd_makenode(bddvar2level[bdv], 0, 1));
+            bddvarset[bdv * 2 + 1] = bdd_makenode(bddvar2level[bdv], 1, 0);
+            POPREF(1);
+
+            SETMAXREF(bddvarset[bdv * 2]);
+            SETMAXREF(bddvarset[bdv * 2 + 1]);
+        }
+        // Fix up pairs
+        for (bddPair pair = pairs; pair != null; pair = pair.next) {
+            bdd_delref(pair.result[bddvarnum-1]);
+            for (int i = bddvarnum-1; i > lev+1; --i) {
+                pair.result[i] = pair.result[i-1];
+                if (i != LEVEL(pair.result[i]) && i > pair.last) {
+                    pair.last = i;
+                }
+            }
+            pair.result[lev+1] = bdd_ithvar(newVar);
+            //System.out.println("Pair "+pair);
+        }
         
         bdd_enable_reorder();
         
@@ -5027,7 +5053,7 @@ public class MicroFactory extends BDDFactory {
             }
 
             SETMAXREF(bddvarset[bddvarnum * 2]);
-            SETMAXREF(bddvarset[bddvarnum * 2] + 1);
+            SETMAXREF(bddvarset[bddvarnum * 2 + 1]);
             bddlevel2var[bddvarnum] = bddvarnum;
             bddvar2level[bddvarnum] = bddvarnum;
         }
@@ -5778,34 +5804,72 @@ public class MicroFactory extends BDDFactory {
         return 0;
     }
 
-    void insert_level(int levToInsert, boolean dupLevel, int val) {
+    void insert_level(int levToInsert) {
         for (int n = 2; n < bddnodesize; n++) {
             if (LOW(n) == INVALID_BDD) continue;
             int lev = LEVEL(n);
-            if (lev < levToInsert || lev == bddvarnum-1) {
+            if (lev <= levToInsert || lev == bddvarnum-1) {
                 // Stays the same.
                 continue;
             }
             int lo, hi, newLev;
-            if (dupLevel && lev == levToInsert) {
-                // Duplicate this node.
-                int n_low, n_high;
-                bdd_addref(n);
-                // 0 = var is zero, 1 = var is one, -1 = var equals other
-                n_low = bdd_makenode(levToInsert+1, val<=0 ? LOW(n) : 0, val<=0 ? 0 : LOW(n));
-                n_high = bdd_makenode(levToInsert+1, val==0 ? HIGH(n) : 0, val==0 ? 0 : HIGH(n));
-                bdd_delref(n);
-                lo = LOW(n);
-                hi = HIGH(n);
-                newLev = lev;
-                SETLOW(n, n_low);
-                SETHIGH(n, n_high);
-            } else {
-                // Need to increase level by one.
-                lo = LOW(n);
-                hi = HIGH(n);
-                newLev = lev+1;
+            lo = LOW(n);
+            hi = HIGH(n);
+            // Need to increase level by one.
+            newLev = lev+1;
+            
+            // Find this node in its hash chain.
+            int hash = NODEHASH(lev, lo, hi);
+            int r = HASH(hash), r2 = 0;
+            while (r != n && r != 0) {
+                r2 = r;
+                r = NEXT(r);
             }
+            if (r == 0) {
+                // Cannot find node in the hash chain ?!
+                throw new InternalError();
+            }
+            // Remove from this hash chain.
+            int NEXT_r = NEXT(r);
+            if (r2 == 0) {
+                SETHASH(hash, NEXT_r);
+            } else {
+                SETNEXT(r2, NEXT_r);
+            }
+            // Set level of this node.
+            SETLEVEL(n, newLev);
+            lo = LOW(n); hi = HIGH(n);
+            // Add to new hash chain.
+            hash = NODEHASH(newLev, lo, hi);
+            r = HASH(hash);
+            SETHASH(hash, n);
+            SETNEXT(n, r);
+        }
+    }
+
+    void dup_level(int levToInsert, int val) {
+        for (int n = 2; n < bddnodesize; n++) {
+            if (LOW(n) == INVALID_BDD) continue;
+            int lev = LEVEL(n);
+            if (lev != levToInsert || lev == bddvarnum-1) {
+                // Stays the same.
+                continue;
+            }
+            int lo, hi, newLev;
+            lo = LOW(n);
+            hi = HIGH(n);
+            // Duplicate this node.
+            _assert(LEVEL(lo) > levToInsert + 1);
+            _assert(LEVEL(hi) > levToInsert + 1);
+            int n_low, n_high;
+            bdd_addref(n);
+            // 0 = var is zero, 1 = var is one, -1 = var equals other
+            n_low = bdd_makenode(levToInsert+1, val<=0 ? lo : 0, val<=0 ? 0 : lo);
+            n_high = bdd_makenode(levToInsert+1, val==0 ? hi : 0, val==0 ? 0 : hi);
+            bdd_delref(n);
+            newLev = lev;
+            SETLOW(n, n_low);
+            SETHIGH(n, n_high);
             
             // Find this node in its hash chain.
             int hash = NODEHASH(lev, lo, hi);
