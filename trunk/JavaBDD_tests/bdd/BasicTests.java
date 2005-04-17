@@ -3,8 +3,19 @@
 // Licensed under the terms of the GNU LGPL; see COPYING for details.
 package bdd;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Random;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.math.BigInteger;
 import junit.framework.Assert;
 import net.sf.javabdd.BDD;
+import net.sf.javabdd.BDDDomain;
 import net.sf.javabdd.BDDException;
 import net.sf.javabdd.BDDFactory;
 
@@ -384,5 +395,145 @@ public class BasicTests extends BDDTestCase {
             // TODO: more tests.
             a.free(); b.free(); c.free(); d.free(); e.free();
         }
+    }
+    
+    public void testEnsureCapacity() {
+        reset();
+        Assert.assertTrue(hasNext());
+        while (hasNext()) {
+            BDDFactory bdd = nextFactory();
+            long[] domains = new long[] { 127, 17, 31, 4 };
+            BDDDomain[] d = bdd.extDomain(domains);
+            BDD q = d[0].ithVar(7);
+            BDD r = d[1].ithVar(9);
+            BDD s = d[2].ithVar(4);
+            BDD t = d[3].ithVar(2);
+            BDD u = r.and(s);
+            BDD v = q.and(t);
+            BDD w = u.and(t);
+            //BDD x = d[1].set();
+            for (int i = 0; i < d.length; ++i) {
+                d[i].ensureCapacity(BigInteger.valueOf(150));
+                Assert.assertEquals(BigInteger.valueOf(7), q.scanVar(d[0]));
+                Assert.assertEquals(BigInteger.valueOf(9), r.scanVar(d[1]));
+                Assert.assertEquals(BigInteger.valueOf(4), s.scanVar(d[2]));
+                Assert.assertEquals(BigInteger.valueOf(2), t.scanVar(d[3]));
+                Assert.assertEquals(BigInteger.valueOf(9), u.scanVar(d[1]));
+                Assert.assertEquals(BigInteger.valueOf(4), u.scanVar(d[2]));
+                Assert.assertEquals(BigInteger.valueOf(7), v.scanVar(d[0]));
+                Assert.assertEquals(BigInteger.valueOf(2), v.scanVar(d[3]));
+                Assert.assertEquals(BigInteger.valueOf(9), w.scanVar(d[1]));
+                Assert.assertEquals(BigInteger.valueOf(4), w.scanVar(d[2]));
+                Assert.assertEquals(BigInteger.valueOf(2), w.scanVar(d[3]));
+                //BDD y = d[1].set();
+                //Assert.assertEquals(x, y);
+                //y.free();
+            }
+            //x.free();
+            w.free(); v.free(); u.free(); t.free(); s.free(); r.free(); q.free();
+        }
+    }
+    
+    public void testEnsureCapacity2() throws IOException {
+        reset();
+        Assert.assertTrue(hasNext());
+        while (hasNext()) {
+            BDDFactory bdd = nextFactory();
+            System.out.println("Factory "+bdd);
+            int n = bdd.numberOfDomains();
+            long[] domainSizes = new long[] { 127, 17, 31, 4, 256, 87, 42, 666, 3405, 18 };
+            while (bdd.numberOfDomains() < domainSizes.length) {
+                bdd.extDomain(domainSizes[bdd.numberOfDomains()]);
+            }
+            BDDDomain[] d = new BDDDomain[domainSizes.length];
+            for (int i = 0; i < domainSizes.length; ++i) {
+                d[i] = bdd.getDomain(i);
+                domainSizes[i] = d[i].size().longValue();
+            }
+            for (int i = 0; i < d.length; ++i) {
+                d[i].setName(Integer.toString(i));
+            }
+            final int count = 100;
+            final int num = 10;
+            for (int i = 0; i < count; ++i) {
+                String order = randomOrder(d);
+                //System.out.println("Random order: "+order);
+                bdd.setVarOrder(bdd.makeVarOrdering(false, order));
+                List bdds = new LinkedList();
+                for (int j = 0; j < num; ++j) {
+                    BDD b = randomBDD(bdd);
+                    bdds.add(b);
+                }
+                StringBuffer sb = new StringBuffer();
+                for (Iterator j = bdds.iterator(); j.hasNext(); ) {
+                    BDD b = (BDD) j.next();
+                    sb.append(b.toStringWithDomains());
+                    //bdd.save(new BufferedWriter(new PrintWriter(System.out)), b);
+                }
+                String before = sb.toString();
+                int which = random.nextInt(d.length);
+                int amount = random.nextInt(d[which].size().intValue() * 3);
+                //System.out.println(" Ensure capacity "+d[which]+" = "+amount);
+                d[which].ensureCapacity(amount);
+                sb = new StringBuffer();
+                for (Iterator j = bdds.iterator(); j.hasNext(); ) {
+                    BDD b = (BDD) j.next();
+                    sb.append(b.toStringWithDomains());
+                    //bdd.save(new BufferedWriter(new PrintWriter(System.out)), b);
+                }
+                String after = sb.toString();
+                Assert.assertEquals(before, after);
+                for (Iterator j = bdds.iterator(); j.hasNext(); ) {
+                    BDD b = (BDD) j.next();
+                    b.free();
+                }
+            }
+        }
+    }
+    
+    private static BDD randomBDD(BDDFactory f) {
+        Assert.assertTrue(f.numberOfDomains() > 0);
+        List list = new ArrayList(f.numberOfDomains());
+        int k = random.nextInt(f.numberOfDomains());
+        for (int i = 0; i < f.numberOfDomains(); ++i) {
+            list.add(f.getDomain(i));
+        }
+        BDD result = f.one();
+        for (int i = 0; i < k; ++i) {
+            int x = random.nextInt(f.numberOfDomains()-i);
+            BDDDomain d = (BDDDomain) list.remove(x);
+            int y = random.nextInt(d.size().intValue());
+            result.andWith(d.ithVar(y));
+        }
+        if (k == 0 && random.nextBoolean())
+            result.andWith(f.zero());
+        return result;
+    }
+    
+    private static String randomOrder(BDDDomain[] domains) {
+        domains = (BDDDomain[]) randomShuffle(domains);
+        StringBuffer sb = new StringBuffer();
+        for (int i = 0; i < domains.length; ++i) {
+            if (i > 0) {
+                boolean x = random.nextBoolean();
+                if (x) sb.append('x');
+                else sb.append('_');
+            }
+            sb.append(domains[i].toString());
+        }
+        return sb.toString();
+    }
+    
+    private static Random random = new Random(System.currentTimeMillis());
+    private static Object[] randomShuffle(Object[] a) {
+        int n = a.length;
+        List list = new ArrayList(Arrays.asList(a));
+        Object[] result = (Object[]) a.clone();
+        for (int i = 0; i < n; ++i) {
+            int k = random.nextInt(n-i);
+            result[i] = list.remove(k);
+        }
+        Assert.assertTrue(list.isEmpty());
+        return result;
     }
 }
