@@ -19,7 +19,7 @@ public class R3 extends BDDTestCase {
         junit.textui.TestRunner.run(R3.class);
     }
     
-    public void testR2() {
+    public void testR3() {
         Assert.assertTrue(hasNext());
         while (hasNext()) {
             
