@@ -47,7 +47,7 @@ public class CallbackTests extends BDDTestCase {
             BDDFactory bdd = nextFactory();
             bdd.registerGCCallback(this, m);
             gc_called = 0;
-            final int numBits = 16;
+            final int numBits = 20;
             final int max = (1 << numBits) - 1;
             if (bdd.varNum() < numBits) bdd.setVarNum(numBits);
             int[] vars = new int[numBits];
