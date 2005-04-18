@@ -369,7 +369,7 @@ typedef struct s_BddNode /* Node table entry */
 # define CLOCKS_PER_SEC DEFAULT_CLOCK
 #endif
 
-#define DEFAULTMAXNODEINC 50000
+#define DEFAULTMAXNODEINC 10000000
 
 #define MIN(a,b) ((a) < (b) ? (a) : (b))
 #define MAX(a,b) ((a) > (b) ? (a) : (b))
