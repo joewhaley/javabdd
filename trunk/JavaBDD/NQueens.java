@@ -29,6 +29,10 @@ public class NQueens {
         freeAll();
         time = System.currentTimeMillis() - time;
         System.out.println("Time: "+time/1000.+" seconds");
+        BDDFactory.CacheStats cachestats = B.getCacheStats();
+        if (cachestats != null && cachestats.uniqueAccess > 0) {
+            System.out.println(cachestats);
+        }
         B.done();
         B = null;
     }
