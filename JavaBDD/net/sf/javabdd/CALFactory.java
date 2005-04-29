@@ -52,8 +52,8 @@ public class CALFactory extends BDDFactory {
         } catch (java.lang.UnsatisfiedLinkError x) {
             // Cannot find library, try loading it from the current directory...
             libname = System.mapLibraryName(libname);
-            String currentdir = System.getProperty("user.dir");
-            String sep = System.getProperty("file.separator");
+            String currentdir = getProperty("user.dir", ".");
+            String sep = getProperty("file.separator", "/");
             System.load(currentdir+sep+libname);
         }
         registerNatives();
