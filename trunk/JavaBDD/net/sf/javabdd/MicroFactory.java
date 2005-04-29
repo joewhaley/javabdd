@@ -1224,6 +1224,11 @@ public class MicroFactory extends BDDFactory {
     }
     
     private static class JavaBDDException extends BDDException {
+        /**
+         * Version ID for serialization.
+         */
+        private static final long serialVersionUID = 3257289123604607538L;
+
         public JavaBDDException(int x) {
             super(errorstrings[-x]);
         }

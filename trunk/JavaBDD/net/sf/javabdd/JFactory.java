@@ -606,12 +606,22 @@ public class JFactory extends BDDFactory {
     }
 
     private static class JavaBDDException extends BDDException {
+        /**
+         * Version ID for serialization.
+         */
+        private static final long serialVersionUID = 3257289144995952950L;
+
         public JavaBDDException(int x) {
             super(errorstrings[-x]);
         }
     }
 
-    private static class ReorderException extends RuntimeException {}
+    private static class ReorderException extends RuntimeException {
+        /**
+         * Version ID for serialization.
+         */
+        private static final long serialVersionUID = 3256727264505772345L;
+    }
     
     static final int bddtrue = 1;
     static final int bddfalse = 0;
