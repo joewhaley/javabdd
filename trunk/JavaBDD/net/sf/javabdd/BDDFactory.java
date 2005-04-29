@@ -20,6 +20,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.math.BigInteger;
+import java.security.AccessControlException;
 
 /**
  * <p>Interface for the creation and manipulation of BDDs.</p>
@@ -31,6 +32,14 @@ import java.math.BigInteger;
  */
 public abstract class BDDFactory {
 
+    public static final String getProperty(String key, String def) {
+        try {
+            return System.getProperty(key, def);
+        } catch (AccessControlException _) {
+            return def;
+        }
+    }
+    
     /**
      * <p>Initializes a BDD factory with the given initial node table size
      * and operation cache size.  Tries to use the "buddy" native library;
@@ -41,7 +50,7 @@ public abstract class BDDFactory {
      * @return BDD factory object
      */
     public static BDDFactory init(int nodenum, int cachesize) {
-        String bddpackage = System.getProperty("bdd", "buddy");
+        String bddpackage = getProperty("bdd", "buddy");
         return init(bddpackage, nodenum, cachesize);
     }
 
@@ -1156,7 +1165,7 @@ public abstract class BDDFactory {
          */
         public String toString() {
             StringBuffer sb = new StringBuffer();
-            String newLine = System.getProperty("line.separator");
+            String newLine = getProperty("line.separator", "\n");
             sb.append(newLine);
             sb.append("Cache statistics");
             sb.append(newLine);

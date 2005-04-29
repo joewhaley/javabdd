@@ -50,14 +50,14 @@ public class BuDDyFactory extends BDDFactory {
     private static BuDDyFactory INSTANCE;
     
     static {
-        String libname = System.getProperty("buddylib", "buddy");
+        String libname = getProperty("buddylib", "buddy");
         try {
             System.loadLibrary(libname);
         } catch (java.lang.UnsatisfiedLinkError x) {
             // Cannot find library, try loading it from the current directory...
             libname = System.mapLibraryName(libname);
-            String currentdir = System.getProperty("user.dir");
-            String sep = System.getProperty("file.separator");
+            String currentdir = getProperty("user.dir", ".");
+            String sep = getProperty("file.separator", "/");
             String filename = currentdir+sep+libname;
             try {
                 System.load(filename);

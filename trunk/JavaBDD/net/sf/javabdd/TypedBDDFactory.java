@@ -38,7 +38,7 @@ public class TypedBDDFactory extends BDDFactory {
     
     public static BDDFactory init(int nodenum, int cachesize) {
         BDDFactory a;
-        String factoryName = System.getProperty("bdd");
+        String factoryName = getProperty("bdd", null);
         if (factoryName != null && factoryName.equals("typed"))
             a = BuDDyFactory.init(nodenum, cachesize);
         else
