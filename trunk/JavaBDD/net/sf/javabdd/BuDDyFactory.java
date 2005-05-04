@@ -39,7 +39,11 @@ import java.math.BigInteger;
 public class BuDDyFactory extends BDDFactory {
 
     public static BDDFactory init(int nodenum, int cachesize) {
-        BuDDyFactory f = new BuDDyFactory();
+        BuDDyFactory f;
+        if (USE_FINALIZER)
+            f = new BuDDyFactoryWithFinalizer();
+        else
+            f = new BuDDyFactory();
         f.initialize(nodenum, cachesize);
         return f;
     }
@@ -96,6 +100,18 @@ public class BuDDyFactory extends BDDFactory {
     private BuDDyFactory() {}
 
     private static final boolean USE_FINALIZER = false;
+    
+    private static class BuDDyFactoryWithFinalizer extends BuDDyFactory {
+        
+        /**
+         * @see java.lang.Object#finalize()
+         */
+        protected void finalize() throws Throwable {
+            super.finalize();
+            this.done();
+        }
+        
+    }
     
     private static BuDDyBDD makeBDD(int id) {
         BuDDyBDD b;
