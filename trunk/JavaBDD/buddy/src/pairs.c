@@ -68,6 +68,7 @@ void bdd_pairs_done(void)
       free(p);
       p = next;
    }
+   pairs = NULL;
 }
 
 
