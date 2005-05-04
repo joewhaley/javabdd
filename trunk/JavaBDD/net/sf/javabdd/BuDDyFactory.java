@@ -344,7 +344,11 @@ public class BuDDyFactory extends BDDFactory {
      */
     public BDDPairing makePair() {
         long ptr = makePair0();
-        return new BuDDyBDDPairing(ptr);
+        if (USE_FINALIZER) {
+            return new BuDDyBDDPairingWithFinalizer(ptr);
+        } else {
+            return new BuDDyBDDPairing(ptr);
+        }
     }
     private static native long makePair0();
     
@@ -1100,20 +1104,31 @@ public class BuDDyFactory extends BDDFactory {
         }
         private static native void reset0(long ptr);
         
+        /**
+         * Free the memory allocated for this pair.
+         */
+        public void free() {
+            if (_ptr != 0) free0(_ptr);
+            _ptr = 0;
+        }
+        private static native void free0(long p);
+        
+    }
+    
+    private static class BuDDyBDDPairingWithFinalizer extends BuDDyBDDPairing {
+        
+        private BuDDyBDDPairingWithFinalizer(long ptr) {
+            super(ptr);
+        }
+
         /* (non-Javadoc)
          * @see java.lang.Object#finalize()
          */
         protected void finalize() throws Throwable {
             super.finalize();
-            if (_ptr != 0) free0(_ptr);
-            _ptr = 0;
+            free();
         }
 
-        /**
-         * Free the memory allocated for this pair.
-         */
-        private static native void free0(long p);
-        
     }
     
     /* (non-Javadoc)
