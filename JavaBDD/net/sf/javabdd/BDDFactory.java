@@ -293,14 +293,6 @@ public abstract class BDDFactory {
     public abstract void done();
     
     /**
-     * @see java.lang.Object#finalize()
-     */
-    protected void finalize() throws Throwable {
-        super.finalize();
-        this.done();
-    }
-    
-    /**
      * <p>Sets the error condition.  This will cause the BDD package to throw an
      * exception at the next garbage collection.</p>
      * 
