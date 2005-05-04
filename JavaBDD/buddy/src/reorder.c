@@ -1656,7 +1656,7 @@ int bdd_reorder_ready(void)
    
 void bdd_reorder_auto(void)
 {
-   if (!bdd_reorder_ready)
+   if (!bdd_reorder_ready())
       return;
    
    bdd_reorder(bddreordermethod);
