@@ -5,7 +5,7 @@
   <name>JavaBDD</name>
   <groupId>javabdd</groupId>
   <id>javabdd</id>
-  <currentVersion>1.0b1</currentVersion>
+  <currentVersion>1.0b2</currentVersion>
   <logo>/images/logo2_mid.jpg</logo>
   <organization>
     <name>John Whaley</name>
@@ -41,7 +41,7 @@
   </description>
   <url>http://javabdd.sourceforge.net/</url>
   <issueTrackingUrl>http://sourceforge.net/tracker/?group_id=72725</issueTrackingUrl>
-  <siteAddress>javabdd.sourceforge.net</siteAddress>
+  <siteAddress>shell.sourceforge.net</siteAddress>
   <siteDirectory>/home/groups/j/ja/javabdd/htdocs/</siteDirectory>
   <distributionDirectory>/home/groups/j/ja/javabdd/</distributionDirectory>
   <repository>
@@ -74,6 +74,11 @@
       <id>1.0b1</id>
       <name>1.0b1</name>
       <tag>v1_0b1</tag>
+    </version>
+    <version>
+      <id>1.0b2</id>
+      <name>1.0b2</name>
+      <tag>v1_0b2</tag>
     </version>
   </versions>
   <mailingLists>

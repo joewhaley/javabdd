@@ -23,7 +23,7 @@
       The JavaBDD jar file contains a simple example that solves an NxN
       queens problem.  You can run this example by simply typing:
       <br/>
-      <code>java -jar javabdd.jar <i>N</i></code>
+      <code>java -jar javabdd-1.0b2.jar <i>N</i></code>
       <br/>
       where <code><i>N</i></code> is the size of the board (e.g. <code>8</code>).
       </p>
