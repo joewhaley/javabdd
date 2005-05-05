@@ -16,7 +16,7 @@
       creation and BDD garbage collection.  The command line I used to test
       was:
       <br/>
-      <code>java -mx512m -Dbdd=<i>package</i> -jar javabdd.jar 12</code>
+      <code>java -mx512m -Dbdd=<i>package</i> -jar javabdd-1.0b2.jar 12</code>
       <br/>
       </p>
       <table border="2">

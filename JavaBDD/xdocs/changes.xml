@@ -5,6 +5,33 @@
   </properties>
   <body>
 
+    <release version="1.0b2" date="2005-05-05">
+      <action dev="joewhaley" type="update">
+        Better error handling in BDDIterator.
+      </action>
+      <action dev="joewhaley" type="update">
+        More small performance improvements for the Java version.
+      </action>
+      <action dev="joewhaley" type="add">
+        Added ability to register callbacks for various events.
+      </action>
+      <action dev="joewhaley" type="add">
+        Added support for dynamically growing domains.
+      </action>
+      <action dev="joewhaley" type="add">
+        Added support for running JavaBDD under restricted permissions; e.g. as an applet.
+      </action>
+      <action dev="joewhaley" type="fix">
+        Fixed a bug involving finalizers.
+      </action>
+      <action dev="joewhaley" type="fix">
+        Fixed a bug involving reset() and done().
+      </action>
+      <action dev="joewhaley" type="fix">
+        Fixed a bug involving reordering in the Java implementation.
+      </action>
+    </release>
+    
     <release version="1.0b1" date="2004-10-17">
       <action dev="joewhaley" type="update">
         Many, many new features and enhancements.
