@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Vector;
+import java.util.zip.GZIPInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -297,7 +298,7 @@ public class TraceDriver {
     }
 
     // -----------------------------------------------
-    private static final int DEFAULT_NODES = 10000, MAX_NODES = 3000000;
+    private static final int DEFAULT_NODES = 500000, MAX_NODES = 3000000;
     private BDDFactory bdd;
     private InputStream is;
     private StringBuffer sb;
@@ -315,14 +316,24 @@ public class TraceDriver {
     public static boolean verbose = false;
 
     public TraceDriver(String file) throws IOException
-        { this(file, new FileInputStream(file),  DEFAULT_NODES); }
+    {
+        this(file, DEFAULT_NODES);
+    }
 
     public TraceDriver(String file, int nodes) throws IOException
-            { this(file, new FileInputStream(file), nodes); }
+    {
+        this(file,
+             file.endsWith(".gz") ?
+                 (InputStream) new GZIPInputStream(new FileInputStream(file)) :
+                 (InputStream) new FileInputStream(file),
+             nodes);
+    }
 
 
     public TraceDriver(String file, InputStream is) throws IOException
-        { this(file, is, DEFAULT_NODES); }
+    {
+        this(file, is, DEFAULT_NODES);
+    }
 
 
     public TraceDriver(String file, InputStream is, int nodes) throws IOException {
@@ -404,7 +415,7 @@ public class TraceDriver {
     // -----------------------------------------------------
     private void setup_bdd(int vars) {
         this.vars = vars;
-        nodes = (int)Math.min( MAX_NODES, nodes * (1 + Math.log(1+vars)) );
+        //nodes = (int)Math.min( MAX_NODES, nodes * (1 + Math.log(1+vars)) );
 
         out.println();
         out.println("loading " + module + " from " + filename + " (" + nodes + " nodes, " + vars + " vars)");
@@ -825,12 +836,21 @@ public class TraceDriver {
     public static void main(String [] args) {
         //TraceDriver.verbose = true;
 
+        if (args.length == 0) {
+            out.println("Usage:  java "+TraceDriver.class.getName()+" file.trace {file2.trace ...}");
+            return;
+        }
+        int bddnodes = Integer.parseInt(System.getProperty("bddnodes", Integer.toString(DEFAULT_NODES)));
+        long totalTime = 0;
         try {
-            if(args.length == 2) {
-                new TraceDriver(args[0], Integer.parseInt(args[1]) );
-            } else if(args.length == 1) new TraceDriver(args[0]);
-            else out.println("Usage:  java "+TraceDriver.class.getName()+" file.trace [initial node-base]");
-        } catch(IOException exx) {
+            for (int i = 0; i < args.length; ++i) {
+                TraceDriver td = new TraceDriver(args[i], bddnodes);
+                totalTime += td.time;
+            }
+            if (args.length > 1) {
+                out.println("Total time for all traces: "+totalTime+" [ms]");
+            }
+        } catch (IOException exx) {
             out.println("FAILED: " + exx.getMessage() );
             exx.printStackTrace();
         }
