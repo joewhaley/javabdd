@@ -719,7 +719,7 @@ public class JFactory extends BDDFactory {
             "Illegal shift-left/right parameter",
             "Division by zero" };
 
-    static final int DEFAULTMAXNODEINC = 50000;
+    static final int DEFAULTMAXNODEINC = 10000000;
 
     /*=== OTHER INTERNAL DEFINITIONS =======================================*/
 
