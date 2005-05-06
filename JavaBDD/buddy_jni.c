@@ -32,8 +32,6 @@
 
 #define INVALID_BDD -1
 
-#undef TRACE_BUDDYLIB
-
 static int bdd_error;
 
 static void bdd_errhandler(int errcode)
