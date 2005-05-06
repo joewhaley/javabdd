@@ -103,6 +103,7 @@ JAVA_SOURCES = net/sf/javabdd/BDD.java \
 	net/sf/javabdd/JDDFactory.java \
 	net/sf/javabdd/MicroFactory.java \
 	net/sf/javabdd/TestBDDFactory.java \
+	net/sf/javabdd/TryVarOrder.java \
 	net/sf/javabdd/TypedBDDFactory.java
 JAVA_CLASSFILES = net/sf/javabdd/*.class
 JAVA_PACKAGES = net.sf.javabdd
