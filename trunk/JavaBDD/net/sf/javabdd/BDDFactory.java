@@ -1718,7 +1718,7 @@ public abstract class BDDFactory {
         if (reorder_callbacks == null) {
             bdd_default_reohandler(b, s);
         } else {
-            doCallbacks(reorder_callbacks, new Integer(b?1:0), s);
+            doCallbacks(reorder_callbacks, new Boolean(b), s);
         }
     }
 
