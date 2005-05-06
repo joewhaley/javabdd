@@ -305,6 +305,7 @@ public class TraceDriver {
     private String filename, module;
     private int [] stack;
     private int stack_tos, nodes, cache, vars;
+    private static int auto_reorder = Integer.parseInt(System.getProperty("reorder", "0"));
     private HashMap map;
     private BDDPairing s2sp, sp2s;
     private TracedVariable last_assignment;
@@ -421,6 +422,11 @@ public class TraceDriver {
         out.println("loading " + module + " from " + filename + " (" + nodes + " nodes, " + vars + " vars)");
 
         bdd = BDDFactory.init(nodes, cache);
+        if (auto_reorder != 0) {
+            out.println("setting auto reorder to " + auto_reorder);
+            bdd.autoReorder(getReorderMethod(auto_reorder));
+            bdd.varBlockAll();
+        }
         //bdd.setNodeNames(new TracedNames() );
     }
 
@@ -585,9 +591,12 @@ public class TraceDriver {
             } else if(ret.equals("save_bdd")) {
                 need("("); String str = need();   TracedVariable v = needVar(str);need(")"); need(";");
                 createSaveOperation(v);
-            } else if(ret.equals("check_point_for_force_reordering")) {
-                out.println("NOTE: ignoring variable-reordering request");
-                skip_eol();
+            } else if(ret.equals("check_point_for_force_reordering")) { 
+                need("("); String str = need(); 
+                int type = Integer.parseInt(str);
+                need(")"); need(";");
+                BDDFactory.ReorderMethod m = getReorderMethod(type);
+                bdd.reorder(m);
             } else {
 
 
@@ -642,6 +651,22 @@ public class TraceDriver {
             }
         }
     }
+
+    private static BDDFactory.ReorderMethod getReorderMethod(int type) {
+        BDDFactory.ReorderMethod m;
+        switch (type) {
+        case 0:  m = BDDFactory.REORDER_NONE; break;
+        case 1:  m = BDDFactory.REORDER_WIN2; break;
+        case 2:  m = BDDFactory.REORDER_WIN2ITE; break;
+        case 3:  m = BDDFactory.REORDER_WIN3; break;
+        case 4:  m = BDDFactory.REORDER_WIN3ITE; break;
+        case 5:  m = BDDFactory.REORDER_SIFT; break;
+        case 6:  m = BDDFactory.REORDER_SIFTITE; break;
+        default: m = BDDFactory.REORDER_NONE; break;
+        }
+        return m;
+    }
+
 
     // --------------------------------------------------------------------------------------------
 
@@ -760,7 +785,7 @@ public class TraceDriver {
         if(c == '\n') line_count--;
     }
     private boolean isSpace(int c) { return (c == ' ' || c == '\n' || c == '\t' || c == '\r'); }
-    private boolean isAlnum(int c) { return ((c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')  || c == '_'); }
+    private boolean isAlnum(int c) { return ((c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')  || c == '_' || c == '-'); }
 
     // -----------------------------------------------------
 
