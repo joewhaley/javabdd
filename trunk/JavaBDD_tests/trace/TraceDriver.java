@@ -112,6 +112,18 @@ public class TraceDriver {
         }
     }
 
+    class TracedReorderOperation extends TracedOperation {
+        public BDDFactory.ReorderMethod method;
+        public void execute() throws IOException {
+            bdd.reorder(method);
+        }
+        public void show() {
+            out.print(index + "\t");
+            out.print("reorder("+method+");");
+            out.println();
+        }
+    }
+
     // --------------------------------------------------------------
     class TracedBDDOperation extends TracedOperation {
         public int ops;
@@ -425,9 +437,20 @@ public class TraceDriver {
         if (auto_reorder != 0) {
             out.println("setting auto reorder to " + auto_reorder);
             bdd.autoReorder(getReorderMethod(auto_reorder));
-            bdd.varBlockAll();
+            try {
+                java.lang.reflect.Method cb = TraceDriver.class.getDeclaredMethod("reorder_callback", new Class[] { boolean.class, BDDFactory.ReorderStats.class });
+                bdd.registerReorderCallback(this, cb);
+            } catch (NoSuchMethodException x) {
+                System.out.println("Cannot find callback method");
+            }
         }
         //bdd.setNodeNames(new TracedNames() );
+    }
+
+    public static void reorder_callback(boolean prestate, BDDFactory.ReorderStats s) {
+        System.out.print(prestate?"Start":"Finish");
+        System.out.println("ing reorder.");
+        if (!prestate) System.out.println(s);
     }
 
     // -----------------------------------------------------
@@ -498,6 +521,14 @@ public class TraceDriver {
         tp.operands = new Vector(3);
         return tp;
     }
+    private TracedReorderOperation createReorderOperation(BDDFactory.ReorderMethod m) {
+        TracedReorderOperation tp = new TracedReorderOperation();
+        tp.index = op_count;
+        tp.method = m;
+        operations.add(tp);
+        return tp;
+    }
+
 
     // -----------------------------------------------------
 
@@ -517,6 +548,11 @@ public class TraceDriver {
             out.println("Nodes: "+bdd.getNodeNum()+"/"+bdd.getNodeTableSize());
             out.println(bdd.getGCStats());
             bdd.printStat();
+        }
+
+        if (auto_reorder != 0) {
+            out.println("Final variable order:");
+            bdd.printOrder();
         }
     }
 
@@ -596,7 +632,7 @@ public class TraceDriver {
                 int type = Integer.parseInt(str);
                 need(")"); need(";");
                 BDDFactory.ReorderMethod m = getReorderMethod(type);
-                bdd.reorder(m);
+                createReorderOperation(m);
             } else {
 
 
@@ -662,6 +698,7 @@ public class TraceDriver {
         case 4:  m = BDDFactory.REORDER_WIN3ITE; break;
         case 5:  m = BDDFactory.REORDER_SIFT; break;
         case 6:  m = BDDFactory.REORDER_SIFTITE; break;
+        case 7:  m = BDDFactory.REORDER_RANDOM; break;
         default: m = BDDFactory.REORDER_NONE; break;
         }
         return m;
@@ -723,6 +760,8 @@ public class TraceDriver {
         s2sp.set(v1, v2);
         sp2s = bdd.makePair();
         sp2s.set(v2, v1);
+
+            bdd.varBlockAll();
 
         // s2sp.showName();
 
