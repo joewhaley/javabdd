@@ -5,6 +5,7 @@ package net.sf.javabdd;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -3318,6 +3319,7 @@ public class JFactory extends BDDFactory {
         quantvarset = null;
         cacheratio = 0;
         supportSet = null;
+        supportSize = 0;
     }
 
     void bdd_operator_done() {
@@ -3337,6 +3339,7 @@ public class JFactory extends BDDFactory {
         if (supportSet != null) {
             free(supportSet);
             supportSet = null;
+            supportSize = 0;
         }
     }
 
@@ -3754,6 +3757,7 @@ public class JFactory extends BDDFactory {
                 top.first = 0;
                 top.last = bdd_varnum() - 1;
                 top.fixed = false;
+                top.interleaved = false;
                 top.next = null;
                 top.nextlevel = vartree;
         
@@ -3775,6 +3779,7 @@ public class JFactory extends BDDFactory {
 
         t.first = t.last = -1;
         t.fixed = true;
+        t.interleaved = false;
         t.next = t.prev = t.nextlevel = null;
         t.seq = null;
         t.id = id;
@@ -3818,6 +3823,7 @@ public class JFactory extends BDDFactory {
             reorder_block(dis, method);
 
         if (t.seq != null) {
+            //Arrays.sort(t.seq, 0, t.last-t.first + 1);
             varseq_qsort(t.seq, 0, t.last-t.first + 1);
         }
 
@@ -4342,6 +4348,86 @@ public class JFactory extends BDDFactory {
         return first;
     }
 
+    /**
+     * <p>Set the variable order to be the given list of domains.</p>
+     * 
+     * @param domains  domain order
+     */
+    public void setVarOrder(List domains) {
+        BddTree[] my_vartree = new BddTree[fdvarnum];
+        boolean[] interleaved = new boolean[fdvarnum];
+        int k = 0;
+        for (Iterator i = domains.iterator(); i.hasNext(); ) {
+            Object o = i.next();
+            Collection c;
+            if (o instanceof BDDDomain) c = Collections.singleton(o);
+            else c = (Collection) o;
+            for (Iterator j = c.iterator(); j.hasNext(); ) {
+                BDDDomain d = (BDDDomain) j.next();
+                int low = d.ivar[0];
+                int high = d.ivar[d.ivar.length-1];
+                addVarBlock(low, high, false);
+                BddTree b = getBlock(vartree, low, high);
+                my_vartree[k] = b;
+                interleaved[k] = j.hasNext();
+                k++;
+            }
+        }
+        BddTree prev = null; boolean prev_interleaved = false;
+        for (int i = 0; i < k; ++i) {
+            BddTree t = my_vartree[i];
+            while (t.prev != prev) {
+                blockdown(t.prev);
+            }
+            if (prev_interleaved) {
+                blockinterleave(t.prev);
+            }
+            prev = t;
+            prev_interleaved = interleaved[k];
+        }
+    }
+    
+    BddTree getBlock(BddTree t, int low, int high) {
+        if (t == null) return null;
+        for (BddTree p = t; p != null; p = p.next) {
+            if (p.first == low && p.last == high) return p;
+            BddTree q = getBlock(t.nextlevel, low, high);
+            if (q != null) return q;
+        }
+        return null;
+    }
+    
+    void blockinterleave(BddTree left) {
+        BddTree right = left.next;
+        int n;
+        int leftsize = left.last - left.first;
+        int rightsize = right.last - right.first;
+        int[] lseq = left.seq;
+        int[] rseq = right.seq;
+        int minsize = Math.min(leftsize, rightsize);
+        for (n = 0; n <= minsize; ++n) {
+            while (bddvar2level[lseq[n]] + 1 < bddvar2level[rseq[n]]) {
+                reorder_varup(rseq[n]);
+            }
+        }
+    outer:
+        for ( ; n <= rightsize; ++n) {
+            for (;;) {
+                BddTree t = left.prev;
+                if (t == null || !t.interleaved) break outer;
+                int tsize = t.last - t.first;
+                if (n <= tsize) {
+                    int[] tseq = t.seq;
+                    while (bddvar2level[tseq[n]] + 1 < bddvar2level[rseq[n]]) {
+                        reorder_varup(rseq[n]);
+                    }
+                    break;
+                }
+            }
+        }
+        left.interleaved = true;
+    }
+    
     void blockdown(BddTree left) {
         BddTree right = left.next;
         int n;
@@ -4392,6 +4478,9 @@ public class JFactory extends BDDFactory {
         n = left.pos;
         left.pos = right.pos;
         right.pos = n;
+        
+        left.interleaved = false;
+        right.interleaved = false;
     }
 
     BddTree reorder_win2ite(BddTree t) {
@@ -4886,6 +4975,7 @@ public class JFactory extends BDDFactory {
         int pos; /* Sifting position */
         int[] seq; /* Sequence of first...last in the current order */
         boolean fixed; /* Are the sub-blocks fixed or may they be reordered */
+        boolean interleaved; /* Is this block interleaved with the next one */
         int id; /* A sequential id number given by addblock */
         BddTree next, prev;
         BddTree nextlevel;
@@ -6273,6 +6363,7 @@ public class JFactory extends BDDFactory {
                 o.print("   ");
             // todo: better reorder id printout
             o.print(right(t.id, 3));
+            if (t.interleaved) o.print('x');
             o.println("{\n");
 
             print_order_rec(o, t.nextlevel, level + 1);
@@ -6288,7 +6379,9 @@ public class JFactory extends BDDFactory {
             for (int i = 0; i < level; ++i)
                 o.print("   ");
             // todo: better reorder id printout
-            o.println(right(t.id, 3));
+            o.print(right(t.id, 3));
+            if (t.interleaved) o.print('x');
+            o.println();
 
             print_order_rec(o, t.next, level);
         }
