@@ -66,8 +66,8 @@ public class CallbackTests extends BDDTestCase {
     
     volatile boolean reorder_called;
     
-    public void my_reorder_callback(int k, BDDFactory.ReorderStats stats) {
-        if (k == 0) {
+    public void my_reorder_callback(boolean k, BDDFactory.ReorderStats stats) {
+        if (!k) {
             System.out.println(stats);
             reorder_called = true;
         }
@@ -78,7 +78,7 @@ public class CallbackTests extends BDDTestCase {
         Method m;
         try {
             m = CallbackTests.class.getDeclaredMethod("my_reorder_callback",
-                new Class[] { int.class, BDDFactory.ReorderStats.class });
+                new Class[] { boolean.class, BDDFactory.ReorderStats.class });
         } catch (SecurityException e) {
             Assert.fail(e.toString());
             return;
@@ -92,6 +92,7 @@ public class CallbackTests extends BDDTestCase {
             bdd.registerReorderCallback(this, m);
             reorder_called = false;
             if (bdd.varNum() < 5) bdd.setVarNum(5);
+            //bdd.varBlockAll();
             BDD x = bdd.ithVar(0);
             x.andWith(bdd.ithVar(1));
             x.andWith(bdd.ithVar(2));
