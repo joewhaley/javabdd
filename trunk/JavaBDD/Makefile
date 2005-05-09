@@ -50,34 +50,57 @@ ifeq (${OS},Windows_NT)
     DLL_OUTPUT_OPTION = -Fe
   endif
 else
-  JDK_ROOT = $(firstword $(wildcard /usr/java/j*dk*))
-  CLASSPATH = .:jdd.jar
-  CFLAGS = -DSPECIALIZE_RELPROD -DSPECIALIZE_AND -DSPECIALIZE_OR -DSMALL_NODES -O2 -fomit-frame-pointer $(EXTRA_CFLAGS)
-  CAL_CFLAGS = -O2 -DCLOCK_RESOLUTION=60 -DRLIMIT_DATA_DEFAULT=16777216 -DNDEBUG=1 -DSTDC_HEADERS=1 -DHAVE_SYS_WAIT_H=1 -DHAVE_SYS_FILE_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_UNISTD_H=1 -DHAVE_ERRNO_H=1 -DHAVE_ASSERT_H=1 -DHAVE_SYS_WAIT_H=1 -DHAVE_PWD_H=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_SYS_TIMES_H=1 -DHAVE_SYS_TIME_H=1 -DHAVE_SYS_RESOURCE_H=1 -DHAVE_STDARG_H=1 -DHAVE_VARARGS_H=1 -DSIZEOF_VOID_P=4 -DSIZEOF_INT=4 -DHAVE_IEEE_754=1 -DPAGE_SIZE=4096 -DLG_PAGE_SIZE=12 -DRETSIGTYPE=void -DHAVE_STRCOLL=1 -DHAVE_SYSCONF=1 -DHAVE_GETHOSTNAME=1 -DHAVE_STRCSPN=1 -DHAVE_STRERROR=1 -DHAVE_STRSPN=1 -DHAVE_STRSTR=1 -DHAVE_GETENV=1 -DHAVE_STRCHR=1 -DHAVE_GETRLIMIT=1 -DHAVE_GETRUSAGE=1 -DHAVE_VALLOC=1 $(EXTRA_CFLAGS)
-  OBJECT_OUTPUT_OPTION = -o$(space)
-  LINK = $(CC)
-  LINKFLAGS = -shared
-  DLL_OUTPUT_OPTION = -o$(space)
-  INCLUDES = -I. -I$(JDK_ROOT)/include \
-             -I$(BUDDY_SRC) -I$(BUDDY_SRC)/.. \
-             -I$(CUDD_SRC)/cudd -I$(CUDD_SRC)/epd -I$(CUDD_SRC)/mtr \
-             -I$(CUDD_SRC)/st -I$(CUDD_SRC)/util \
-             -I$(CAL_SRC) \
-             -I$(JDK_ROOT)/include/linux
-  BUDDY_DLL_NAME = libbuddy.so
-  CUDD_DLL_NAME = libcudd.so
-  CAL_DLL_NAME = libcal.so
-  ifeq (${CC},icc)    # Intel Linux compiler
-    CFLAGS = -DSPECIALIZE_RELPROD -DSPECIALIZE_AND -DSPECIALIZE_OR -DSMALL_NODES -O2 -Ob2 -ip $(EXTRA_CFLAGS)
-    LINK = xild  # Bug in icc link makes it ignore -static, so use xild
-    # Include libirc for _intel_fast_memset
-    LINKFLAGS = -static -shared /opt/intel_cc_80/lib/libirc.a
-  endif
-  ifeq (${CC},pathcc)    # Pathscale compiler
-    CFLAGS = -DSPECIALIZE_RELPROD -DSPECIALIZE_AND -DSPECIALIZE_OR -DSMALL_NODES -m32 -O2 -fomit_frame_pointer $(EXTRA_CFLAGS)
-    # For 64-bit, eliminate -m32 and add -fPIC in CFLAGS.
-    LINK = pathcc
-    LINKFLAGS = -shared $(CFLAGS)
+  ifeq (${shell uname -s},Darwin)
+    JDK_ROOT = /Library/Java/Home
+    CLASSPATH = .:jdd.jar
+    CC = gcc
+    CFLAGS = -DSPECIALIZE_RELPROD -DSPECIALIZE_AND -DSPECIALIZE_OR -DSMALL_NODES -O2 -fomit-frame-pointer $(EXTRA_CFLAGS)
+    CAL_CFLAGS = -O2 -DCLOCK_RESOLUTION=60 -DRLIMIT_DATA_DEFAULT=16777216 -DNDEBUG=1 -DSTDC_HEADERS=1 -DHAVE_SYS_WAIT_H=1 -DHAVE_SYS_FILE_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_UNISTD_H=1 -DHAVE_ERRNO_H=1 -DHAVE_ASSERT_H=1 -DHAVE_SYS_WAIT_H=1 -DHAVE_PWD_H=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_SYS_TIMES_H=1 -DHAVE_SYS_TIME_H=1 -DHAVE_SYS_RESOURCE_H=1 -DHAVE_STDARG_H=1 -DHAVE_VARARGS_H=1 -DSIZEOF_VOID_P=4 -DSIZEOF_INT=4 -DHAVE_IEEE_754=1 -DPAGE_SIZE=4096 -DLG_PAGE_SIZE=12 -DRETSIGTYPE=void -DHAVE_STRCOLL=1 -DHAVE_SYSCONF=1 -DHAVE_GETHOSTNAME=1 -DHAVE_STRCSPN=1 -DHAVE_STRERROR=1 -DHAVE_STRSPN=1 -DHAVE_STRSTR=1 -DHAVE_GETENV=1 -DHAVE_STRCHR=1 -DHAVE_GETRLIMIT=1 -DHAVE_GETRUSAGE=1 -DHAVE_VALLOC=1 $(EXTRA_CFLAGS)
+    OBJECT_OUTPUT_OPTION = -o$(space)
+    LINK = $(CC) 
+    LINKFLAGS = -dynamiclib -framework JavaVM  -single_module -undefined suppress -flat_namespace
+    DLL_OUTPUT_OPTION = -o$(space)
+    INCLUDES = -I/usr/local/include \
+               -I. -I$(JDK_ROOT)/include \
+               -I/System/Library/Frameworks/JavaVM.framework/Headers \
+               -I$(BUDDY_SRC) -I$(BUDDY_SRC)/.. \
+               -I$(CUDD_SRC)/cudd -I$(CUDD_SRC)/epd -I$(CUDD_SRC)/mtr \
+               -I$(CUDD_SRC)/st -I$(CUDD_SRC)/util \
+               -I$(CAL_SRC) \
+               -I$(JDK_ROOT)/include/linux
+    BUDDY_DLL_NAME = libbuddy.jnilib
+    CUDD_DLL_NAME = libcudd.jnilib
+    CAL_DLL_NAME = libcal.jnilib
+  else
+    JDK_ROOT = $(firstword $(wildcard /usr/java/j*dk*))
+    CLASSPATH = .:jdd.jar
+    CFLAGS = -DSPECIALIZE_RELPROD -DSPECIALIZE_AND -DSPECIALIZE_OR -DSMALL_NODES -O2 -fomit-frame-pointer $(EXTRA_CFLAGS)
+    CAL_CFLAGS = -O2 -DCLOCK_RESOLUTION=60 -DRLIMIT_DATA_DEFAULT=16777216 -DNDEBUG=1 -DSTDC_HEADERS=1 -DHAVE_SYS_WAIT_H=1 -DHAVE_SYS_FILE_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_UNISTD_H=1 -DHAVE_ERRNO_H=1 -DHAVE_ASSERT_H=1 -DHAVE_SYS_WAIT_H=1 -DHAVE_PWD_H=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_SYS_TIMES_H=1 -DHAVE_SYS_TIME_H=1 -DHAVE_SYS_RESOURCE_H=1 -DHAVE_STDARG_H=1 -DHAVE_VARARGS_H=1 -DSIZEOF_VOID_P=4 -DSIZEOF_INT=4 -DHAVE_IEEE_754=1 -DPAGE_SIZE=4096 -DLG_PAGE_SIZE=12 -DRETSIGTYPE=void -DHAVE_STRCOLL=1 -DHAVE_SYSCONF=1 -DHAVE_GETHOSTNAME=1 -DHAVE_STRCSPN=1 -DHAVE_STRERROR=1 -DHAVE_STRSPN=1 -DHAVE_STRSTR=1 -DHAVE_GETENV=1 -DHAVE_STRCHR=1 -DHAVE_GETRLIMIT=1 -DHAVE_GETRUSAGE=1 -DHAVE_VALLOC=1 $(EXTRA_CFLAGS)
+    OBJECT_OUTPUT_OPTION = -o$(space)
+    LINK = $(CC)
+    LINKFLAGS = -shared
+    DLL_OUTPUT_OPTION = -o$(space)
+    INCLUDES = -I. -I$(JDK_ROOT)/include \
+               -I$(BUDDY_SRC) -I$(BUDDY_SRC)/.. \
+               -I$(CUDD_SRC)/cudd -I$(CUDD_SRC)/epd -I$(CUDD_SRC)/mtr \
+               -I$(CUDD_SRC)/st -I$(CUDD_SRC)/util \
+               -I$(CAL_SRC) \
+               -I$(JDK_ROOT)/include/linux
+    BUDDY_DLL_NAME = libbuddy.so
+    CUDD_DLL_NAME = libcudd.so
+    CAL_DLL_NAME = libcal.so
+    ifeq (${CC},icc)    # Intel Linux compiler
+      CFLAGS = -DSPECIALIZE_RELPROD -DSPECIALIZE_AND -DSPECIALIZE_OR -DSMALL_NODES -O2 -Ob2 -ip $(EXTRA_CFLAGS)
+      LINK = xild  # Bug in icc link makes it ignore -static, so use xild
+      # Include libirc for _intel_fast_memset
+      LINKFLAGS = -static -shared /opt/intel_cc_80/lib/libirc.a
+    endif
+    ifeq (${CC},pathcc)    # Pathscale compiler
+      CFLAGS = -DSPECIALIZE_RELPROD -DSPECIALIZE_AND -DSPECIALIZE_OR -DSMALL_NODES -m32 -O2 -fomit_frame_pointer $(EXTRA_CFLAGS)
+      # For 64-bit, eliminate -m32 and add -fPIC in CFLAGS.
+      LINK = pathcc
+      LINKFLAGS = -shared $(CFLAGS)
+    endif
   endif
 endif
 
