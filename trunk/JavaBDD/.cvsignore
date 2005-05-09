@@ -3,6 +3,7 @@ cudd_jni.h
 cal_jni.h
 *.jar
 *.dll
+*.jnilib
 *.ext
 *.lib
 *.o
