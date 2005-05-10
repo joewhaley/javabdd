@@ -3755,8 +3755,8 @@ public class JFactory extends BDDFactory {
                 
                 usednum_before = bddnodesize - bddfreenum;
         
-                top.first = 0;
-                top.last = bdd_varnum() - 1;
+                top.firstVar = top.firstLevel = 0;
+                top.lastVar = top.lastLevel = bdd_varnum() - 1;
                 top.fixed = false;
                 top.interleaved = false;
                 top.next = null;
@@ -3778,11 +3778,11 @@ public class JFactory extends BDDFactory {
     BddTree bddtree_new(int id) {
         BddTree t = new BddTree();
 
-        t.first = t.last = -1;
+        t.firstVar = t.lastVar = t.firstLevel = t.lastLevel = -1;
         t.fixed = true;
-        t.interleaved = false;
-        t.next = t.prev = t.nextlevel = null;
-        t.seq = null;
+        //t.interleaved = false;
+        //t.next = t.prev = t.nextlevel = null;
+        //t.seq = null;
         t.id = id;
         return t;
     }
@@ -3824,8 +3824,10 @@ public class JFactory extends BDDFactory {
             reorder_block(dis, method);
 
         if (t.seq != null) {
-            //Arrays.sort(t.seq, 0, t.last-t.first + 1);
-            varseq_qsort(t.seq, 0, t.last-t.first + 1);
+            //Arrays.sort(t.seq, 0, t.lastVar-t.firstVar + 1);
+            varseq_qsort(t.seq, 0, t.lastVar-t.firstVar + 1);
+            t.firstLevel = bddvar2level[t.seq[0]];
+            t.lastLevel = bddvar2level[t.seq[t.lastVar-t.firstVar]];
         }
 
         return t;
@@ -4301,8 +4303,9 @@ public class JFactory extends BDDFactory {
             int v;
 
             /* Accumulate number of nodes for each block */
+            p[n] = new sizePair();
             p[n].val = 0;
-            for (v = dis.first; v <= dis.last; v++)
+            for (v = dis.firstVar; v <= dis.lastVar; v++)
                 p[n].val -= levels[v].nodenum;
 
             p[n].block = dis;
@@ -4363,20 +4366,31 @@ public class JFactory extends BDDFactory {
         reorder_done();
     }
     
-    protected BddTree reverseDomain0(BDDDomain d) {
+    protected void reverseDomain0(BDDDomain d) {
         int n = d.varNum();
         BddTree[] trees = new BddTree[n];
-        for (int i = 0; i < n; ++i) {
-            int v = d.ivar[i];
+        int v = d.ivar[0];
+        addVarBlock(v, v, true);
+        trees[0] = getBlock(vartree, v, v);
+        BddTree parent = getParent(trees[0]);
+        for (int i = 1; i < n; ++i) {
+            v = d.ivar[i];
             addVarBlock(v, v, true);
             trees[i] = getBlock(vartree, v, v);
+            BddTree parent2 = getParent(trees[i]);
+            if (parent != parent2) {
+                throw new BDDException();
+            }
         }
         for (int i = 0; i < n; ++i) {
             for (int j = i + 1; j < n; ++j) {
                 blockdown(trees[i]);
             }
         }
-        return trees[n-1];
+        BddTree newchild = trees[n-1];
+        while (newchild.prev != null) newchild = newchild.prev;
+        if (parent == null) vartree = newchild;
+        else parent.nextlevel = newchild;
     }
     
     public void setVarOrder(String ordering) {
@@ -4437,7 +4451,7 @@ public class JFactory extends BDDFactory {
      * 
      * @param domains  domain order
      */
-    public BddTree setVarOrder(List domains) {
+    public void setVarOrder(List domains) {
         BddTree[] my_vartree = new BddTree[fdvarnum];
         boolean[] interleaved = new boolean[fdvarnum];
         int k = 0;
@@ -4450,11 +4464,18 @@ public class JFactory extends BDDFactory {
                 BDDDomain d = (BDDDomain) j.next();
                 int low = d.ivar[0];
                 int high = d.ivar[d.ivar.length-1];
-                addVarBlock(low, high, false);
+                bdd_intaddvarblock(low, high, false);
                 BddTree b = getBlock(vartree, low, high);
                 my_vartree[k] = b;
                 interleaved[k] = j.hasNext();
                 k++;
+            }
+        }
+        if (k <= 1) return;
+        BddTree parent = getParent(my_vartree[0]);
+        for (int i = 0; i < k; ++i) {
+            if (parent != getParent(my_vartree[i])) {
+                throw new BDDException("var block "+my_vartree[i].firstVar+".."+my_vartree[i].lastVar+" is in wrong place in tree");
             }
         }
         reorder_init();
@@ -4464,21 +4485,48 @@ public class JFactory extends BDDFactory {
             while (t.prev != prev) {
                 blockdown(t.prev);
             }
+            boolean inter = interleaved[i];
             if (prev_interleaved) {
                 blockinterleave(t.prev);
+                //++i;
+                prev = t.prev;
+            } else {
+                prev = t;
             }
-            prev = t;
-            prev_interleaved = interleaved[i];
+            prev_interleaved = inter;
         }
+        BddTree newchild = my_vartree[0];
+        _assert(newchild.prev == null);
+        //while (newchild.prev != null) newchild = newchild.prev;
+        if (parent == null) vartree = newchild;
+        else parent.nextlevel = newchild;
         reorder_done();
-        return my_vartree[0];
     }
     
-    BddTree getBlock(BddTree t, int low, int high) {
+    protected BddTree getParent(BddTree child) {
+        for (BddTree p = vartree; p != null; p = p.next) {
+            if (p == child) return null;
+            BddTree q = getParent(p, child);
+            if (q != null) return q;
+        }
+        throw new BDDException("Cannot find tree node "+child);
+    }
+    
+    protected BddTree getParent(BddTree parent, BddTree child) {
+        if (parent.nextlevel == null) return null;
+        for (BddTree p = parent.nextlevel; p != null; p = p.next) {
+            if (p == child) return parent;
+            BddTree q = getParent(p, child);
+            if (q != null) return q;
+        }
+        return null;
+    }
+    
+    protected BddTree getBlock(BddTree t, int low, int high) {
         if (t == null) return null;
         for (BddTree p = t; p != null; p = p.next) {
-            if (p.first == low && p.last == high) return p;
-            BddTree q = getBlock(t.nextlevel, low, high);
+            if (p.firstVar == low && p.lastVar == high) return p;
+            BddTree q = getBlock(p.nextlevel, low, high);
             if (q != null) return q;
         }
         return null;
@@ -4488,8 +4536,8 @@ public class JFactory extends BDDFactory {
         BddTree right = left.next;
         //System.out.println("Interleaving "+left.first+".."+left.last+" and "+right.first+".."+right.last);
         int n;
-        int leftsize = left.last - left.first;
-        int rightsize = right.last - right.first;
+        int leftsize = left.lastVar - left.firstVar;
+        int rightsize = right.lastVar - right.firstVar;
         int[] lseq = left.seq;
         int[] rseq = right.seq;
         int minsize = Math.min(leftsize, rightsize);
@@ -4503,7 +4551,7 @@ public class JFactory extends BDDFactory {
             for (;;) {
                 BddTree t = left.prev;
                 if (t == null || !t.interleaved) break outer;
-                int tsize = t.last - t.first;
+                int tsize = t.lastVar - t.firstVar;
                 if (n <= tsize) {
                     int[] tseq = t.seq;
                     while (bddvar2level[tseq[n]] + 1 < bddvar2level[rseq[n]]) {
@@ -4513,15 +4561,20 @@ public class JFactory extends BDDFactory {
                 }
             }
         }
-        left.interleaved = true;
+        right.next.prev = left;
+        left.next = right.next;
+        left.firstVar = Math.min(left.firstVar, right.firstVar);
+        left.lastVar = Math.max(left.lastVar, right.lastVar);
+        left.seq = new int[left.lastVar - left.firstVar + 1];
+        update_seq(left);
     }
     
     void blockdown(BddTree left) {
         BddTree right = left.next;
         //System.out.println("Swapping "+left.first+".."+left.last+" and "+right.first+".."+right.last);
         int n;
-        int leftsize = left.last - left.first;
-        int rightsize = right.last - right.first;
+        int leftsize = left.lastVar - left.firstVar;
+        int rightsize = right.lastVar - right.firstVar;
         int leftstart = bddvar2level[left.seq[0]];
         int[] lseq = left.seq;
         int[] rseq = right.seq;
@@ -4570,6 +4623,11 @@ public class JFactory extends BDDFactory {
         
         left.interleaved = false;
         right.interleaved = false;
+        
+        left.firstLevel = bddvar2level[lseq[0]];
+        left.lastLevel = bddvar2level[lseq[leftsize]];
+        right.firstLevel = bddvar2level[rseq[0]];
+        right.lastLevel = bddvar2level[rseq[rightsize]];
     }
 
     BddTree reorder_win2ite(BddTree t) {
@@ -5060,7 +5118,8 @@ public class JFactory extends BDDFactory {
     }
 
     static class BddTree {
-        int first, last; /* First and last variable in this block */
+        int firstVar, lastVar; /* First and last variable in this block */
+        int firstLevel, lastLevel; /* First and last level in this block */
         int pos; /* Sifting position */
         int[] seq; /* Sequence of first...last in the current order */
         boolean fixed; /* Are the sub-blocks fixed or may they be reordered */
@@ -5360,6 +5419,14 @@ public class JFactory extends BDDFactory {
             while (r != 0) {
                 int next = NEXT(r);
 
+/***
+                if (LOW(r) == -1) {
+                    System.out.println(r+": LOW="+LOW(r));
+                }
+                if (HIGH(r) == -1) {
+                    System.out.println(r+": HIGH="+HIGH(r));
+                }
+***/
                 if (VARr(LOW(r)) != var1 && VARr(HIGH(r)) != var1) {
                     /* Node does not depend on next var, let it stay in the chain */
                     SETNEXT(r, HASH(n + vl0));
@@ -6331,31 +6398,38 @@ public class JFactory extends BDDFactory {
         /* Empty tree -> build one */
         if (t == null) {
             t = bddtree_new(id);
-            t.first = first;
+            t.firstVar = first;
+            t.firstLevel = bddvar2level[first];
             t.fixed = fixed;
             t.seq = new int[last - first + 1];
-            t.last = last;
+            t.lastVar = last;
+            t.lastLevel = bddvar2level[last];
             update_seq(t);
             t.prev = prev;
             return t;
         }
 
         /* Check for identity */
-        if (first == t.first && last == t.last)
+        if (first == t.firstVar && last == t.lastVar)
             return t;
 
+        int firstLev = Math.min(bddvar2level[first], bddvar2level[last]);
+        int lastLev = Math.max(bddvar2level[first], bddvar2level[last]);
+        
         /* Inside this section -> insert in next level */
-        if (first >= t.first && last <= t.last) {
+        if (firstLev >= t.firstLevel && lastLev <= t.lastLevel) {
             t.nextlevel =
                 bddtree_addrange_rec(t.nextlevel, null, first, last, fixed, id);
             return t;
         }
 
         /* Before this section -> insert */
-        if (last < t.first) {
+        if (lastLev < t.firstLevel) {
             BddTree tnew = bddtree_new(id);
-            tnew.first = first;
-            tnew.last = last;
+            tnew.firstVar = first;
+            tnew.firstLevel = firstLev;
+            tnew.lastVar = last;
+            tnew.lastLevel = lastLev;
             tnew.fixed = fixed;
             tnew.seq = new int[last - first + 1];
             update_seq(tnew);
@@ -6366,25 +6440,27 @@ public class JFactory extends BDDFactory {
         }
 
         /* After this this section -> go to next */
-        if (first > t.last) {
+        if (firstLev > t.lastLevel) {
             t.next = bddtree_addrange_rec(t.next, t, first, last, fixed, id);
             return t;
         }
 
         /* Covering this section -> insert above this level */
-        if (first <= t.first) {
+        if (firstLev <= t.firstLevel) {
             BddTree tnew;
             BddTree dis = t;
 
             while (true) {
                 /* Partial cover ->error */
-                if (last >= dis.first && last < dis.last)
+                if (lastLev >= dis.firstLevel && lastLev < dis.lastLevel)
                     return null;
 
-                if (dis.next == null || last < dis.next.first) {
+                if (dis.next == null || last < dis.next.firstLevel) {
                     tnew = bddtree_new(id);
-                    tnew.first = first;
-                    tnew.last = last;
+                    tnew.firstVar = first;
+                    tnew.firstLevel = firstLev;
+                    tnew.lastVar = last;
+                    tnew.lastLevel = lastLev;
                     tnew.fixed = fixed;
                     tnew.seq = new int[last - first + 1];
                     update_seq(tnew);
@@ -6408,14 +6484,21 @@ public class JFactory extends BDDFactory {
 
     void update_seq(BddTree t) {
         int n;
-        int low = t.first;
+        int low = t.firstVar;
+        int high = t.lastVar;
 
-        for (n = t.first; n <= t.last; n++)
+        for (n = t.firstVar; n <= t.lastVar; n++) {
             if (bddvar2level[n] < bddvar2level[low])
                 low = n;
+            if (bddvar2level[n] > bddvar2level[high])
+                high = n;
+        }
 
-        for (n = t.first; n <= t.last; n++)
+        for (n = t.firstVar; n <= t.lastVar; n++)
             t.seq[bddvar2level[n] - bddvar2level[low]] = n;
+        
+        t.firstLevel = bddvar2level[low];
+        t.lastLevel = bddvar2level[high];
     }
 
     BddTree bddtree_addrange(BddTree t, int first, int last, boolean fixed, int id) {
