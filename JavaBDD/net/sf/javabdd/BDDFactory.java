@@ -835,7 +835,7 @@ public abstract class BDDFactory {
      * <p>This function sets the current variable order to be the one defined by
      * neworder.  The variable parameter neworder is interpreted as a sequence
      * of variable indices and the new variable order is exactly this sequence.
-     * The array must contain all the variables defined so far. If, for
+     * The array must contain all the variables defined so far.  If, for
      * instance the current number of variables is 3 and neworder contains
      * [1; 0; 2] then the new variable order is v1<v0<v2.</p>
      * 
@@ -847,6 +847,20 @@ public abstract class BDDFactory {
      */
     public abstract void setVarOrder(int[] neworder);
 
+    /**
+     * <p>Gets the current variable order.</p>
+     * 
+     * @return variable order
+     */
+    public int[] getVarOrder() {
+        int n = varNum();
+        int[] result = new int[n];
+        for (int i = 0; i < n; ++i) {
+            result[i] = level2Var(i);
+        }
+        return result;
+    }
+    
     /**
      * <p>Make a new BDDPairing object.</p>
      * 
