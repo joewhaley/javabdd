@@ -11,6 +11,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
+import java.util.StringTokenizer;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -4348,12 +4349,95 @@ public class JFactory extends BDDFactory {
         return first;
     }
 
+    public void reverseAllDomains() {
+        reorder_init();
+        for (int i = 0; i < fdvarnum; ++i) {
+            reverseDomain0(domain[i]);
+        }
+        reorder_done();
+    }
+    
+    public void reverseDomain(BDDDomain d) {
+        reorder_init();
+        reverseDomain0(d);
+        reorder_done();
+    }
+    
+    protected BddTree reverseDomain0(BDDDomain d) {
+        int n = d.varNum();
+        BddTree[] trees = new BddTree[n];
+        for (int i = 0; i < n; ++i) {
+            int v = d.ivar[i];
+            addVarBlock(v, v, true);
+            trees[i] = getBlock(vartree, v, v);
+        }
+        for (int i = 0; i < n; ++i) {
+            for (int j = i + 1; j < n; ++j) {
+                blockdown(trees[i]);
+            }
+        }
+        return trees[n-1];
+    }
+    
+    public void setVarOrder(String ordering) {
+        List result = new LinkedList();
+        int nDomains = numberOfDomains();
+        StringTokenizer st = new StringTokenizer(ordering, "x_", true);
+        int numberOfDomains = 0, bitIndex = 0;
+        boolean[] done = new boolean[nDomains];
+        List last = null;
+        for (int i=0; ; ++i) {
+            String s = st.nextToken();
+            BDDDomain d;
+            for (int j=0; ; ++j) {
+                if (j == nDomains)
+                    throw new BDDException("bad domain: "+s);
+                d = getDomain(j);
+                if (s.equals(d.getName())) break;
+            }
+            if (done[d.getIndex()])
+                throw new BDDException("duplicate domain: "+s);
+            done[d.getIndex()] = true;
+            if (last != null) last.add(d);
+            if (st.hasMoreTokens()) {
+                s = st.nextToken();
+                if (s.equals("x")) {
+                    if (last == null) {
+                        last = new LinkedList();
+                        last.add(d);
+                        result.add(last);
+                    }
+                } else if (s.equals("_")) {
+                    if (last == null) {
+                        result.add(d);
+                    }
+                    last = null;
+                } else {
+                    throw new BDDException("bad token: "+s);
+                }
+            } else {
+                if (last == null) {
+                    result.add(d);
+                }
+                break;
+            }
+        }
+        
+        for (int i=0; i<done.length; ++i) {
+            if (!done[i]) {
+                throw new BDDException("missing domain #"+i+": "+getDomain(i));
+            }
+        }
+        
+        setVarOrder(result);
+    }
+    
     /**
      * <p>Set the variable order to be the given list of domains.</p>
      * 
      * @param domains  domain order
      */
-    public void setVarOrder(List domains) {
+    public BddTree setVarOrder(List domains) {
         BddTree[] my_vartree = new BddTree[fdvarnum];
         boolean[] interleaved = new boolean[fdvarnum];
         int k = 0;
@@ -4373,6 +4457,7 @@ public class JFactory extends BDDFactory {
                 k++;
             }
         }
+        reorder_init();
         BddTree prev = null; boolean prev_interleaved = false;
         for (int i = 0; i < k; ++i) {
             BddTree t = my_vartree[i];
@@ -4383,8 +4468,10 @@ public class JFactory extends BDDFactory {
                 blockinterleave(t.prev);
             }
             prev = t;
-            prev_interleaved = interleaved[k];
+            prev_interleaved = interleaved[i];
         }
+        reorder_done();
+        return my_vartree[0];
     }
     
     BddTree getBlock(BddTree t, int low, int high) {
@@ -4399,6 +4486,7 @@ public class JFactory extends BDDFactory {
     
     void blockinterleave(BddTree left) {
         BddTree right = left.next;
+        //System.out.println("Interleaving "+left.first+".."+left.last+" and "+right.first+".."+right.last);
         int n;
         int leftsize = left.last - left.first;
         int rightsize = right.last - right.first;
@@ -4430,6 +4518,7 @@ public class JFactory extends BDDFactory {
     
     void blockdown(BddTree left) {
         BddTree right = left.next;
+        //System.out.println("Swapping "+left.first+".."+left.last+" and "+right.first+".."+right.last);
         int n;
         int leftsize = left.last - left.first;
         int rightsize = right.last - right.first;
@@ -6233,20 +6322,15 @@ public class JFactory extends BDDFactory {
         return blockid++;
     }
 
-    BddTree bddtree_addrange_rec(
-        BddTree t,
-        BddTree prev,
-        int first,
-        int last,
-        boolean fixed,
-        int id) {
+    BddTree bddtree_addrange_rec(BddTree t, BddTree prev,
+                                 int first, int last, boolean fixed, int id)
+    {
         if (first < 0 || last < 0 || last < first)
             return null;
 
         /* Empty tree -> build one */
         if (t == null) {
-            if ((t = bddtree_new(id)) == null)
-                return null;
+            t = bddtree_new(id);
             t.first = first;
             t.fixed = fixed;
             t.seq = new int[last - first + 1];
@@ -6260,11 +6344,16 @@ public class JFactory extends BDDFactory {
         if (first == t.first && last == t.last)
             return t;
 
+        /* Inside this section -> insert in next level */
+        if (first >= t.first && last <= t.last) {
+            t.nextlevel =
+                bddtree_addrange_rec(t.nextlevel, null, first, last, fixed, id);
+            return t;
+        }
+
         /* Before this section -> insert */
         if (last < t.first) {
             BddTree tnew = bddtree_new(id);
-            if (tnew == null)
-                return null;
             tnew.first = first;
             tnew.last = last;
             tnew.fixed = fixed;
@@ -6282,13 +6371,6 @@ public class JFactory extends BDDFactory {
             return t;
         }
 
-        /* Inside this section -> insert in next level */
-        if (first >= t.first && last <= t.last) {
-            t.nextlevel =
-                bddtree_addrange_rec(t.nextlevel, null, first, last, fixed, id);
-            return t;
-        }
-
         /* Covering this section -> insert above this level */
         if (first <= t.first) {
             BddTree tnew;
@@ -6301,8 +6383,6 @@ public class JFactory extends BDDFactory {
 
                 if (dis.next == null || last < dis.next.first) {
                     tnew = bddtree_new(id);
-                    if (tnew == null)
-                        return null;
                     tnew.first = first;
                     tnew.last = last;
                     tnew.fixed = fixed;
@@ -6338,12 +6418,7 @@ public class JFactory extends BDDFactory {
             t.seq[bddvar2level[n] - bddvar2level[low]] = n;
     }
 
-    BddTree bddtree_addrange(
-        BddTree t,
-        int first,
-        int last,
-        boolean fixed,
-        int id) {
+    BddTree bddtree_addrange(BddTree t, int first, int last, boolean fixed, int id) {
         return bddtree_addrange_rec(t, null, first, last, fixed, id);
     }
 
