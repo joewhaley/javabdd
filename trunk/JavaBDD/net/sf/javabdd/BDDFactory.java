@@ -1741,11 +1741,7 @@ public abstract class BDDFactory {
         if (verbose > 0) {
             if (prestate) {
                 System.out.println("Start reordering");
-                s.usednum_before = getNodeNum();
-                s.time = System.currentTimeMillis();
             } else {
-                s.time = System.currentTimeMillis() - s.time;
-                s.usednum_after = getNodeNum();
                 System.out.println("End reordering. "+s);
             }
         }
