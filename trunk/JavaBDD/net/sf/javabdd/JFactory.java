@@ -5317,8 +5317,9 @@ public class JFactory extends BDDFactory {
         /* Update all rename pairs */
         bdd_pairs_vardown(level);
 
-        if (resizedInMakenode)
+        if (resizedInMakenode) {
             reorder_rehashAll();
+        }
 
         return 0;
     }
@@ -5352,12 +5353,9 @@ public class JFactory extends BDDFactory {
             SETHASH(n, 0);
 
         for (n = bddnodesize - 1; n >= 2; n--) {
-
             if (HASREF(n)) {
-                int hash2;
-
-                hash2 = NODEHASH2(VARr(n), LOW(n), HIGH(n));
-                SETNEXT(n, hash2);
+                int hash2 = NODEHASH2(VARr(n), LOW(n), HIGH(n));
+                SETNEXT(n, HASH(hash2));
                 SETHASH(hash2, n);
             } else {
                 SETNEXT(n, bddfreepos);
