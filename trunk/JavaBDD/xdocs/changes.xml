@@ -125,7 +125,7 @@
       </action>
     </release>
       
-    <release version="0.2" date="2003-1-30">
+    <release version="0.1" date="2003-1-30">
       <action dev="joewhaley" type="add">
         Initial release. Largely untested.
       </action>
