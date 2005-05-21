@@ -5,6 +5,7 @@ package bdd;
 
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 import java.util.Random;
 import java.util.Set;
 import junit.framework.Assert;
@@ -31,27 +32,29 @@ public class IteratorTests extends BDDTestCase {
             bdd.setNodeTableSize(200000);
             int domainSize = 1024;
             bdd.extDomain(new int[] { domainSize, domainSize });
-            BDDDomain d = bdd.getDomain(0);
-            BDDDomain d2 = bdd.getDomain(1);
+            BDDDomain d = bdd.getDomain(0); d.setName("D0");
+            BDDDomain d2 = bdd.getDomain(1); d2.setName("D1");
+            bdd.setVarOrder(bdd.makeVarOrdering(true, "D1xD0"));
             Random r = new Random();
             int times = 1000;
             int combine = 400;
+            boolean dual = true;
             for (int i = 0; i < times; ++i) {
                 int count = r.nextInt(combine);
                 BDD b = bdd.zero();
                 for (int j = 0; j < count; ++j) {
                     int varNum = r.nextInt(domainSize);
-                    BDD c = d.ithVar(varNum); //.andWith(d2.ithVar(domainSize - varNum - 1));
+                    BDD c = d.ithVar(varNum);
+                    if (dual) c.andWith(d2.ithVar(r.nextInt(domainSize)));
                     b.orWith(c);
                 }
                 BDD var = d.set();
+                if (dual) var.andWith(d2.set());
                 Iterator i1 = b.iterator(var);
-                Iterator i2 = b.iterator2(var);
-                Iterator i3 = b.iterator3(var);
+                Iterator i2 = new MyBDDIterator(b, var);
                 b.free();
                 Set s1 = new HashSet();
                 Set s2 = new HashSet();
-                Set s3 = new HashSet();
                 while (i1.hasNext()) {
                     BDD b1 = (BDD) i1.next();
                     double sc = b1.satCount(var); 
@@ -64,12 +67,6 @@ public class IteratorTests extends BDDTestCase {
                     Assert.assertEquals(1., sc, 0.0000001);
                     s2.add(b2);
                 }
-                while (i3.hasNext()) {
-                    BDD b3 = (BDD) i3.next();
-                    double sc = b3.satCount(var); 
-                    Assert.assertEquals(1., sc, 0.0000001);
-                    s3.add(b3);
-                }
                 var.free();
                 if (!s1.equals(s2)) {
                     Set s1_minus_s2 = new HashSet(s1);
@@ -79,14 +76,6 @@ public class IteratorTests extends BDDTestCase {
                     Assert.fail("iterator() contains these extras: "+s1_minus_s2+"\n"+
                         "iterator2() contains these extras: "+s2_minus_s1);
                 }
-                if (!s1.equals(s3)) {
-                    Set s1_minus_s3 = new HashSet(s1);
-                    s1_minus_s3.removeAll(s3);
-                    Set s3_minus_s1 = new HashSet(s3);
-                    s3_minus_s1.removeAll(s1);
-                    Assert.fail("iterator() contains these extras: "+s1_minus_s3+"\n"+
-                        "iterator3() contains these extras: "+s3_minus_s1);
-                }
                 for (Iterator k = s1.iterator(); k.hasNext(); ) {
                     BDD q = (BDD) k.next();
                     q.free();
@@ -95,11 +84,65 @@ public class IteratorTests extends BDDTestCase {
                     BDD q = (BDD) k.next();
                     q.free();
                 }
-                for (Iterator k = s3.iterator(); k.hasNext(); ) {
-                    BDD q = (BDD) k.next();
-                    q.free();
-                }
             }
         }
     }
+    
+    /**
+     * <p>This is another version of iterator() that exists for testing purposes.
+     * It is much slower than the other one.</p>
+     * 
+     * @return an iteration of minterms
+     */
+    static class MyBDDIterator implements Iterator {
+
+        BDD orig;
+        BDD b = null;
+        BDD myVar;
+        BDD last = null;
+        
+        MyBDDIterator(BDD dis, BDD var) {
+            orig = dis;
+            if (!dis.isZero()) {
+                b = dis.id();
+                myVar = var.id();
+            }
+        }
+        
+        /* (non-Javadoc)
+         * @see java.util.Iterator#remove()
+         */
+        public void remove() {
+            if (last != null) {
+                orig.applyWith(last.id(), BDDFactory.diff);
+                last = null;
+            } else {
+                throw new IllegalStateException();
+            }
+        }
+
+        /* (non-Javadoc)
+         * @see java.util.Iterator#hasNext()
+         */
+        public boolean hasNext() {
+            return b != null;
+        }
+
+        /* (non-Javadoc)
+         * @see java.util.Iterator#next()
+         */
+        public Object next() {
+            if (b == null)
+                throw new NoSuchElementException();
+            BDD c = b.satOne(myVar, false);
+            b.applyWith(c.id(), BDDFactory.diff);
+            if (b.isZero()) {
+                myVar.free(); myVar = null;
+                b.free(); b = null;
+            }
+            return last = c;
+        }
+        
+    }
+    
 }
