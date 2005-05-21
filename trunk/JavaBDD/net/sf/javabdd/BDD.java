@@ -6,6 +6,7 @@ package net.sf.javabdd;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.io.PrintStream;
@@ -73,6 +74,7 @@ public abstract class BDD {
      * @return the level of this BDD
      */
     public int level() {
+        if (isZero() || isOne()) return getFactory().varNum();
         return getFactory().var2Level(var());
     }
 
@@ -724,6 +726,78 @@ public abstract class BDD {
         return new BDDIterator(this, var);
     }
     
+    public static class AllSatIterator implements Iterator {
+
+        byte[] allsatProfile;
+        LinkedList loStack, hiStack;
+        BDDFactory f;
+
+        public AllSatIterator(BDD r) {
+            f = r.getFactory();
+            if (r.isZero()) return;
+            allsatProfile = new byte[f.varNum()];
+            Arrays.fill(allsatProfile, (byte) -1);
+            loStack = new LinkedList();
+            hiStack = new LinkedList();
+            if (!r.isOne()) loStack.addLast(r);
+            if (!gotoNext()) allsatProfile = null;
+        }
+        
+        private boolean gotoNext() {
+            BDD r;
+            for (;;) {
+                boolean lo_empty = loStack.isEmpty();
+                if (lo_empty) {
+                    if (hiStack.isEmpty()) return false;
+                    r = (BDD) hiStack.getLast();
+                } else {
+                    r = (BDD) loStack.getLast();
+                }
+                int LEVEL_r = r.level();
+                allsatProfile[f.level2Var(LEVEL_r)] = lo_empty ? (byte)1 : (byte)0;
+                BDD rn = lo_empty ? r.high() : r.low();
+                for (int v = rn.level() - 1; v > LEVEL_r; --v) {
+                    allsatProfile[f.level2Var(v)] = -1;
+                }
+                if (!lo_empty) {
+                    hiStack.addLast(r);
+                } else {
+                    r.free();
+                }
+                if (rn.isOne()) {
+                    rn.free();
+                    return true;
+                }
+                if (rn.isZero()) {
+                    rn.free();
+                    continue;
+                }
+                loStack.addLast(rn);
+            }
+        }
+        
+        public boolean hasNext() {
+            return allsatProfile != null;
+        }
+
+        public Object next() {
+            if (allsatProfile == null)
+                throw new NoSuchElementException();
+            byte[] b = new byte[allsatProfile.length];
+            System.arraycopy(allsatProfile, 0, b, 0, b.length);
+            if (!gotoNext()) allsatProfile = null;
+            return b;
+        }
+
+        /* (non-Javadoc)
+         * @see java.util.Iterator#remove()
+         */
+        public void remove() {
+            throw new UnsupportedOperationException();
+        }
+        
+    }
+    
     /**
      * <p>BDDIterator is used to iterate through the satisfying assignments of a BDD.
      * It includes the ability to check if bits are dont-cares and skip them.</p>
@@ -984,6 +1058,65 @@ public abstract class BDD {
             //increment();
         }
         
+    }
+    
+    public Iterator iterator3(final BDD var) {
+        return new Iterator() {
+            BDDFactory f = BDD.this.getFactory();
+            AllSatIterator i = new AllSatIterator(BDD.this);
+            byte[] a;
+            BDD b;
+            BDD v = var;
+            BDD lastReturned;
+
+            { gotoNext(); }
+            
+            void gotoNext() {
+                if (i.hasNext()) {
+                    a = (byte[])i.next();
+                } else {
+                    a = null;
+                    b = null;
+                    return;
+                }
+                b = f.one();
+                for (int i = 0; i < a.length; ++i) {
+                    if (a[i] == 1) b.andWith(f.ithVar(i));
+                    else if (a[i] == 0) b.andWith(f.nithVar(i));
+                }
+            }
+            
+            public boolean hasNext() {
+                return b != null || a != null;
+            }
+
+            public Object next() {
+                if (b == null) {
+                    gotoNext();
+                    if (a == null) {
+                        throw new NoSuchElementException();
+                    }
+                }
+                lastReturned = b.satOne(v, false);
+                b.applyWith(lastReturned.id(), BDDFactory.diff);
+                if (b.isZero()) {
+                    b.free();
+                    b = null;
+                }
+                return lastReturned;
+            }
+
+            /* (non-Javadoc)
+             * @see java.util.Iterator#remove()
+             */
+            public void remove() {
+                if (lastReturned == null)
+                    throw new IllegalStateException();
+                BDD.this.applyWith(lastReturned, BDDFactory.diff);
+                lastReturned = null;
+            }
+            
+        };
     }
     
     /**
