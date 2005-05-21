@@ -47,9 +47,11 @@ public class IteratorTests extends BDDTestCase {
                 BDD var = d.set();
                 Iterator i1 = b.iterator(var);
                 Iterator i2 = b.iterator2(var);
+                Iterator i3 = b.iterator3(var);
                 b.free();
                 Set s1 = new HashSet();
                 Set s2 = new HashSet();
+                Set s3 = new HashSet();
                 while (i1.hasNext()) {
                     BDD b1 = (BDD) i1.next();
                     double sc = b1.satCount(var); 
@@ -62,6 +64,12 @@ public class IteratorTests extends BDDTestCase {
                     Assert.assertEquals(1., sc, 0.0000001);
                     s2.add(b2);
                 }
+                while (i3.hasNext()) {
+                    BDD b3 = (BDD) i3.next();
+                    double sc = b3.satCount(var); 
+                    Assert.assertEquals(1., sc, 0.0000001);
+                    s3.add(b3);
+                }
                 var.free();
                 if (!s1.equals(s2)) {
                     Set s1_minus_s2 = new HashSet(s1);
@@ -71,11 +79,23 @@ public class IteratorTests extends BDDTestCase {
                     Assert.fail("iterator() contains these extras: "+s1_minus_s2+"\n"+
                         "iterator2() contains these extras: "+s2_minus_s1);
                 }
+                if (!s1.equals(s3)) {
+                    Set s1_minus_s3 = new HashSet(s1);
+                    s1_minus_s3.removeAll(s3);
+                    Set s3_minus_s1 = new HashSet(s3);
+                    s3_minus_s1.removeAll(s1);
+                    Assert.fail("iterator() contains these extras: "+s1_minus_s3+"\n"+
+                        "iterator3() contains these extras: "+s3_minus_s1);
+                }
                 for (Iterator k = s1.iterator(); k.hasNext(); ) {
                     BDD q = (BDD) k.next();
                     q.free();
                 }
                 for (Iterator k = s2.iterator(); k.hasNext(); ) {
+                    BDD q = (BDD) k.next();
+                    q.free();
+                }
+                for (Iterator k = s3.iterator(); k.hasNext(); ) {
                     BDD q = (BDD) k.next();
                     q.free();
                 }
