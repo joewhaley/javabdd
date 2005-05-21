@@ -7,7 +7,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.NoSuchElementException;
 import java.io.PrintStream;
 import java.math.BigInteger;
@@ -519,8 +518,116 @@ public abstract class BDD {
      * 
      * @return all satisfying variable assignments
      */
-    public abstract List allsat();
+    public AllSatIterator allsat() {
+        return new AllSatIterator(this);
+    }
 
+    /**
+     * Iterator that returns all satisfying assignments as byte arrays.
+     * In the byte arrays, -1 means dont-care, 0 means 0, and 1 means 1.
+     */
+    public static class AllSatIterator implements Iterator {
+
+        protected final BDDFactory f;
+        protected LinkedList loStack, hiStack;
+        protected byte[] allsatProfile;
+        protected final boolean useLevel;
+
+        /**
+         * Constructs a satisfying-assignment iterator on the given BDD.
+         * next() returns a byte array indexed by BDD variable number.
+         * 
+         * @param r  BDD to iterate over
+         */
+        public AllSatIterator(BDD r) {
+            this(r, false);
+        }
+        
+        /**
+         * Constructs a satisfying-assignment iterator on the given BDD.
+         * If lev is true, next() will returns a byte array indexed by
+         * level.  If lev is false, the byte array will be indexed by
+         * BDD variable number.
+         * 
+         * @param r  BDD to iterate over
+         * @param lev  whether to index byte array by level instead of var
+         */
+        public AllSatIterator(BDD r, boolean lev) {
+            f = r.getFactory();
+            useLevel = lev;
+            if (r.isZero()) return;
+            allsatProfile = new byte[f.varNum()];
+            Arrays.fill(allsatProfile, (byte) -1);
+            loStack = new LinkedList();
+            hiStack = new LinkedList();
+            if (!r.isOne()) loStack.addLast(r.id());
+            if (!gotoNext()) allsatProfile = null;
+        }
+        
+        private boolean gotoNext() {
+            BDD r;
+            for (;;) {
+                boolean lo_empty = loStack.isEmpty();
+                if (lo_empty) {
+                    if (hiStack.isEmpty()) {
+                        return false;
+                    }
+                    r = (BDD) hiStack.removeLast();
+                } else {
+                    r = (BDD) loStack.removeLast();
+                }
+                int LEVEL_r = r.level();
+                allsatProfile[useLevel?LEVEL_r:f.level2Var(LEVEL_r)] =
+                    lo_empty ? (byte)1 : (byte)0;
+                BDD rn = lo_empty ? r.high() : r.low();
+                for (int v = rn.level() - 1; v > LEVEL_r; --v) {
+                    allsatProfile[useLevel?v:f.level2Var(v)] = -1;
+                }
+                if (!lo_empty) {
+                    hiStack.addLast(r);
+                } else {
+                    r.free();
+                }
+                if (rn.isOne()) {
+                    rn.free();
+                    return true;
+                }
+                if (rn.isZero()) {
+                    rn.free();
+                    continue;
+                }
+                loStack.addLast(rn);
+            }
+        }
+        
+        /* (non-Javadoc)
+         * @see java.util.Iterator#hasNext()
+         */
+        public boolean hasNext() {
+            return allsatProfile != null;
+        }
+
+        /* (non-Javadoc)
+         * @see java.util.Iterator#next()
+         */
+        public Object next() {
+            if (allsatProfile == null)
+                throw new NoSuchElementException();
+            byte[] b = new byte[allsatProfile.length];
+            System.arraycopy(allsatProfile, 0, b, 0, b.length);
+            if (!gotoNext()) allsatProfile = null;
+            return b;
+        }
+
+        /* (non-Javadoc)
+         * @see java.util.Iterator#remove()
+         */
+        public void remove() {
+            throw new UnsupportedOperationException();
+        }
+        
+    }
+    
     /**
      * <p>Scans this BDD to find all occurrences of BDD variables and returns an
      * array that contains the indices of the possible found BDD variables.</p>
@@ -726,266 +833,125 @@ public abstract class BDD {
         return new BDDIterator(this, var);
     }
     
-    public static class AllSatIterator implements Iterator {
-
-        byte[] allsatProfile;
-        LinkedList loStack, hiStack;
-        BDDFactory f;
-
-        public AllSatIterator(BDD r) {
-            f = r.getFactory();
-            if (r.isZero()) return;
-            allsatProfile = new byte[f.varNum()];
-            Arrays.fill(allsatProfile, (byte) -1);
-            loStack = new LinkedList();
-            hiStack = new LinkedList();
-            if (!r.isOne()) loStack.addLast(r.id());
-            if (!gotoNext()) allsatProfile = null;
-        }
-        
-        private boolean gotoNext() {
-            BDD r;
-            for (;;) {
-                boolean lo_empty = loStack.isEmpty();
-                if (lo_empty) {
-                    if (hiStack.isEmpty()) {
-                        return false;
-                    }
-                    r = (BDD) hiStack.removeLast();
-                } else {
-                    r = (BDD) loStack.removeLast();
-                }
-                int LEVEL_r = r.level();
-                allsatProfile[f.level2Var(LEVEL_r)] = lo_empty ? (byte)1 : (byte)0;
-                BDD rn = lo_empty ? r.high() : r.low();
-                for (int v = rn.level() - 1; v > LEVEL_r; --v) {
-                    allsatProfile[f.level2Var(v)] = -1;
-                }
-                if (!lo_empty) {
-                    hiStack.addLast(r);
-                } else {
-                    r.free();
-                }
-                if (rn.isOne()) {
-                    rn.free();
-                    return true;
-                }
-                if (rn.isZero()) {
-                    rn.free();
-                    continue;
-                }
-                loStack.addLast(rn);
-            }
-        }
-        
-        public boolean hasNext() {
-            return allsatProfile != null;
-        }
-
-        public Object next() {
-            if (allsatProfile == null)
-                throw new NoSuchElementException();
-            byte[] b = new byte[allsatProfile.length];
-            System.arraycopy(allsatProfile, 0, b, 0, b.length);
-            if (!gotoNext()) allsatProfile = null;
-            return b;
-        }
-
-        /* (non-Javadoc)
-         * @see java.util.Iterator#remove()
-         */
-        public void remove() {
-            throw new UnsupportedOperationException();
-        }
-        
-    }
-    
     /**
-     * <p>BDDIterator is used to iterate through the satisfying assignments of a BDD.
-     * It includes the ability to check if bits are dont-cares and skip them.</p>
+     * BDDIterator is used to iterate through the satisfying assignments of a BDD.
+     * It includes the ability to check if bits are dont-cares and skip them.
      * 
      * @author jwhaley
      * @version $Id$
      */
     public static class BDDIterator implements Iterator {
-        protected BDDFactory factory;
-        protected int[] levels;
-        protected boolean[] values;
-        protected BDD[] nodes = null;
-        protected boolean more = false;
-        
+        final BDDFactory f;
+        final AllSatIterator i;
+        // Reference to the initial BDD object, used to support the remove() operation.
+        final BDD initialBDD;
+        // List of levels that we care about.
+        final int[] v;
+        // Current bit assignment, indexed by indices of v.
+        final boolean[] b;
+        // Latest result from allsat iterator.
+        byte[] a;
+        // Last BDD returned.  Used to support the remove() operation.
+        BDD lastReturned;
+
         /**
-         * <p>Construct a new BDDIterator on the given BDD.  The <tt>var</tt>
-         * argument is the set of variables that will be mentioned in the result.</p>
+         * Construct a new BDDIterator on the given BDD.
+         * The var argument is the set of variables that will be mentioned in the result.
          * 
-         * @param dis  BDD to iterate over
+         * @param bdd  BDD to iterate over
          * @param var  variable set to mention in result
          */
-        public BDDIterator(BDD dis, BDD var){
-            factory = dis.getFactory();
-            if (!dis.isZero()) {
-                levels = varset2levels(var);
-                values = new boolean[levels.length];
-                nodes = new BDD[levels.length];
-                fillInSatisfyingAssignment(dis.id(), 0);
-                more = true;
+        public BDDIterator(BDD bdd, BDD var) {
+            initialBDD = bdd;
+            f = bdd.getFactory();
+            i = new AllSatIterator(bdd, true);
+            // init v[]
+            int n = 0;
+            BDD p = var.id();
+            while (!p.isOne()) {
+                ++n;
+                BDD q = p.high();
+                p.free();
+                p = q;
             }
+            p.free();
+            v = new int[n];
+            n = 0;
+            p = var.id();
+            while (!p.isOne()) {
+                v[n++] = p.level();
+                BDD q = p.high();
+                p.free();
+                p = q;
+            }
+            p.free();
+            // init b[]
+            b = new boolean[n];
+            gotoNext();
         }
         
-        protected void fillInSatisfyingAssignment(BDD node, int i) {
-            while (!node.isOne() && !node.isZero()) {
-                int v = node.level();
-                
-                // Mark skipped variables as dont-cares.
-                int j = i;
-                while (j < levels.length && levels[j] != v) {
-                    if (nodes[j] != null)
-                        throw new InternalError("nodes["+j+"] should be null");
-                    ++j;
-                }
-                if (j == levels.length) {
-                    StringBuffer sb = new StringBuffer();
-                    sb.append("BDD contains variable ");
-                    sb.append(factory.level2Var(v));
-                    sb.append("(level ");
-                    sb.append(v);
-                    sb.append(") not in iteration set:\n");
-                    for (int k = 0; k < levels.length; ++k) {
-                        sb.append(factory.level2Var(levels[k]));
-                        if (k < levels.length-1) sb.append(",");
-                    }
-                    sb.append("\n(levels: ");
-                    for (int k = 0; k < levels.length; ++k) {
-                        sb.append(levels[k]);
-                        if (k < levels.length-1) sb.append(",");
-                    }
-                    sb.append(")\n");
-                    throw new BDDException(sb.toString());
-                }
-                i = j;
-                
-                // Put node in table.
-                nodes[i] = node;
-                
-                // Choose zero edge.
-                BDD node2 = node.low();
-                if (node2.isZero()) {
-                    // Zero edge is F.  Choose one edge instead.
-                    node2.free();
-                    values[i] = true;
-                    node2 = node.high();
-                }
-                node = node2;
-                ++i;
-            }
-        }
-        
-        protected boolean findNextSatisfyingAssignment() {
-            int i = nodes.length - 1;
-            for (;;) {
-                if (i < 0) return false;
-                if (nodes[i] != null) {
-                    if (!values[i]) {
-                        // We already tried zero, try a one here now.
-                        BDD hi = nodes[i].high();
-                        if (!hi.isZero()) {
-                            values[i] = true;
-                            fillInSatisfyingAssignment(hi, i+1);
-                            return true;
-                        } else {
-                            // Leads to zero, no satisfying assignments.
-                            // Fallthrough.
-                        }
-                    }
-                    // We already tried both zero and one.
-                    nodes[i].free();
-                    nodes[i] = null;
-                    values[i] = false;
-                    // Fallthrough: Go to next bit.
-                } else {
-                    // This is a dont-care bit, skip it.
-                }
-                --i;
-            }
-        }
-        
-        protected void increment() {
-            more = false;
-            boolean carry = true;
-            for (int i = levels.length - 1; i >= 0; --i) {
-                boolean val = values[i];
-                if (nodes[i] == null) {
-                    if (carry) {
-                        values[i] = !val;
-                        more |= !val;
-                        carry = val;
-                    }
-                }
-            }
-        }
-        
-        protected BDD buildAndIncrement() {
-            more = false;
-            BDD b = factory.one();
-            boolean carry = true;
-            for (int i = levels.length - 1; i >= 0; --i) {
-                int level = levels[i];
-                int var = factory.level2Var(level);
-                boolean val = values[i];
-                if (nodes[i] == null) {
-                    if (carry) {
-                        values[i] = !val;
-                        more |= !val;
-                        carry = val;
-                    }
-                }
-                BDD v = val ? factory.ithVar(var) : factory.nithVar(var);
-                b.andWith(v);
-            }
-            return b;
-        }
-        
-        protected void free() {
-            for (int i = levels.length - 1; i >= 0; --i) {
-                if (nodes[i] != null) {
-                    nodes[i].free();
-                    nodes[i] = null;
-                }
-            }
-            nodes = null;
-        }
-        
-        /* (non-Javadoc)
-         * @see java.util.Iterator#next()
-         */
-        public Object next() {
-            BDD b;
-            if (more) {
-                b = buildAndIncrement();
+        protected void gotoNext() {
+            if (i.hasNext()) {
+                a = (byte[]) i.next();
             } else {
+                a = null;
+                return;
+            }
+            for (int i = 0; i < v.length; ++i) {
+                int vi = v[i];
+                if (a[vi] == 1) b[i] = true;
+                else b[i] = false;
+            }
+        }
+        
+        protected boolean gotoNextA() {
+            for (int i = v.length-1; i >= 0; --i) {
+                int vi = v[i];
+                if (a[vi] != -1) continue;
+                if (b[i] == false) {
+                    b[i] = true;
+                    return true;
+                }
+                b[i] = false;
+            }
+            return false;
+        }
+        
+        public boolean hasNext() {
+            return a != null;
+        }
+        
+        public Object next() {
+            return nextBDD();
+        }
+        
+        public BDD nextBDD() {
+            if (a == null) {
                 throw new NoSuchElementException();
             }
-            if (!more) {
-                more = findNextSatisfyingAssignment();
-                if (!more) {
-                    free();
-                }
+            if (lastReturned != null) lastReturned.free();
+            lastReturned = f.one();
+            //for (int i = 0; i < v.length; ++i) {
+            for (int i = v.length-1; i >= 0; --i) {
+                int li = v[i];
+                int vi = f.level2Var(li);
+                if (b[i] == true) lastReturned.andWith(f.ithVar(vi));
+                else lastReturned.andWith(f.nithVar(vi));
             }
-            return b;
+            if (!gotoNextA()) {
+                gotoNext();
+            }
+            return lastReturned;
         }
-        
-        /* (non-Javadoc)
-         * @see java.util.Iterator#hasNext()
-         */
-        public boolean hasNext() {
-            return nodes != null;
-        }
-        
+
         /* (non-Javadoc)
          * @see java.util.Iterator#remove()
          */
         public void remove() {
-            throw new UnsupportedOperationException();
+            if (lastReturned == null)
+                throw new IllegalStateException();
+            initialBDD.applyWith(lastReturned.id(), BDDFactory.diff);
+            lastReturned = null;
         }
         
         /**
@@ -994,17 +960,11 @@ public abstract class BDD {
          * 
          * @param var  variable number to check
          * @return  if the given variable is a dont-care
-         * @throws BDDException if var is not in the iteration set
          */
         public boolean isDontCare(int var) {
-            if (nodes == null) return false;
-            if (levels == null)
-                throw new BDDException(); 
-            int level = factory.var2Level(var);
-            int i = Arrays.binarySearch(levels, level);
-            if (i < 0)
-                throw new BDDException("var "+var+" not in iteration set"); 
-            return nodes[i] == null;
+            if (a == null) return false;
+            int level = f.var2Level(var);
+            return a[level] == -1;
         }
         
         /**
@@ -1016,24 +976,12 @@ public abstract class BDD {
          * @throws BDDException if d is not in the iteration set
          */
         public boolean isDontCare(BDDDomain d) {
-            if (nodes == null) return false;
+            if (a == null) return false;
             int[] vars = d.vars();
             for (int i = 0; i < vars.length; ++i) {
                 if (!isDontCare(vars[i])) return false;
             }
             return true;
-        }
-        
-        protected void fastForward0(int var) {
-            if (levels == null)
-                throw new BDDException(); 
-            int level = factory.var2Level(var);
-            int i = Arrays.binarySearch(levels, level);
-            if (i < 0)
-                throw new BDDException(); 
-            if (nodes[i] != null)
-                throw new BDDException();
-            values[i] = true;
         }
         
         /**
@@ -1042,8 +990,24 @@ public abstract class BDD {
          * @param var  number of variable
          */
         public void fastForward(int var) {
-            fastForward0(var);
-            //increment();
+            if (a == null)
+                throw new BDDException();
+            int level = f.var2Level(var);
+            int i = Arrays.binarySearch(v, level);
+            if (i == -1 || a[i] != -1)
+                throw new BDDException();
+            b[i] = true;
+        }
+        
+        /**
+         * Fast-forward the iteration such that the given set of variables are true.
+         * 
+         * @param vars  set of variable indices
+         */
+        public void fastForward(int[] vars) {
+            for (int i = 0; i < vars.length; ++i) {
+                fastForward(vars[i]);
+            }
         }
         
         /**
@@ -1054,124 +1018,11 @@ public abstract class BDD {
          */
         public void skipDontCare(BDDDomain d) {
             int[] vars = d.vars();
-            for (int i = 0; i < vars.length; ++i) {
-                fastForward0(vars[i]);
+            fastForward(vars);
+            if (!gotoNextA()) {
+                gotoNext();
             }
-            //increment();
         }
-        
-    }
-    
-    public Iterator iterator3(final BDD var) {
-        return new Iterator() {
-            final BDDFactory f = BDD.this.getFactory();
-            final AllSatIterator i = new AllSatIterator(BDD.this);
-            final BDD v = var;
-            byte[] a;
-            BDD b;
-            BDD lastReturned;
-
-            { gotoNext(); }
-            
-            void gotoNext() {
-                if (i.hasNext()) {
-                    a = (byte[])i.next();
-                } else {
-                    a = null;
-                    b = null;
-                    return;
-                }
-                b = f.one();
-                for (int i = 0; i < a.length; ++i) {
-                    if (a[i] == 1) b.andWith(f.ithVar(i));
-                    else if (a[i] == 0) b.andWith(f.nithVar(i));
-                }
-            }
-            
-            public boolean hasNext() {
-                return b != null;
-            }
-
-            public Object next() {
-                if (b == null) {
-                    throw new NoSuchElementException();
-                }
-                lastReturned = b.satOne(v, false);
-                b.applyWith(lastReturned.id(), BDDFactory.diff);
-                if (b.isZero()) {
-                    b.free();
-                    gotoNext();
-                }
-                return lastReturned;
-            }
-
-            /* (non-Javadoc)
-             * @see java.util.Iterator#remove()
-             */
-            public void remove() {
-                if (lastReturned == null)
-                    throw new IllegalStateException();
-                BDD.this.applyWith(lastReturned, BDDFactory.diff);
-                lastReturned = null;
-            }
-            
-        };
-    }
-    
-    /**
-     * <p>This is another version of iterator() that supports the remove() operation.
-     * It is much slower than the other one.</p>
-     * 
-     * @return an iteration of minterms
-     */
-    public Iterator iterator2(final BDD var) {
-        return new Iterator() {
-
-            BDD b = null;
-            BDD myVar;
-            BDD last = null;
-            {
-                if (!isZero()) {
-                    b = id();
-                    myVar = var.id();
-                }
-            }
-            
-            /* (non-Javadoc)
-             * @see java.util.Iterator#remove()
-             */
-            public void remove() {
-                if (last != null) {
-                    applyWith(last.id(), BDDFactory.diff);
-                    last = null;
-                } else {
-                    throw new IllegalStateException();
-                }
-            }
-
-            /* (non-Javadoc)
-             * @see java.util.Iterator#hasNext()
-             */
-            public boolean hasNext() {
-                return b != null;
-            }
-
-            /* (non-Javadoc)
-             * @see java.util.Iterator#next()
-             */
-            public Object next() {
-                if (b == null)
-                    throw new NoSuchElementException();
-                BDD c = b.satOne(myVar, false);
-                b.applyWith(c.id(), BDDFactory.diff);
-                if (b.isZero()) {
-                    myVar.free(); myVar = null;
-                    b.free(); b = null;
-                }
-                return last = c;
-            }
-                
-        };
     }
     
     /**
