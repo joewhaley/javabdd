@@ -940,6 +940,31 @@ public abstract class BDD {
             return nextBDD();
         }
         
+        public BigInteger nextValue(BDDDomain dom) {
+            if (a == null) {
+                throw new NoSuchElementException();
+            }
+            lastReturned = null;
+            BigInteger val = BigInteger.ZERO;
+            int[] ivar = dom.vars();
+            for (int m = dom.varNum() - 1; m >= 0; m--) {
+                val = val.shiftLeft(1);
+                int level = f.var2Level(ivar[m]);
+                int k = Arrays.binarySearch(v, level);
+                if (k < 0) {
+                    val = null;
+                    break;
+                }
+                if (b[k]) {
+                    val = val.add(BigInteger.ONE);
+                }
+            }
+            if (!gotoNextA()) {
+                gotoNext();
+            }
+            return val;
+        }
+        
         /**
          * Return the next tuple of domain values in the iteration.
          * 
