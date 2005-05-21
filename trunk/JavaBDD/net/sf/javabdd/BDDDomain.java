@@ -3,8 +3,8 @@
 // Licensed under the terms of the GNU LGPL; see COPYING for details.
 package net.sf.javabdd;
 
-import java.util.Iterator;
 import java.math.BigInteger;
+import net.sf.javabdd.BDD.BDDIterator;
 
 /**
  * Represents a domain of BDD variables.  This is useful for finite state
@@ -353,7 +353,7 @@ public abstract class BDDDomain {
      * Be careful when using this method for BDDs with a large number
      * of entries, as it allocates a BigInteger[] array of dimension k.
      *
-     * @param bdd bdd that is the disjunction of domain indices
+     * @param bdd  bdd that is the disjunction of domain indices
      * @see #getVarIndices(BDD,int)
      * @see #ithVar(BigInteger)
      */
@@ -373,17 +373,15 @@ public abstract class BDDDomain {
      */
     public BigInteger[] getVarIndices(BDD bdd, int max) {
         BDD myvarset = set(); // can't use var here, must respect subclass a factory may provide
-        int n = (int)bdd.satCount(myvarset);
+        int n = (int) bdd.satCount(myvarset);
         if (max != -1 && n > max)
             n = max;
         BigInteger[] res = new BigInteger[n];
-        Iterator it = bdd.iterator(myvarset);
-        for (int i = 0; i < n; i++) {
-            BDD bi = (BDD) it.next();
-            res[i] = bi.scanVar(this);
-            bi.free();
-        }
+        BDDIterator it = bdd.iterator(myvarset);
         myvarset.free();
+        for (int i = 0; i < n; i++) {
+            res[i] = it.nextValue(this);
+        }
         return res;
     }
 }
