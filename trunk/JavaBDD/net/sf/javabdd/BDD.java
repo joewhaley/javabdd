@@ -607,16 +607,25 @@ public abstract class BDD {
             return allsatProfile != null;
         }
 
-        /* (non-Javadoc)
-         * @see java.util.Iterator#next()
+        /**
+         * Return the next satisfying var setting.
+         * 
+         * @return  byte[]
          */
-        public Object next() {
+        public byte[] nextSat() {
             if (allsatProfile == null)
                 throw new NoSuchElementException();
             byte[] b = new byte[allsatProfile.length];
             System.arraycopy(allsatProfile, 0, b, 0, b.length);
             if (!gotoNext()) allsatProfile = null;
             return b;
+        }
+        
+        /* (non-Javadoc)
+         * @see java.util.Iterator#next()
+         */
+        public Object next() {
+            return nextSat();
         }
 
         /* (non-Javadoc)
@@ -917,14 +926,103 @@ public abstract class BDD {
             return false;
         }
         
+        /* (non-Javadoc)
+         * @see java.util.Iterator#hasNext()
+         */
         public boolean hasNext() {
             return a != null;
         }
         
+        /* (non-Javadoc)
+         * @see java.util.Iterator#next()
+         */
         public Object next() {
             return nextBDD();
         }
         
+        /**
+         * Return the next tuple of domain values in the iteration.
+         * 
+         * @return  the next tuple of domain values in the iteration.
+         */
+        public BigInteger[] nextTuple() {
+            if (a == null) {
+                throw new NoSuchElementException();
+            }
+            lastReturned = null;
+            BigInteger[] result = new BigInteger[f.numberOfDomains()];
+            for (int i = 0; i < result.length; ++i) {
+                BDDDomain dom = f.getDomain(i);
+                int[] ivar = dom.vars();
+                BigInteger val = BigInteger.ZERO;
+                for (int m = dom.varNum() - 1; m >= 0; m--) {
+                    val = val.shiftLeft(1);
+                    int level = f.var2Level(ivar[m]);
+                    int k = Arrays.binarySearch(v, level);
+                    if (k < 0) {
+                        val = null;
+                        break;
+                    }
+                    if (b[k]) {
+                        val = val.add(BigInteger.ONE);
+                    }
+                }
+                result[i] = val;
+            }
+            if (!gotoNextA()) {
+                gotoNext();
+            }
+            return result;
+        }
+        
+        /**
+         * An alternate implementation of nextTuple().
+         * This may be slightly faster than the default if there are many domains.
+         * 
+         * @return  the next tuple of domain values in the iteration.
+         */
+        public BigInteger[] nextTuple2() {
+            boolean[] store = nextSat();
+            BigInteger[] result = new BigInteger[f.numberOfDomains()];
+            for (int i = 0; i < result.length; ++i) {
+                BDDDomain dom = f.getDomain(i);
+                int[] ivar = dom.vars();
+                BigInteger val = BigInteger.ZERO;
+                for (int m = dom.varNum() - 1; m >= 0; m--) {
+                    val = val.shiftLeft(1);
+                    if (store[ivar[m]])
+                        val = val.add(BigInteger.ONE);
+                }
+                result[i] = val;
+            }
+            return result;
+        }
+        
+        /**
+         * Return the next single satisfying assignment in the iteration.
+         * 
+         * @return  the next single satisfying assignment in the iteration.
+         */
+        public boolean[] nextSat() {
+            if (a == null) {
+                throw new NoSuchElementException();
+            }
+            lastReturned = null;
+            boolean[] result = new boolean[f.varNum()];
+            for (int i = 0; i < b.length; ++i) {
+                result[f.level2Var(v[i])] = b[i];
+            }
+            if (!gotoNextA()) {
+                gotoNext();
+            }
+            return result;
+        }
+        
+        /**
+         * Return the next BDD in the iteration.
+         * 
+         * @return  the next BDD in the iteration
+         */
         public BDD nextBDD() {
             if (a == null) {
                 throw new NoSuchElementException();
@@ -994,7 +1092,7 @@ public abstract class BDD {
                 throw new BDDException();
             int level = f.var2Level(var);
             int i = Arrays.binarySearch(v, level);
-            if (i == -1 || a[i] != -1)
+            if (i < 0 || a[i] != -1)
                 throw new BDDException();
             b[i] = true;
         }
