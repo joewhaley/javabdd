@@ -1490,51 +1490,6 @@ JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDD_satOne1
   return result;
 }
 
-static JNIEnv *allsat_env;
-static jobjectArray allsat_result;
-static int allsat_index;
-static void allsatHandler(char* varset, int size)
-{
-  jbyteArray result = (*allsat_env)->NewByteArray(allsat_env, size);
-  (*allsat_env)->SetByteArrayRegion(allsat_env, result, 0, size, (jbyte*) varset);
-  (*allsat_env)->SetObjectArrayElement(allsat_env, allsat_result, allsat_index, result);
-  (*allsat_env)->DeleteLocalRef(allsat_env, result);
-  allsat_index++;
-}
-
-/*
- * Class:     net_sf_javabdd_BuDDyFactory_BuDDyBDD
- * Method:    allsat0
- * Signature: (I)[[B
- */
-JNIEXPORT jobjectArray JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDD_allsat0
-  (JNIEnv *env, jclass cl, jint b)
-{
-  jobjectArray result;
-  jclass c;
-  int size;
-  jnienv = env;
-  c = (*env)->FindClass(env, "[B");
-#if defined(TRACE_BUDDYLIB)
-  printf("bdd_varnum()\n");
-#endif
-  size = bdd_varnum();
-  check_error(env);
-  allsat_result = (*env)->NewObjectArray(env, size, c, NULL);
-  if (allsat_result == NULL) return NULL;
-  allsat_env = env;
-  allsat_index = 0;
-#if defined(TRACE_BUDDYLIB)
-  printf("bdd_allsat(%d, %p)\n", b, allsatHandler);
-#endif
-  bdd_allsat(b, allsatHandler);
-  allsat_env = NULL;
-  result = allsat_result;
-  allsat_result = NULL;
-  check_error(env);
-  return result;
-}
-
 /*
  * Class:     net_sf_javabdd_BuDDyFactory_BuDDyBDD
  * Method:    printSet0
