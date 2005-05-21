@@ -739,7 +739,7 @@ public abstract class BDD {
             Arrays.fill(allsatProfile, (byte) -1);
             loStack = new LinkedList();
             hiStack = new LinkedList();
-            if (!r.isOne()) loStack.addLast(r);
+            if (!r.isOne()) loStack.addLast(r.id());
             if (!gotoNext()) allsatProfile = null;
         }
         
@@ -748,10 +748,12 @@ public abstract class BDD {
             for (;;) {
                 boolean lo_empty = loStack.isEmpty();
                 if (lo_empty) {
-                    if (hiStack.isEmpty()) return false;
-                    r = (BDD) hiStack.getLast();
+                    if (hiStack.isEmpty()) {
+                        return false;
+                    }
+                    r = (BDD) hiStack.removeLast();
                 } else {
-                    r = (BDD) loStack.getLast();
+                    r = (BDD) loStack.removeLast();
                 }
                 int LEVEL_r = r.level();
                 allsatProfile[f.level2Var(LEVEL_r)] = lo_empty ? (byte)1 : (byte)0;
@@ -1062,11 +1064,11 @@ public abstract class BDD {
     
     public Iterator iterator3(final BDD var) {
         return new Iterator() {
-            BDDFactory f = BDD.this.getFactory();
-            AllSatIterator i = new AllSatIterator(BDD.this);
+            final BDDFactory f = BDD.this.getFactory();
+            final AllSatIterator i = new AllSatIterator(BDD.this);
+            final BDD v = var;
             byte[] a;
             BDD b;
-            BDD v = var;
             BDD lastReturned;
 
             { gotoNext(); }
@@ -1087,21 +1089,18 @@ public abstract class BDD {
             }
             
             public boolean hasNext() {
-                return b != null || a != null;
+                return b != null;
             }
 
             public Object next() {
                 if (b == null) {
-                    gotoNext();
-                    if (a == null) {
-                        throw new NoSuchElementException();
-                    }
+                    throw new NoSuchElementException();
                 }
                 lastReturned = b.satOne(v, false);
                 b.applyWith(lastReturned.id(), BDDFactory.diff);
                 if (b.isZero()) {
                     b.free();
-                    b = null;
+                    gotoNext();
                 }
                 return lastReturned;
             }
