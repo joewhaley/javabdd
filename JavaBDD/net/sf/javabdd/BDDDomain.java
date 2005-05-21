@@ -381,6 +381,7 @@ public abstract class BDDDomain {
         for (int i = 0; i < n; i++) {
             BDD bi = (BDD) it.next();
             res[i] = bi.scanVar(this);
+            bi.free();
         }
         myvarset.free();
         return res;
