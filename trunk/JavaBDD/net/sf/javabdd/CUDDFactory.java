@@ -4,7 +4,6 @@
 package net.sf.javabdd;
 
 import java.util.Collection;
-import java.util.List;
 import java.math.BigInteger;
 
 /**
@@ -703,14 +702,6 @@ public class CUDDFactory extends BDDFactory {
          * @see net.sf.javabdd.BDD#satOne(net.sf.javabdd.BDD, boolean)
          */
         public BDD satOne(BDD var, boolean pol) {
-            // TODO Implement this.
-            throw new UnsupportedOperationException();
-        }
-
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#allsat()
-         */
-        public List allsat() {
             // TODO Implement this.
             throw new UnsupportedOperationException();
         }
