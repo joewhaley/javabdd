@@ -6,7 +6,6 @@ package net.sf.javabdd;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.List;
 import java.io.IOException;
 import java.math.BigInteger;
 
@@ -368,24 +367,6 @@ public class TestBDDFactory extends BDDFactory {
             BDD r1 = b1.satOne(c1, pol);
             BDD r2 = b2.satOne(c2, pol);
             return new TestBDD(r1, r2);
-        }
-
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#allsat()
-         */
-        public List allsat() {
-            List r1 = b1.allsat();
-            List r2 = b2.allsat();
-            assertSame(r1.size() == r2.size(), b1, b2, "allsat");
-            List r = new LinkedList();
-            Iterator i = r1.iterator();
-            Iterator j = r2.iterator();
-            while (i.hasNext()) {
-                BDD c1 = (BDD) i.next();
-                BDD c2 = (BDD) j.next();
-                r.add(new TestBDD(c1, c2));
-            }
-            return r;
         }
 
         /* (non-Javadoc)

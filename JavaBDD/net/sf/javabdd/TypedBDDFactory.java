@@ -7,7 +7,6 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -918,7 +917,7 @@ public class TypedBDDFactory extends BDDFactory {
         /* (non-Javadoc)
          * @see net.sf.javabdd.BDD#allsat()
          */
-        public List allsat() {
+        public AllSatIterator allsat() {
             return bdd.allsat();
         }
 

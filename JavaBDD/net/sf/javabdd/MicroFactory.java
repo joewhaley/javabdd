@@ -8,7 +8,6 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
@@ -568,16 +567,6 @@ public class MicroFactory extends BDDFactory {
             int y = ((bdd) var)._index;
             int z = pol ? 1 : 0;
             return makeBDD(bdd_satoneset(x, y, z));
-        }
-
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#allsat()
-         */
-        public List allsat() {
-            int x = _index;
-            List result = new LinkedList();
-            bdd_allsat(x, result);
-            return result;
         }
 
         /* (non-Javadoc)
@@ -3312,62 +3301,6 @@ public class MicroFactory extends BDDFactory {
         return size;
     }
 
-    void bdd_allsat(int r, List result) {
-        int v;
-
-        CHECK(r);
-
-        allsatProfile = new byte[bddvarnum];
-
-        for (v = LEVEL(r) - 1; v >= 0; --v)
-            allsatProfile[bddlevel2var[v]] = -1;
-
-        INITREF();
-
-        allsat_rec(r, result);
-
-        allsatProfile = null;
-    }
-
-    void allsat_rec(int r, List result) {
-        if (ISONE(r)) {
-            //allsatHandler(allsatProfile, bddvarnum);
-            byte[] b = new byte[bddvarnum];
-            System.arraycopy(allsatProfile, 0, b, 0, bddvarnum);
-            result.add(b);
-            return;
-        }
-
-        if (ISZERO(r)) return;
-
-        int LOW_r = LOW(r);
-        int HIGH_r = HIGH(r);
-        int LEVEL_r = LEVEL(r);
-        if (!ISZERO(LOW_r)) {
-            int v;
-
-            allsatProfile[bddlevel2var[LEVEL_r]] = 0;
-
-            for (v = LEVEL(LOW_r) - 1; v > LEVEL_r; --v) {
-                allsatProfile[bddlevel2var[v]] = -1;
-            }
-
-            allsat_rec(LOW_r, result);
-        }
-
-        if (!ISZERO(HIGH_r)) {
-            int v;
-
-            allsatProfile[bddlevel2var[LEVEL_r]] = 1;
-
-            for (v = LEVEL(HIGH_r) - 1; v > LEVEL_r; --v) {
-                allsatProfile[bddlevel2var[v]] = -1;
-            }
-
-            allsat_rec(HIGH_r, result);
-        }
-    }
-    
     double bdd_satcount(int r) {
         double size = 1;
 
@@ -3790,8 +3723,6 @@ public class MicroFactory extends BDDFactory {
     int[] supportSet; /* The found support set */
     int cacheratio;
     int satPolarity;
-
-    byte[] allsatProfile; /* Variable profile for bdd_allsat() */
 
     OpCache1 singlecache;  /* not(), exist(), forAll() */
     OpCache2 replacecache; /* replace(), veccompose() */
