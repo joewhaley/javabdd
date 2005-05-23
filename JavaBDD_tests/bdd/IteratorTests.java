@@ -91,8 +91,6 @@ public class IteratorTests extends BDDTestCase {
     /**
      * <p>This is another version of iterator() that exists for testing purposes.
      * It is much slower than the other one.</p>
-     * 
-     * @return an iteration of minterms
      */
     static class MyBDDIterator implements Iterator {
 
