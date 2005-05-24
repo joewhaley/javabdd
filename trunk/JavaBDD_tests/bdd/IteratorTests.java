@@ -35,7 +35,7 @@ public class IteratorTests extends BDDTestCase {
             BDDDomain d = bdd.getDomain(0); d.setName("D0");
             BDDDomain d2 = bdd.getDomain(1); d2.setName("D1");
             bdd.setVarOrder(bdd.makeVarOrdering(true, "D1xD0"));
-            Random r = new Random();
+            Random r = new Random(666);
             int times = 1000;
             int combine = 400;
             boolean dual = true;
@@ -57,7 +57,7 @@ public class IteratorTests extends BDDTestCase {
                 Set s2 = new HashSet();
                 while (i1.hasNext()) {
                     BDD b1 = (BDD) i1.next();
-                    double sc = b1.satCount(var); 
+                    double sc = b1.satCount(var);
                     Assert.assertEquals(1., sc, 0.0000001);
                     s1.add(b1);
                 }
