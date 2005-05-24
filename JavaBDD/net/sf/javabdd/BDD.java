@@ -1226,17 +1226,17 @@ public abstract class BDD {
         if (visited[r])
             return current;
         visited[r] = true;
-       
+        
         // TODO: support labelling of vars.
         out.println(r+" [label=\""+this.var()+"\"];");
-
+        
         BDD l = this.low(), h = this.high();
-        Integer li = ((Integer) map.get(l));
+        Integer li = (Integer) map.get(l);
         if (li == null) {
             map.put(l.id(), li = new Integer(++current));
         }
         int low = li.intValue();
-        Integer hi = ((Integer) map.get(h));
+        Integer hi = (Integer) map.get(h);
         if (hi == null) {
             map.put(h.id(), hi = new Integer(++current));
         }

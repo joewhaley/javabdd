@@ -532,6 +532,8 @@ public abstract class BDDFactory {
             BDD b = ithVar(var);
             root = b.ite(high, low);
             b.free();
+            if (low.isZero() || low.isOne()) low.free();
+            if (high.isZero() || high.isOne()) high.free();
 
             int hash = key % lh_nodenum;
             int pos = lh_freepos;
