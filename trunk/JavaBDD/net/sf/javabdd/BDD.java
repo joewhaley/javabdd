@@ -1052,7 +1052,7 @@ public abstract class BDD {
             if (a == null) {
                 throw new NoSuchElementException();
             }
-            if (lastReturned != null) lastReturned.free();
+            //if (lastReturned != null) lastReturned.free();
             lastReturned = f.one();
             //for (int i = 0; i < v.length; ++i) {
             for (int i = v.length-1; i >= 0; --i) {
