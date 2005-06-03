@@ -24,16 +24,75 @@ public class IteratorTests extends BDDTestCase {
         junit.textui.TestRunner.run(IteratorTests.class);
     }
     
-    public void testIterator() {
+    public void testOneZeroIterator() {
+        reset();
+        Assert.assertTrue(hasNext());
+        while (hasNext()) {
+            BDDFactory bdd = nextFactory();
+            int domainSize = 1024;
+            BDDDomain[] ds = bdd.extDomain(new int[] { domainSize });
+            BDDDomain d = ds[0];
+            BDD b = bdd.zero();
+            BDD var = d.set();
+            Iterator i = b.iterator(var);
+            b.free();
+            Assert.assertEquals(i.hasNext(), false);
+            try {
+                i.next();
+                Assert.fail();
+            } catch (NoSuchElementException x) {
+            }
+            
+            b = bdd.one();
+            Iterator i1 = b.iterator(var);
+            Iterator i2 = new MyBDDIterator(b, var);
+            b.free();
+            Set s1 = new HashSet();
+            Set s2 = new HashSet();
+            while (i1.hasNext()) {
+                BDD b1 = (BDD) i1.next();
+                double sc = b1.satCount(var);
+                Assert.assertEquals(1., sc, 0.0000001);
+                s1.add(b1);
+            }
+            while (i2.hasNext()) {
+                BDD b2 = (BDD) i2.next();
+                double sc = b2.satCount(var); 
+                Assert.assertEquals(1., sc, 0.0000001);
+                s2.add(b2);
+            }
+            var.free();
+            Assert.assertEquals(s1.size(), domainSize);
+            Assert.assertEquals(s2.size(), domainSize);
+            if (!s1.equals(s2)) {
+                Set s1_minus_s2 = new HashSet(s1);
+                s1_minus_s2.removeAll(s2);
+                Set s2_minus_s1 = new HashSet(s2);
+                s2_minus_s1.removeAll(s1);
+                Assert.fail("iterator() contains these extras: "+s1_minus_s2+"\n"+
+                    "iterator2() contains these extras: "+s2_minus_s1);
+            }
+            for (Iterator k = s1.iterator(); k.hasNext(); ) {
+                BDD q = (BDD) k.next();
+                q.free();
+            }
+            for (Iterator k = s2.iterator(); k.hasNext(); ) {
+                BDD q = (BDD) k.next();
+                q.free();
+            }
+        }
+    }
+    
+    public void testRandomIterator() {
         reset();
         Assert.assertTrue(hasNext());
         while (hasNext()) {
             BDDFactory bdd = nextFactory();
             bdd.setNodeTableSize(200000);
             int domainSize = 1024;
-            bdd.extDomain(new int[] { domainSize, domainSize });
-            BDDDomain d = bdd.getDomain(0); d.setName("D0");
-            BDDDomain d2 = bdd.getDomain(1); d2.setName("D1");
+            BDDDomain[] ds = bdd.extDomain(new int[] { domainSize, domainSize });
+            BDDDomain d = ds[0]; d.setName("D0");
+            BDDDomain d2 = ds[1]; d2.setName("D1");
             bdd.setVarOrder(bdd.makeVarOrdering(true, "D1xD0"));
             Random r = new Random(666);
             int times = 1000;
