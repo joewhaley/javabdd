@@ -560,8 +560,10 @@ public abstract class BDD {
             Arrays.fill(allsatProfile, (byte) -1);
             loStack = new LinkedList();
             hiStack = new LinkedList();
-            if (!r.isOne()) loStack.addLast(r.id());
-            if (!gotoNext()) allsatProfile = null;
+            if (!r.isOne()) {
+                loStack.addLast(r.id());
+                if (!gotoNext()) allsatProfile = null;
+            }
         }
         
         private boolean gotoNext() {
