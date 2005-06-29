@@ -16,6 +16,7 @@ import net.sf.javabdd.BDD;
 import net.sf.javabdd.BDDDomain;
 import net.sf.javabdd.BDDException;
 import net.sf.javabdd.BDDFactory;
+import net.sf.javabdd.BDDPairing;
 
 /**
  * BasicTests
@@ -395,7 +396,46 @@ public class BasicTests extends BDDTestCase {
         }
     }
     
-    public void testEnsureCapacity() {
+    public void testReplace() {
+        reset();
+        Assert.assertTrue(hasNext());
+        while (hasNext()) {
+            BDDFactory bdd = nextFactory();
+            if (bdd.varNum() < 5) bdd.setVarNum(5);
+            BDDPairing p1 = bdd.makePair(0, 1);
+            BDDPairing p2 = bdd.makePair();
+            p2.set(1, 2);
+            BDDPairing p3 = bdd.makePair();
+            p3.set(new int[] { 0, 1 }, new int[] { 1, 0 });
+            BDD a, b, c, d, e, f;
+            a = bdd.ithVar(0);
+            b = bdd.ithVar(1);
+            c = bdd.ithVar(2);
+            d = bdd.zero();
+            e = bdd.one();
+            a.replaceWith(p1);
+            Assert.assertEquals(a, b);
+            a.replaceWith(p2);
+            Assert.assertEquals(a, c);
+            if (bdd.varNum() < 25) bdd.setVarNum(25);
+            b.andWith(bdd.nithVar(0));
+            f = b.replace(p3);
+            f.andWith(bdd.ithVar(0));
+            Assert.assertTrue(!f.isZero());
+            f.andWith(bdd.ithVar(1));
+            Assert.assertTrue(f.isZero());
+            d.replaceWith(p3);
+            Assert.assertTrue(d.isZero());
+            e.replaceWith(p3);
+            Assert.assertTrue(e.isOne());
+            a.free(); b.free(); c.free(); d.free(); e.free(); f.free();
+            p1.reset();
+            p2.reset();
+            p3.reset();
+        }
+    }
+    
+    void tEnsureCapacity() {
         reset();
         Assert.assertTrue(hasNext());
         while (hasNext()) {
@@ -432,13 +472,12 @@ public class BasicTests extends BDDTestCase {
         }
     }
     
-    public void testEnsureCapacity2() throws IOException {
+    void tEnsureCapacity2() throws IOException {
         reset();
         Assert.assertTrue(hasNext());
         while (hasNext()) {
             BDDFactory bdd = nextFactory();
             System.out.println("Factory "+bdd);
-            int n = bdd.numberOfDomains();
             long[] domainSizes = new long[] { 127, 17, 31, 4, 256, 87, 42, 666, 3405, 18 };
             while (bdd.numberOfDomains() < domainSizes.length) {
                 bdd.extDomain(domainSizes[bdd.numberOfDomains()]);
