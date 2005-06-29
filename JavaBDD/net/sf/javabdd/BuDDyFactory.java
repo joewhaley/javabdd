@@ -1172,14 +1172,17 @@ public class BuDDyFactory extends BDDFactory {
     }
     private static native String getVersion0();
     
+    // Called by native code.
     private static void gc_callback(int i) {
         INSTANCE.gbc_handler(i!=0, INSTANCE.gcstats);
     }
     
+    // Called by native code.
     private static void reorder_callback(int i) {
         INSTANCE.reorder_handler(i!=0, INSTANCE.reorderstats);
     }
     
+    // Called by native code.
     private static void resize_callback(int i, int j) {
         INSTANCE.resize_handler(i, j);
     }
