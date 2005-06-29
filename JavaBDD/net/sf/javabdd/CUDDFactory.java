@@ -414,9 +414,9 @@ public class CUDDFactory extends BDDFactory {
      * @see net.sf.javabdd.BDDFactory#getCacheSize()
      */
     public int getCacheSize() {
-        // TODO Implement this.
-        throw new UnsupportedOperationException();
+        return getCacheSize0();
     }
+    private static native int getCacheSize0();
     
     /* (non-Javadoc)
      * @see net.sf.javabdd.BDDFactory#reorderGain()
@@ -482,6 +482,8 @@ public class CUDDFactory extends BDDFactory {
          * @see net.sf.javabdd.BDD#var()
          */
         public int var() {
+            if (isZero() || isOne())
+                throw new BDDException("cannot get var of terminal");
             return var0(_ddnode_ptr);
         }
         private static native int var0(long b);
