@@ -59,6 +59,13 @@ JNIEXPORT void JNICALL Java_net_sf_javabdd_CUDDFactory_registerNatives
 {
 }
 
+typedef struct CuddPairing {
+    DdNode** table;
+    struct CuddPairing *next;
+} CuddPairing;
+
+static CuddPairing *pair_list;
+
 /*
  * Class:     net_sf_javabdd_CUDDFactory
  * Method:    initialize0
@@ -89,6 +96,8 @@ JNIEXPORT void JNICALL Java_net_sf_javabdd_CUDDFactory_initialize0
     
     Cudd_Ref((DdNode *)(intptr_cast_type) bdd_one);
     Cudd_Ref((DdNode *)(intptr_cast_type) bdd_zero);
+    
+    pair_list = NULL;
     
     one_fid = (*env)->GetStaticFieldID(env, cl, "one", "J");
     zero_fid = (*env)->GetStaticFieldID(env, cl, "zero", "J");
@@ -123,17 +132,29 @@ JNIEXPORT void JNICALL Java_net_sf_javabdd_CUDDFactory_done0
     int bdds;
     DdManager* m;
 
+    while (pair_list) {
+        CuddPairing *p;
+        int n;
+        for (n=0 ; n<varnum ; n++) {
+            Cudd_RecursiveDeref(manager, pair_list->table[n]);
+        }
+        free(pair_list->table);
+        p = pair_list->next;
+        free(pair_list);
+        pair_list = p;
+    }
+
     Cudd_Deref((DdNode *)(intptr_cast_type) bdd_one);
     Cudd_Deref((DdNode *)(intptr_cast_type) bdd_zero);
     
     fprintf(stderr, "Garbage collections: %d  Time spent: %ldms\n",
-    	Cudd_ReadGarbageCollections(manager), Cudd_ReadGarbageCollectionTime(manager));
+    Cudd_ReadGarbageCollections(manager), Cudd_ReadGarbageCollectionTime(manager));
     
     bdds = Cudd_CheckZeroRef(manager);
     if (bdds > 0) fprintf(stderr, "Note: %d BDDs still in memory when terminating\n", bdds);
     m = manager;
     manager = NULL; // race condition with delRef
-	Cudd_Quit(m);
+    Cudd_Quit(m);
 }
 
 /*
@@ -156,6 +177,22 @@ JNIEXPORT jint JNICALL Java_net_sf_javabdd_CUDDFactory_setVarNum0
   (JNIEnv *env, jclass cl, jint x)
 {
     jint old = varnum;
+    CuddPairing *p = pair_list;
+    while (p) {
+        int n;
+        DdNode** t = (DdNode**) malloc(sizeof(DdNode*)*x);
+        if (t == NULL) return 0;
+        memcpy(t, p->table, sizeof(DdNode*)*old);
+        for (n=old ; n<x ; n++) {
+            int var = n;
+            //int var = Cudd_ReadInvPerm(manager, n); // level2var
+            t[n] = Cudd_bddIthVar(manager, var);
+            Cudd_Ref(t[n]);
+        }
+        free(p->table);
+        p->table = t;
+        p = p->next;
+    }
     varnum = varcount = x;
     return old;
 }
@@ -184,8 +221,8 @@ JNIEXPORT jlong JNICALL Java_net_sf_javabdd_CUDDFactory_ithVar0
 JNIEXPORT jint JNICALL Java_net_sf_javabdd_CUDDFactory_level2Var0
   (JNIEnv *env, jclass cl, jint level)
 {
-	//return manager->invperm[level];
-	return (jint) Cudd_ReadInvPerm(manager, level);
+    //return manager->invperm[level];
+    return (jint) Cudd_ReadInvPerm(manager, level);
 }
 
 /*
@@ -196,8 +233,8 @@ JNIEXPORT jint JNICALL Java_net_sf_javabdd_CUDDFactory_level2Var0
 JNIEXPORT jint JNICALL Java_net_sf_javabdd_CUDDFactory_var2Level0
   (JNIEnv *env, jclass cl, jint v)
 {
-	//return (jint) cuddI(manager, v);
-	return (jint) Cudd_ReadPerm(manager, v);
+    //return (jint) cuddI(manager, v);
+    return (jint) Cudd_ReadPerm(manager, v);
 }
 
 /*
@@ -242,6 +279,17 @@ JNIEXPORT jint JNICALL Java_net_sf_javabdd_CUDDFactory_getNodeNum0
   (JNIEnv *env, jclass cl)
 {
   return Cudd_ReadNodeCount(manager);
+}
+
+/*
+ * Class:     net_sf_javabdd_CUDDFactory
+ * Method:    getCacheSize0
+ * Signature: ()I
+ */
+JNIEXPORT jint JNICALL Java_net_sf_javabdd_CUDDFactory_getCacheSize0
+  (JNIEnv *env, jclass cl)
+{
+  return Cudd_ReadCacheSlots(manager);
 }
 
 /* class net_sf_javabdd_CUDDFactory_CUDDBDD */
@@ -528,22 +576,22 @@ static DdNode* satone_rec(DdNode* f)
     unsigned int index;
     
     if (F == zero ||
-    	F == one) {
-    	return f;
+        F == one) {
+        return f;
     }
-  	
+    
     index = F->index;
     high = cuddT(F);
     low = cuddE(F);
     if (Cudd_IsComplement(f)) {
-	high = Cudd_Not(high);
-	low = Cudd_Not(low);
+        high = Cudd_Not(high);
+        low = Cudd_Not(low);
     }
     if (low == (DdNode*)(intptr_cast_type)bdd_zero) {
         DdNode* res = satone_rec(high);
         if (res == NULL) {
             return NULL;
-  	}
+        }
         cuddRef(res);
         if (Cudd_IsComplement(res)) {
             r = cuddUniqueInter(manager, (int)index, Cudd_Not(res), one);
@@ -674,13 +722,13 @@ JNIEXPORT void JNICALL Java_net_sf_javabdd_CUDDFactory_00024CUDDBDD_delRef
 JNIEXPORT jlong JNICALL Java_net_sf_javabdd_CUDDFactory_00024CUDDBDD_veccompose0
   (JNIEnv *env, jclass cl, jlong a, jlong b)
 {
-	DdNode* d;
-	DdNode** e;
-	DdNode* f;
+    DdNode* d;
+    CuddPairing* e;
+    DdNode* f;
     jlong result;
     d = (DdNode*) (intptr_cast_type) a;
-    e = (DdNode**) (intptr_cast_type) b;
-    f = Cudd_bddVectorCompose(manager, d, e);
+    e = (CuddPairing*) (intptr_cast_type) b;
+    f = Cudd_bddVectorCompose(manager, d, e->table);
     result = (jlong) (intptr_cast_type) f;
     return result;
 }
@@ -693,23 +741,23 @@ JNIEXPORT jlong JNICALL Java_net_sf_javabdd_CUDDFactory_00024CUDDBDD_veccompose0
 JNIEXPORT jlong JNICALL Java_net_sf_javabdd_CUDDFactory_00024CUDDBDD_replace0
   (JNIEnv *env, jclass cl, jlong a, jlong b)
 {
-	DdNode* d;
-	DdNode** e;
-	DdNode* f;
+    DdNode* d;
+    CuddPairing* e;
+    DdNode* f;
     jlong result;
-	int n;
-	int *arr;
-	arr = (int*) malloc(sizeof(int)*varnum);
-	if (arr == NULL) return INVALID_BDD;
+    int n;
+    int *arr;
+    arr = (int*) malloc(sizeof(int)*varnum);
+    if (arr == NULL) return INVALID_BDD;
     d = (DdNode*) (intptr_cast_type) a;
-    e = (DdNode**) (intptr_cast_type) b;
-	for (n=0; n<varnum; ++n) {
-		DdNode* node = e[n];
-		int var = Cudd_Regular(node)->index;
-		int level = var;
-		//int level = Cudd_ReadPerm(manager, var);
-		arr[n] = level;
-	}
+    e = (CuddPairing*) (intptr_cast_type) b;
+    for (n=0; n<varnum; ++n) {
+        DdNode* node = e->table[n];
+        int var = Cudd_Regular(node)->index;
+        int level = var;
+        //int level = Cudd_ReadPerm(manager, var);
+        arr[n] = level;
+    }
     f = Cudd_bddPermute(manager, d, arr);
     free(arr);
     result = (jlong) (intptr_cast_type) f;
@@ -726,16 +774,23 @@ JNIEXPORT jlong JNICALL Java_net_sf_javabdd_CUDDFactory_00024CUDDBDD_replace0
 JNIEXPORT jlong JNICALL Java_net_sf_javabdd_CUDDFactory_00024CUDDBDDPairing_alloc
   (JNIEnv *env, jclass cl)
 {
-	int n;
-	DdNode **r = (DdNode**) malloc(sizeof(DdNode*)*varnum);
-	if (r == NULL) return 0;
-	for (n=0 ; n<varnum ; n++) {
-		int var = n;
-		//int var = Cudd_ReadInvPerm(manager, n); // level2var
-		r[n] = Cudd_bddIthVar(manager, var);
-		Cudd_Ref(r[n]);
-	}
-	return (jlong) (intptr_cast_type) r;
+    int n;
+    CuddPairing* r = (CuddPairing*) malloc(sizeof(CuddPairing));
+    if (r == NULL) return 0;
+    r->table = (DdNode**) malloc(sizeof(DdNode*)*varnum);
+    if (r->table == NULL) {
+        free(r);
+        return 0;
+    }
+    for (n=0 ; n<varnum ; n++) {
+        int var = n;
+        //int var = Cudd_ReadInvPerm(manager, n); // level2var
+        r->table[n] = Cudd_bddIthVar(manager, var);
+        Cudd_Ref(r->table[n]);
+    }
+    r->next = pair_list;
+    pair_list = r;
+    return (jlong) (intptr_cast_type) r;
 }
 
 /*
@@ -746,13 +801,13 @@ JNIEXPORT jlong JNICALL Java_net_sf_javabdd_CUDDFactory_00024CUDDBDDPairing_allo
 JNIEXPORT void JNICALL Java_net_sf_javabdd_CUDDFactory_00024CUDDBDDPairing_set0
   (JNIEnv *env, jclass cl, jlong p, jint var, jint b)
 {
-	DdNode **r = (DdNode**) (intptr_cast_type) p;
-	int level1 = var;
-	//int level1 = Cudd_ReadPerm(manager, var);
-	//int level2 = Cudd_ReadPerm(manager, b);
-	Cudd_RecursiveDeref(manager, r[level1]);
-    r[level1] = Cudd_bddIthVar(manager, b);
-    Cudd_Ref(r[level1]);
+    CuddPairing* r = (CuddPairing*) (intptr_cast_type) p;
+    int level1 = var;
+    //int level1 = Cudd_ReadPerm(manager, var);
+    //int level2 = Cudd_ReadPerm(manager, b);
+    Cudd_RecursiveDeref(manager, r->table[level1]);
+    r->table[level1] = Cudd_bddIthVar(manager, b);
+    Cudd_Ref(r->table[level1]);
 }
 
 /*
@@ -763,13 +818,13 @@ JNIEXPORT void JNICALL Java_net_sf_javabdd_CUDDFactory_00024CUDDBDDPairing_set0
 JNIEXPORT void JNICALL Java_net_sf_javabdd_CUDDFactory_00024CUDDBDDPairing_set2
   (JNIEnv *env, jclass cl, jlong p, jint var, jlong b)
 {
-	DdNode **r = (DdNode**) (intptr_cast_type) p;
-	DdNode *d = (DdNode*) (intptr_cast_type) b;
-	int level1 = var;
-	//int level1 = Cudd_ReadPerm(manager, var);
-	Cudd_RecursiveDeref(manager, r[level1]);
-    r[level1] = d;
-    Cudd_Ref(r[level1]);
+    CuddPairing* r = (CuddPairing*) (intptr_cast_type) p;
+    DdNode *d = (DdNode*) (intptr_cast_type) b;
+    int level1 = var;
+    //int level1 = Cudd_ReadPerm(manager, var);
+    Cudd_RecursiveDeref(manager, r->table[level1]);
+    r->table[level1] = d;
+    Cudd_Ref(r->table[level1]);
 }
 
 /*
@@ -780,16 +835,16 @@ JNIEXPORT void JNICALL Java_net_sf_javabdd_CUDDFactory_00024CUDDBDDPairing_set2
 JNIEXPORT void JNICALL Java_net_sf_javabdd_CUDDFactory_00024CUDDBDDPairing_reset0
   (JNIEnv *env, jclass cl, jlong p)
 {
-	int n;
-	DdNode **r = (DdNode**) (intptr_cast_type) p;
-	for (n=0 ; n<varnum ; n++) {
-		int var;
-		Cudd_RecursiveDeref(manager, r[n]);
-		var = n;
-		//int var = Cudd_ReadInvPerm(manager, n); // level2var
-		r[n] = Cudd_bddIthVar(manager, var);
-		Cudd_Ref(r[n]);
-	}
+    int n;
+    CuddPairing* r = (CuddPairing*) (intptr_cast_type) p;
+    for (n=0 ; n<varnum ; n++) {
+        int var;
+        Cudd_RecursiveDeref(manager, r->table[n]);
+        var = n;
+        //int var = Cudd_ReadInvPerm(manager, n); // level2var
+        r->table[n] = Cudd_bddIthVar(manager, var);
+        Cudd_Ref(r->table[n]);
+    }
 }
 
 /*
@@ -800,10 +855,16 @@ JNIEXPORT void JNICALL Java_net_sf_javabdd_CUDDFactory_00024CUDDBDDPairing_reset
 JNIEXPORT void JNICALL Java_net_sf_javabdd_CUDDFactory_00024CUDDBDDPairing_free0
   (JNIEnv *env, jclass cl, jlong p)
 {
-	int n;
-	DdNode **r = (DdNode**) (intptr_cast_type) p;
-	for (n=0 ; n<varnum ; n++) {
-		Cudd_RecursiveDeref(manager, r[n]);
-	}
-	free(r);
+    int n;
+    CuddPairing* r = (CuddPairing*) (intptr_cast_type) p;
+    CuddPairing** ptr;
+    for (n=0 ; n<varnum ; n++) {
+        Cudd_RecursiveDeref(manager, r->table[n]);
+    }
+    ptr = &pair_list; 
+    while (*ptr != r)
+        ptr = &(*ptr)->next;
+    *ptr = r->next;
+    free(r->table);
+    free(r);
 }
