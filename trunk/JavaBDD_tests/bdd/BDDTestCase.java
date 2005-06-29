@@ -23,7 +23,7 @@ public abstract class BDDTestCase extends TestCase implements Iterator {
         "net.sf.javabdd.JFactory",
         "net.sf.javabdd.BuDDyFactory",
         "net.sf.javabdd.MicroFactory",
-        //"net.sf.javabdd.CUDDFactory",
+        "net.sf.javabdd.CUDDFactory",
         //"net.sf.javabdd.CALFactory",
         //"net.sf.javabdd.JDDFactory",
     };
