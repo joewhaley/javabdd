@@ -11,6 +11,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
+import java.util.BitSet;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.FileReader;
@@ -638,19 +639,20 @@ public abstract class BDDFactory {
             out.write(var2Level(x) + " ");
         out.write("\n");
 
-        Map visited = new HashMap();
-        save_rec(out, visited, r);
+        //Map visited = new HashMap();
+        BitSet visited = new BitSet(getNodeTableSize());
+        save_rec(out, visited, r.id());
         
-        for (Iterator it = visited.keySet().iterator(); it.hasNext(); ) {
-            BDD b = (BDD) it.next();
-            if (b != r) b.free();
-        }
+        //for (Iterator it = visited.keySet().iterator(); it.hasNext(); ) {
+        //    BDD b = (BDD) it.next();
+        //    if (b != r) b.free();
+        //}
     }
 
     /**
      * Helper function for save().
      */
-    protected int save_rec(BufferedWriter out, Map visited, BDD root) throws IOException {
+    protected int save_rec_original(BufferedWriter out, Map visited, BDD root) throws IOException {
         if (root.isZero()) {
             root.free();
             return 0;
@@ -668,13 +670,59 @@ public abstract class BDDFactory {
         visited.put(root, new Integer(v));
         
         BDD l = root.low();
-        int lo = save_rec(out, visited, l);
+        int lo = save_rec_original(out, visited, l);
         
         BDD h = root.high();
-        int hi = save_rec(out, visited, h);
+        int hi = save_rec_original(out, visited, h);
 
         out.write(v + " ");
         out.write(root.var() + " ");
+        out.write(lo + " ");
+        out.write(hi + "\n");
+        
+        return v;
+    }
+
+
+    /**
+     * Helper function for save().
+     */
+    protected int save_rec(BufferedWriter out, BitSet visited, BDD root) throws IOException {
+        if (root.isZero()) {
+            root.free();
+            return 0;
+        }
+        if (root.isOne()) {
+            root.free();
+            return 1;
+        }
+        //Integer i = (Integer) visited.get(root);
+        int i = root.hashCode();
+        //if (i != null) {
+        if (visited.get(i)) {
+            root.free();
+            //return i.intValue();
+            return i;
+        }
+        //int v = visited.size() + 2;
+        int v = i;
+        //visited.put(root, new Integer(v));
+        visited.set(i);
+        
+        BDD h = root.high();
+
+        BDD l = root.low();
+
+        int rootvar = root.var();
+        root.free();
+
+        int lo = save_rec(out, visited, l);
+        
+        int hi = save_rec(out, visited, h);
+
+        //out.write(v + " ");
+        out.write(i + " ");
+        out.write(rootvar + " ");
         out.write(lo + " ");
         out.write(hi + "\n");
         
