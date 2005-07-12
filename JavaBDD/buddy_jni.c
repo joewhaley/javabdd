@@ -148,21 +148,23 @@ static void bdd_gbchandler(int code, bddGbcStat *s)
   fid = (*jnienv)->GetFieldID(jnienv, gc_cls, "time", "J");
   if (fid) {
     long t = s->time;
-#if CLOCKS_PER_SEC < 1000
-    t = t * 1000 / CLOCKS_PER_SEC;
-#else
-    t /= (CLOCKS_PER_SEC/1000);
-#endif
+    if (CLOCKS_PER_SEC < 1000) {
+      t = t * 1000 / CLOCKS_PER_SEC;
+    }
+    else {
+      t /= (CLOCKS_PER_SEC/1000);
+    }
     (*jnienv)->SetLongField(jnienv, gc_obj, fid, t);
   }
   fid = (*jnienv)->GetFieldID(jnienv, gc_cls, "sumtime", "J");
   if (fid) {
     long t = s->sumtime;
-#if CLOCKS_PER_SEC < 1000
-    t = t * 1000 / CLOCKS_PER_SEC;
-#else
-    t /= (CLOCKS_PER_SEC/1000);
-#endif
+    if (CLOCKS_PER_SEC < 1000) {
+      t = t * 1000 / CLOCKS_PER_SEC;
+    }
+    else {
+      t /= (CLOCKS_PER_SEC/1000);
+    }
     (*jnienv)->SetLongField(jnienv, gc_obj, fid, t);
   }
   fid = (*jnienv)->GetFieldID(jnienv, gc_cls, "num", "I");
