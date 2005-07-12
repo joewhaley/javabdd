@@ -315,6 +315,9 @@ public abstract class BDDDomain {
         }
         if (ivar.length == binsize) return binsize;
         
+        if (true) {
+            throw new BDDException("Can't add bits to domains, requested domain "+name+" upper limit "+range);
+        }
         int[] new_ivar = new int[binsize];
         System.arraycopy(ivar, 0, new_ivar, 0, ivar.length);
         BDDFactory factory = getFactory();
