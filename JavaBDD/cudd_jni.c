@@ -182,7 +182,7 @@ JNIEXPORT jint JNICALL Java_net_sf_javabdd_CUDDFactory_setVarNum0
         jclass cls = (*env)->FindClass(env, "java/lang/IllegalArgumentException");
         (*env)->ThrowNew(env, cls, "invalid number of variables");
         (*env)->DeleteLocalRef(env, cls);
-        return;
+        return 0;
     }
     p = pair_list;
     while (p) {
