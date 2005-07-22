@@ -130,6 +130,7 @@ JNIEXPORT void JNICALL Java_net_sf_javabdd_CUDDFactory_done0
 {
     int bdds;
     DdManager* m;
+    int varnum = Cudd_ReadSize(manager);
 
     while (pair_list) {
         CuddPairing *p;
@@ -164,7 +165,7 @@ JNIEXPORT void JNICALL Java_net_sf_javabdd_CUDDFactory_done0
 JNIEXPORT jint JNICALL Java_net_sf_javabdd_CUDDFactory_varNum0
   (JNIEnv *env, jclass cl)
 {
-    return varnum;
+    return Cudd_ReadSize(manager);
 }
 
 /*
@@ -176,7 +177,14 @@ JNIEXPORT jint JNICALL Java_net_sf_javabdd_CUDDFactory_setVarNum0
   (JNIEnv *env, jclass cl, jint x)
 {
     jint old = Cudd_ReadSize(manager);
-    CuddPairing *p = pair_list;
+    CuddPairing *p;
+    if (x < 1 || x < old || x > CUDD_MAXINDEX) {
+        jclass cls = (*env)->FindClass(env, "java/lang/IllegalArgumentException");
+        (*env)->ThrowNew(env, cls, "invalid number of variables");
+        (*env)->DeleteLocalRef(env, cls);
+        return;
+    }
+    p = pair_list;
     while (p) {
         int n;
         DdNode** t = (DdNode**) malloc(sizeof(DdNode*)*x);
@@ -246,18 +254,19 @@ JNIEXPORT jint JNICALL Java_net_sf_javabdd_CUDDFactory_var2Level0
 JNIEXPORT void JNICALL Java_net_sf_javabdd_CUDDFactory_setVarOrder0
   (JNIEnv *env, jclass cl, jintArray arr)
 {
-  int *a;
-  jint size = (*env)->GetArrayLength(env, arr);
-  if (size != varnum) {
-    jclass cls = (*env)->FindClass(env, "java/lang/IllegalArgumentException");
-    (*env)->ThrowNew(env, cls, "array size != number of vars");
-    (*env)->DeleteLocalRef(env, cls);
-    return;
-  }
-  a = (int*) (*env)->GetPrimitiveArrayCritical(env, arr, NULL);
-  if (a == NULL) return;
-  Cudd_ShuffleHeap(manager, a);
-  (*env)->ReleasePrimitiveArrayCritical(env, arr, a, JNI_ABORT);
+    int *a;
+    int varnum = Cudd_ReadSize(manager);
+    jint size = (*env)->GetArrayLength(env, arr);
+    if (size != varnum) {
+        jclass cls = (*env)->FindClass(env, "java/lang/IllegalArgumentException");
+        (*env)->ThrowNew(env, cls, "array size != number of vars");
+        (*env)->DeleteLocalRef(env, cls);
+        return;
+    }
+    a = (int*) (*env)->GetPrimitiveArrayCritical(env, arr, NULL);
+    if (a == NULL) return;
+    Cudd_ShuffleHeap(manager, a);
+    (*env)->ReleasePrimitiveArrayCritical(env, arr, a, JNI_ABORT);
 }
 
 /*
