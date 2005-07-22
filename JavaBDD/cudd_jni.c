@@ -33,7 +33,6 @@
 
 static DdManager *manager;
 static jlong bdd_one, bdd_zero;
-static int varcount, varnum;
 
 #define INVALID_BDD 0L
 
@@ -176,7 +175,7 @@ JNIEXPORT jint JNICALL Java_net_sf_javabdd_CUDDFactory_varNum0
 JNIEXPORT jint JNICALL Java_net_sf_javabdd_CUDDFactory_setVarNum0
   (JNIEnv *env, jclass cl, jint x)
 {
-    jint old = varnum;
+    jint old = Cudd_ReadSize(manager);
     CuddPairing *p = pair_list;
     while (p) {
         int n;
@@ -193,7 +192,9 @@ JNIEXPORT jint JNICALL Java_net_sf_javabdd_CUDDFactory_setVarNum0
         p->table = t;
         p = p->next;
     }
-    varnum = varcount = x;
+    while (Cudd_ReadSize(manager) < x) {
+        Cudd_bddNewVar(manager);
+    }
     return old;
 }
 
@@ -682,6 +683,7 @@ JNIEXPORT jdouble JNICALL Java_net_sf_javabdd_CUDDFactory_00024CUDDBDD_satCount0
   (JNIEnv *env, jclass cl, jlong a)
 {
     DdNode* d;
+    int varcount = Cudd_ReadSize(manager);
     d = (DdNode*) (intptr_cast_type) a;
     return Cudd_CountMinterm(manager, d, varcount);
 }
@@ -747,6 +749,7 @@ JNIEXPORT jlong JNICALL Java_net_sf_javabdd_CUDDFactory_00024CUDDBDD_replace0
     jlong result;
     int n;
     int *arr;
+    int varnum = Cudd_ReadSize(manager);
     arr = (int*) malloc(sizeof(int)*varnum);
     if (arr == NULL) return INVALID_BDD;
     d = (DdNode*) (intptr_cast_type) a;
@@ -775,6 +778,7 @@ JNIEXPORT jlong JNICALL Java_net_sf_javabdd_CUDDFactory_00024CUDDBDDPairing_allo
   (JNIEnv *env, jclass cl)
 {
     int n;
+    int varnum = Cudd_ReadSize(manager);
     CuddPairing* r = (CuddPairing*) malloc(sizeof(CuddPairing));
     if (r == NULL) return 0;
     r->table = (DdNode**) malloc(sizeof(DdNode*)*varnum);
@@ -837,6 +841,7 @@ JNIEXPORT void JNICALL Java_net_sf_javabdd_CUDDFactory_00024CUDDBDDPairing_reset
 {
     int n;
     CuddPairing* r = (CuddPairing*) (intptr_cast_type) p;
+    int varnum = Cudd_ReadSize(manager);
     for (n=0 ; n<varnum ; n++) {
         int var;
         Cudd_RecursiveDeref(manager, r->table[n]);
@@ -858,6 +863,7 @@ JNIEXPORT void JNICALL Java_net_sf_javabdd_CUDDFactory_00024CUDDBDDPairing_free0
     int n;
     CuddPairing* r = (CuddPairing*) (intptr_cast_type) p;
     CuddPairing** ptr;
+    int varnum = Cudd_ReadSize(manager);
     for (n=0 ; n<varnum ; n++) {
         Cudd_RecursiveDeref(manager, r->table[n]);
     }
