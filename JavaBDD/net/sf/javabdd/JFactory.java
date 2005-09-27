@@ -4939,8 +4939,8 @@ public class JFactory extends BDDFactory {
     /* (non-Javadoc)
      * @see net.sf.javabdd.BDDFactory#load(java.io.BufferedReader)
      */
-    public BDD load(BufferedReader in) throws IOException {
-        int result = bdd_load(in);
+    public BDD load(BufferedReader in, int[] translate) throws IOException {
+        int result = bdd_load(in, translate);
         return makeBDD(result);
     }
 
@@ -6125,7 +6125,7 @@ public class JFactory extends BDDFactory {
     int[] loadvar2level;
     LoadHash[] lh_table;
 
-    int bdd_load(BufferedReader ifile) throws IOException {
+    int bdd_load(BufferedReader ifile, int[] translate) throws IOException {
         int n, vnum, tmproot;
         int root;
 
@@ -6157,7 +6157,7 @@ public class JFactory extends BDDFactory {
         lh_table[lh_nodenum - 1].next = -1;
         lh_freepos = 0;
 
-        tmproot = bdd_loaddata(ifile);
+        tmproot = bdd_loaddata(ifile, translate);
 
         for (n = 0; n < lh_nodenum; n++)
             bdd_delref(lh_table[n].data);
@@ -6178,12 +6178,14 @@ public class JFactory extends BDDFactory {
         int next;
     }
 
-    int bdd_loaddata(BufferedReader ifile) throws IOException {
+    int bdd_loaddata(BufferedReader ifile, int[] translate) throws IOException {
         int key, var, low, high, root = 0, n;
 
         for (n = 0; n < lh_nodenum; n++) {
             key = Integer.parseInt(readNext(ifile));
             var = Integer.parseInt(readNext(ifile));
+            if (translate != null)
+                var = translate[var];
             low = Integer.parseInt(readNext(ifile));
             high = Integer.parseInt(readNext(ifile));
 
