@@ -485,6 +485,20 @@ public abstract class BDDFactory {
      * @return BDD
      */
     public BDD load(BufferedReader ifile) throws IOException {
+        return load(ifile, null);
+    }
+    
+    /**
+     * <p>Loads a BDD from the given input, translating BDD variables according
+     * to the given map.</p>
+     * 
+     * <p>Compare to bdd_load.</p>
+     * 
+     * @param ifile  reader
+     * @param translate  variable translation map
+     * @return BDD
+     */
+    public BDD load(BufferedReader ifile, int[] translate) throws IOException {
 
         tokenizer = null;
         
@@ -519,6 +533,8 @@ public abstract class BDDFactory {
         for (int n = 0; n < lh_nodenum; n++) {
             int key = Integer.parseInt(readNext(ifile));
             int var = Integer.parseInt(readNext(ifile));
+            if (translate != null)
+                var = translate[var];
             int lowi = Integer.parseInt(readNext(ifile));
             int highi = Integer.parseInt(readNext(ifile));
 
