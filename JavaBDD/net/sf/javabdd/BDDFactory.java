@@ -5,7 +5,6 @@ package net.sf.javabdd;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -1575,9 +1574,13 @@ public abstract class BDDFactory {
             if (!done[i]) {
                 throw new BDDException("missing domain #"+i+": "+getDomain(i));
             }
-            doms[i] = getDomain(i);
         }
         
+        while (bitIndex < varorder.length) {
+            varorder[bitIndex] = bitIndex;
+            ++bitIndex;
+        }
+            
         int[] test = new int[varorder.length];
         System.arraycopy(varorder, 0, test, 0, varorder.length);
         Arrays.sort(test);
