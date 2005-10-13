@@ -239,7 +239,10 @@ public class TryVarOrder {
     String filename3;
     
     /** How long to delay for loading, in ms. */
-    long DELAY_TIME = 20000;
+    long DELAY_TIME = Long.parseLong(System.getProperty("fbo.delaytime", "20000"));
+    
+    /** Factor how long to wait beyond the best time. */
+    float FACTOR = Float.parseFloat(System.getProperty("fbo.waitfactor", "1.1"));
     
     /** Best calc time so far. */
     long bestCalcTime;
@@ -354,11 +357,10 @@ public class TryVarOrder {
         //System.gc();
         TryThread t = new TryThread(reverse, varOrder);
         t.start();
-        boolean stopped;
         try {
             t.join(DELAY_TIME);
             if (t.initTime >= 0L) {
-                t.join(bestCalcTime);
+                t.join((long)(bestCalcTime*FACTOR));
             }
         } catch (InterruptedException x) {
         }
@@ -415,7 +417,7 @@ public class TryVarOrder {
                 initTime = time - System.currentTimeMillis();
                 computeTime = doIt();
                 free();
-                System.out.println("Ordering: "+varOrderToTry+" time: "+time);
+                System.out.println("Ordering: "+varOrderToTry+" init: "+initTime+" compute: "+computeTime);
             } catch (Exception x) {
                 System.err.println("Exception occurred while trying order: "+x.getLocalizedMessage());
                 x.printStackTrace();
