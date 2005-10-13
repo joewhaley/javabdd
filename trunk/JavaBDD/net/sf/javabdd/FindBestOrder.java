@@ -31,7 +31,11 @@ public class FindBestOrder {
     String filename2 = "fbo.2";
     String filename3 = "fbo.3";
     
-    long DELAY_TIME = 30000;
+    /** How long to delay for loading, in ms. */
+    long DELAY_TIME = Long.parseLong(System.getProperty("fbo.delaytime", "30000"));
+    
+    /** Factor how long to wait beyond the best time. */
+    float FACTOR = Float.parseFloat(System.getProperty("fbo.waitfactor", "1.1"));
     
     BDDFactory.BDDOp op;
     long bestCalcTime;
@@ -108,7 +112,7 @@ public class FindBestOrder {
         t.varOrderToTry = varOrder;
         t.start();
         try {
-            long waitTime = bestTotalTime + DELAY_TIME;
+            long waitTime = (long)(bestTotalTime*FACTOR) + DELAY_TIME;
             if (waitTime < 0L) waitTime = Long.MAX_VALUE;
             t.join(waitTime);
         } catch (InterruptedException x) {
