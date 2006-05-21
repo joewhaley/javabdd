@@ -45,9 +45,9 @@
   <siteDirectory>/home/groups/j/ja/javabdd/htdocs/</siteDirectory>
   <distributionDirectory>/home/groups/j/ja/javabdd/</distributionDirectory>
   <repository>
-    <connection>scm:cvs:pserver:anonymous@cvs.sourceforge.net:/cvsroot/javabdd:JavaBDD</connection>
-    <developerConnection>scm:cvs:ext:joewhaley@cvs.sourceforge.net:/cvsroot/javabdd:JavaBDD</developerConnection>
-    <url>http://cvs.sourceforge.net/viewcvs.py/javabdd/</url>
+    <connection>scm:cvs:pserver:anonymous@javabdd.cvs.sourceforge.net:/cvsroot/javabdd:JavaBDD</connection>
+    <developerConnection>scm:cvs:ext:joewhaley@javabdd.cvs.sourceforge.net:/cvsroot/javabdd:JavaBDD</developerConnection>
+    <url>http://javabdd.cvs.sourceforge.net/javabdd/</url>
   </repository>
   <versions>
     <version>
