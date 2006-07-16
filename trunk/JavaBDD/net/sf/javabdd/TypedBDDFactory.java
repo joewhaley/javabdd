@@ -484,6 +484,13 @@ public class TypedBDDFactory extends BDDFactory {
             this.dom = dom;
         }
         
+        /* (non-Javadoc)
+         * @see net.sf.javabdd.BDD#toVarSet()
+         */
+        public BDDVarSet toVarSet() {
+            return new TypedBDDVarSet(bdd.toVarSet(), makeSet(dom));
+        }
+        
         /**
          * Returns the set of domains that this BDD uses.
          */
@@ -540,13 +547,13 @@ public class TypedBDDFactory extends BDDFactory {
         }
         
         /**
-         * Returns the set of domains in BDD format.
+         * Returns the set of domains in BDDVarSet format.
          */
-        BDD getDomains() {
-            BDD b = factory.one();
+        BDDVarSet getDomains() {
+            BDDVarSet b = factory.emptySet();
             for (Iterator i = dom.iterator(); i.hasNext(); ) {
                 TypedBDDDomain d = (TypedBDDDomain) i.next();
-                b.andWith(d.domain.set());
+                b.unionWith(d.domain.set());
             }
             return b;
         }
@@ -621,11 +628,11 @@ public class TypedBDDFactory extends BDDFactory {
         }
 
         /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#relprod(net.sf.javabdd.BDD, net.sf.javabdd.BDD)
+         * @see net.sf.javabdd.BDD#relprod(net.sf.javabdd.BDD, net.sf.javabdd.BDDVarSet)
          */
-        public BDD relprod(BDD that, BDD var) {
+        public BDD relprod(BDD that, BDDVarSet var) {
             TypedBDD bdd1 = (TypedBDD) that;
-            TypedBDD bdd2 = (TypedBDD) var;
+            TypedBDDVarSet bdd2 = (TypedBDDVarSet) var;
             Set newDom = makeSet();
             newDom.addAll(dom);
             newDom.addAll(bdd1.dom);
@@ -672,10 +679,10 @@ public class TypedBDDFactory extends BDDFactory {
         }
 
         /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#exist(net.sf.javabdd.BDD)
+         * @see net.sf.javabdd.BDD#exist(net.sf.javabdd.BDDVarSet)
          */
-        public BDD exist(BDD var) {
-            TypedBDD bdd1 = (TypedBDD) var;
+        public BDD exist(BDDVarSet var) {
+            TypedBDDVarSet bdd1 = (TypedBDDVarSet) var;
             Set newDom = makeSet();
             newDom.addAll(dom);
             if (!newDom.containsAll(bdd1.dom)) {
@@ -688,10 +695,10 @@ public class TypedBDDFactory extends BDDFactory {
         }
 
         /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#forAll(net.sf.javabdd.BDD)
+         * @see net.sf.javabdd.BDD#forAll(net.sf.javabdd.BDDVarSet)
          */
-        public BDD forAll(BDD var) {
-            TypedBDD bdd1 = (TypedBDD) var;
+        public BDD forAll(BDDVarSet var) {
+            TypedBDDVarSet bdd1 = (TypedBDDVarSet) var;
             Set newDom = makeSet();
             newDom.addAll(dom);
             if (!newDom.containsAll(bdd1.dom)) {
@@ -704,10 +711,10 @@ public class TypedBDDFactory extends BDDFactory {
         }
 
         /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#unique(net.sf.javabdd.BDD)
+         * @see net.sf.javabdd.BDD#unique(net.sf.javabdd.BDDVarSet)
          */
-        public BDD unique(BDD var) {
-            TypedBDD bdd1 = (TypedBDD) var;
+        public BDD unique(BDDVarSet var) {
+            TypedBDDVarSet bdd1 = (TypedBDDVarSet) var;
             Set newDom = makeSet();
             newDom.addAll(dom);
             if (!newDom.containsAll(bdd1.dom)) {
@@ -761,10 +768,10 @@ public class TypedBDDFactory extends BDDFactory {
         }
 
         /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#simplify(net.sf.javabdd.BDD)
+         * @see net.sf.javabdd.BDD#simplify(net.sf.javabdd.BDDVarSet)
          */
-        public BDD simplify(BDD d) {
-            TypedBDD bdd1 = (TypedBDD) d;
+        public BDD simplify(BDDVarSet d) {
+            TypedBDDVarSet bdd1 = (TypedBDDVarSet) d;
             // TODO How does this change the domains?
             Set newDom = makeSet();
             newDom.addAll(dom);
@@ -828,14 +835,14 @@ public class TypedBDDFactory extends BDDFactory {
         }
 
         /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#applyAll(net.sf.javabdd.BDD, net.sf.javabdd.BDDFactory.BDDOp, net.sf.javabdd.BDD)
+         * @see net.sf.javabdd.BDD#applyAll(net.sf.javabdd.BDD, net.sf.javabdd.BDDFactory.BDDOp, net.sf.javabdd.BDDVarSet)
          */
-        public BDD applyAll(BDD that, BDDOp opr, BDD var) {
+        public BDD applyAll(BDD that, BDDOp opr, BDDVarSet var) {
             TypedBDD bdd1 = (TypedBDD) that;
             Set newDom = makeSet();
             newDom.addAll(dom);
             applyHelper(newDom, this, bdd1, opr);
-            TypedBDD bdd2 = (TypedBDD) var;
+            TypedBDDVarSet bdd2 = (TypedBDDVarSet) var;
             if (!newDom.containsAll(bdd2.dom)) {
                 out.println("Warning! Quantifying domain that doesn't exist: "+domainNames(bdd2.dom));
                 if (STACK_TRACES)
@@ -847,14 +854,14 @@ public class TypedBDDFactory extends BDDFactory {
         }
 
         /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#applyEx(net.sf.javabdd.BDD, net.sf.javabdd.BDDFactory.BDDOp, net.sf.javabdd.BDD)
+         * @see net.sf.javabdd.BDD#applyEx(net.sf.javabdd.BDD, net.sf.javabdd.BDDFactory.BDDOp, net.sf.javabdd.BDDVarSet)
          */
-        public BDD applyEx(BDD that, BDDOp opr, BDD var) {
+        public BDD applyEx(BDD that, BDDOp opr, BDDVarSet var) {
             TypedBDD bdd1 = (TypedBDD) that;
             Set newDom = makeSet();
             newDom.addAll(dom);
             applyHelper(newDom, this, bdd1, opr);
-            TypedBDD bdd2 = (TypedBDD) var;
+            TypedBDDVarSet bdd2 = (TypedBDDVarSet) var;
             if (!newDom.containsAll(bdd2.dom)) {
                 out.println("Warning! Quantifying domain that doesn't exist: "+domainNames(bdd2.dom));
                 if (STACK_TRACES)
@@ -866,14 +873,14 @@ public class TypedBDDFactory extends BDDFactory {
         }
 
         /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#applyUni(net.sf.javabdd.BDD, net.sf.javabdd.BDDFactory.BDDOp, net.sf.javabdd.BDD)
+         * @see net.sf.javabdd.BDD#applyUni(net.sf.javabdd.BDD, net.sf.javabdd.BDDFactory.BDDOp, net.sf.javabdd.BDDVarSet)
          */
-        public BDD applyUni(BDD that, BDDOp opr, BDD var) {
+        public BDD applyUni(BDD that, BDDOp opr, BDDVarSet var) {
             TypedBDD bdd1 = (TypedBDD) that;
             Set newDom = makeSet();
             newDom.addAll(dom);
             applyHelper(newDom, this, bdd1, opr);
-            TypedBDD bdd2 = (TypedBDD) var;
+            TypedBDDVarSet bdd2 = (TypedBDDVarSet) var;
             if (!newDom.containsAll(bdd2.dom)) {
                 out.println("Warning! Quantifying domain that doesn't exist: "+domainNames(bdd2.dom));
                 if (STACK_TRACES)
@@ -899,10 +906,10 @@ public class TypedBDDFactory extends BDDFactory {
         }
 
         /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#satOne(net.sf.javabdd.BDD, boolean)
+         * @see net.sf.javabdd.BDD#satOne(net.sf.javabdd.BDDVarSet, boolean)
          */
-        public BDD satOne(BDD var, boolean pol) {
-            TypedBDD bdd1 = (TypedBDD) var;
+        public BDD satOne(BDDVarSet var, boolean pol) {
+            TypedBDDVarSet bdd1 = (TypedBDDVarSet) var;
             Set newDom = makeSet();
             newDom.addAll(dom);
             if (!newDom.containsAll(bdd1.dom)) {
@@ -996,8 +1003,8 @@ public class TypedBDDFactory extends BDDFactory {
         /* (non-Javadoc)
          * @see net.sf.javabdd.BDD#satCount(net.sf.javabdd.BDD)
          */
-        public double satCount(BDD set) {
-            TypedBDD bdd1 = (TypedBDD) set;
+        public double satCount(BDDVarSet set) {
+            TypedBDDVarSet bdd1 = (TypedBDDVarSet) set;
             if (!bdd.isZero() && !bdd1.dom.equals(dom)) {
                 out.println("Warning! satCount on the wrong domains: "+domainNames(dom)+" != "+domainNames(bdd1.dom));
                 new Exception().printStackTrace();
@@ -1030,18 +1037,18 @@ public class TypedBDDFactory extends BDDFactory {
             return bdd.hashCode();
         }
 
-        public BDDIterator iterator(BDD var) {
-            TypedBDD bdd1 = (TypedBDD) var;
+        public BDDIterator iterator(BDDVarSet var) {
+            TypedBDDVarSet bdd1 = (TypedBDDVarSet) var;
             if (!dom.equals(bdd1.dom)) {
                 out.println("Warning! iterator on the wrong domain(s): "+domainNames(dom)+" != "+domainNames(bdd1.dom));
             }
-            return super.iterator(var);
+            return super.iterator(bdd1.bdd);
         }
         
         public BDDIterator iterator() {
             Set newDom = makeSet();
             newDom.addAll(dom);
-            return super.iterator(new TypedBDD(getDomains(), newDom));
+            return super.iterator(new TypedBDDVarSet(getDomains(), newDom));
         }
         
         /* (non-Javadoc)
@@ -1052,6 +1059,104 @@ public class TypedBDDFactory extends BDDFactory {
             dom.clear();
         }
         
+    }
+    
+    private class TypedBDDVarSet extends BDDVarSet {
+        
+        BDDVarSet bdd;
+        Set dom;
+        
+        protected TypedBDDVarSet(BDDVarSet bdd, Set dom) {
+            this.bdd = bdd;
+            this.dom = dom;
+        }
+
+        public void free() {
+            bdd.free();
+            dom.clear();
+        }
+
+        public BDDFactory getFactory() {
+            return TypedBDDFactory.this;
+        }
+
+        public BDD toBDD() {
+            return new TypedBDD(bdd.toBDD(), makeSet(dom));
+        }
+        
+        public BDDVarSet id() {
+            return new TypedBDDVarSet(bdd.id(), makeSet(dom));
+        }
+
+        public BDDVarSet intersect(BDDVarSet that) {
+            TypedBDDVarSet bdd1 = (TypedBDDVarSet) that;
+            Set newDom = makeSet(dom);
+            newDom.retainAll(bdd1.dom);
+            return new TypedBDDVarSet(bdd.intersect(bdd1.bdd), newDom);
+        }
+
+        public BDDVarSet intersectWith(BDDVarSet that) {
+            TypedBDDVarSet bdd1 = (TypedBDDVarSet) that;
+            dom.retainAll(bdd1.dom);
+            bdd.intersectWith(bdd1.bdd);
+            return this;
+        }
+
+        public boolean isEmpty() {
+            return bdd.isEmpty();
+        }
+
+        public int size() {
+            return bdd.size();
+        }
+
+        public int[] toArray() {
+            return bdd.toArray();
+        }
+
+        public int[] toLevelArray() {
+            return bdd.toLevelArray();
+        }
+
+        public BDDVarSet union(BDDVarSet that) {
+            TypedBDDVarSet bdd1 = (TypedBDDVarSet) that;
+            Set newDom = makeSet(dom);
+            newDom.addAll(bdd1.dom);
+            return new TypedBDDVarSet(bdd.intersect(bdd1.bdd), newDom);
+        }
+
+        public BDDVarSet union(int var) {
+            Set s = makeSet(dom);
+            //BDDDomain d = whichDomain(var);
+            //if (d != null) s.add(d);
+            return new TypedBDDVarSet(bdd.union(var), s);
+        }
+
+        public BDDVarSet unionWith(BDDVarSet that) {
+            TypedBDDVarSet bdd1 = (TypedBDDVarSet) that;
+            dom.addAll(bdd1.dom);
+            bdd.unionWith(bdd1.bdd);
+            return this;
+        }
+
+        public BDDVarSet unionWith(int var) {
+            //BDDDomain d = whichDomain(var);
+            //if (d != null) dom.add(d);
+            bdd.unionWith(var);
+            return this;
+        }
+        
+        public int hashCode() {
+            return bdd.hashCode();
+        }
+        
+        public boolean equals(BDDVarSet that) {
+            TypedBDDVarSet bdd1 = (TypedBDDVarSet) that;
+            if (!dom.containsAll(bdd1.dom)) {
+                out.println("Warning! Comparing domain that doesn't exist: "+domainNames(bdd1.dom));
+            }
+            return bdd.equals(bdd1.bdd);
+        }
     }
     
     private class TypedBDDDomain extends BDDDomain {
@@ -1115,11 +1220,11 @@ public class TypedBDDFactory extends BDDFactory {
         /* (non-Javadoc)
          * @see net.sf.javabdd.BDDDomain#set()
          */
-        public BDD set() {
-            BDD v = domain.set();
+        public BDDVarSet set() {
+            BDDVarSet v = domain.set();
             Set s = makeSet();
             s.add(this);
-            return new TypedBDD(v, s);
+            return new TypedBDDVarSet(v, s);
         }
 
         /* (non-Javadoc)

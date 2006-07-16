@@ -196,7 +196,7 @@ public class TryVarOrder {
         /** Inputs to applyEx. */
         BDD b1 = null;
         BDD b2 = null;
-        BDD b3 = null;
+        BDDVarSet b3 = null;
         
         public void setVarOrder(boolean reverse, String varOrderToTry) {
             BDDFactory f = (BDDFactory) bdd;
@@ -209,7 +209,7 @@ public class TryVarOrder {
             if (b1 == null) {
                 b1 = f.load(filename1);
                 b2 = f.load(filename2);
-                b3 = f.load(filename3);
+                b3 = f.load(filename3).toVarSet();
             }
         }
         

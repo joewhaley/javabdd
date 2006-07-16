@@ -3,6 +3,7 @@
 // Licensed under the terms of the GNU LGPL; see COPYING for details.
 package net.sf.javabdd;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -60,6 +61,14 @@ public class TestBDDFactory extends BDDFactory {
         }
     }
     
+    public static final void assertSame(BDDVarSet b1, BDDVarSet b2, String s) {
+        assertSame(b1.toBDD(), b2.toBDD(), s);
+    }
+    
+    public static final void assertSame(boolean b, BDDVarSet b1, BDDVarSet b2, String s) {
+        assertSame(b, b1.toBDD(), b2.toBDD(), s);
+    }
+    
     private class TestBDD extends BDD {
 
         BDD b1, b2;
@@ -77,6 +86,13 @@ public class TestBDDFactory extends BDDFactory {
             return TestBDDFactory.this;
         }
 
+        /* (non-Javadoc)
+         * @see net.sf.javabdd.BDD#toVarSet()
+         */
+        public BDDVarSet toVarSet() {
+            return new TestBDDVarSet(b1.toVarSet(), b2.toVarSet());
+        }
+        
         /* (non-Javadoc)
          * @see net.sf.javabdd.BDD#isZero()
          */
@@ -157,13 +173,13 @@ public class TestBDDFactory extends BDDFactory {
         }
 
         /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#relprod(net.sf.javabdd.BDD, net.sf.javabdd.BDD)
+         * @see net.sf.javabdd.BDD#relprod(net.sf.javabdd.BDD, net.sf.javabdd.BDDVarSet)
          */
-        public BDD relprod(BDD that, BDD var) {
+        public BDD relprod(BDD that, BDDVarSet var) {
             BDD c1 = ((TestBDD)that).b1;
             BDD c2 = ((TestBDD)that).b2;
-            BDD d1 = ((TestBDD)var).b1;
-            BDD d2 = ((TestBDD)var).b2;
+            BDDVarSet d1 = ((TestBDDVarSet)var).b1;
+            BDDVarSet d2 = ((TestBDDVarSet)var).b2;
             BDD r1 = b1.relprod(c1, d1);
             BDD r2 = b2.relprod(c2, d2);
             return new TestBDD(r1, r2);
@@ -203,11 +219,11 @@ public class TestBDDFactory extends BDDFactory {
         }
 
         /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#exist(net.sf.javabdd.BDD)
+         * @see net.sf.javabdd.BDD#exist(net.sf.javabdd.BDDVarSet)
          */
-        public BDD exist(BDD var) {
-            BDD c1 = ((TestBDD)var).b1;
-            BDD c2 = ((TestBDD)var).b2;
+        public BDD exist(BDDVarSet var) {
+            BDDVarSet c1 = ((TestBDDVarSet)var).b1;
+            BDDVarSet c2 = ((TestBDDVarSet)var).b2;
             BDD r1 = b1.exist(c1);
             BDD r2 = b2.exist(c2);
             return new TestBDD(r1, r2);
@@ -216,9 +232,9 @@ public class TestBDDFactory extends BDDFactory {
         /* (non-Javadoc)
          * @see net.sf.javabdd.BDD#forAll(net.sf.javabdd.BDD)
          */
-        public BDD forAll(BDD var) {
-            BDD c1 = ((TestBDD)var).b1;
-            BDD c2 = ((TestBDD)var).b2;
+        public BDD forAll(BDDVarSet var) {
+            BDDVarSet c1 = ((TestBDDVarSet)var).b1;
+            BDDVarSet c2 = ((TestBDDVarSet)var).b2;
             BDD r1 = b1.forAll(c1);
             BDD r2 = b2.forAll(c2);
             return new TestBDD(r1, r2);
@@ -227,9 +243,9 @@ public class TestBDDFactory extends BDDFactory {
         /* (non-Javadoc)
          * @see net.sf.javabdd.BDD#unique(net.sf.javabdd.BDD)
          */
-        public BDD unique(BDD var) {
-            BDD c1 = ((TestBDD)var).b1;
-            BDD c2 = ((TestBDD)var).b2;
+        public BDD unique(BDDVarSet var) {
+            BDDVarSet c1 = ((TestBDDVarSet)var).b1;
+            BDDVarSet c2 = ((TestBDDVarSet)var).b2;
             BDD r1 = b1.unique(c1);
             BDD r2 = b2.unique(c2);
             return new TestBDD(r1, r2);
@@ -259,11 +275,11 @@ public class TestBDDFactory extends BDDFactory {
         }
         
         /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#simplify(net.sf.javabdd.BDD)
+         * @see net.sf.javabdd.BDD#simplify(net.sf.javabdd.BDDVarSet)
          */
-        public BDD simplify(BDD d) {
-            BDD c1 = ((TestBDD)d).b1;
-            BDD c2 = ((TestBDD)d).b2;
+        public BDD simplify(BDDVarSet d) {
+            BDDVarSet c1 = ((TestBDDVarSet)d).b1;
+            BDDVarSet c2 = ((TestBDDVarSet)d).b2;
             BDD r1 = b1.simplify(c1);
             BDD r2 = b2.simplify(c2);
             return new TestBDD(r1, r2);
@@ -302,39 +318,39 @@ public class TestBDDFactory extends BDDFactory {
         }
 
         /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#applyAll(net.sf.javabdd.BDD, net.sf.javabdd.BDDFactory.BDDOp, net.sf.javabdd.BDD)
+         * @see net.sf.javabdd.BDD#applyAll(net.sf.javabdd.BDD, net.sf.javabdd.BDDFactory.BDDOp, net.sf.javabdd.BDDVarSet)
          */
-        public BDD applyAll(BDD that, BDDOp opr, BDD var) {
+        public BDD applyAll(BDD that, BDDOp opr, BDDVarSet var) {
             BDD c1 = ((TestBDD)that).b1;
             BDD c2 = ((TestBDD)that).b2;
-            BDD e1 = ((TestBDD)var).b1;
-            BDD e2 = ((TestBDD)var).b2;
+            BDDVarSet e1 = ((TestBDDVarSet)var).b1;
+            BDDVarSet e2 = ((TestBDDVarSet)var).b2;
             BDD r1 = b1.applyAll(c1, opr, e1);
             BDD r2 = b2.applyAll(c2, opr, e2);
             return new TestBDD(r1, r2);
         }
 
         /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#applyEx(net.sf.javabdd.BDD, net.sf.javabdd.BDDFactory.BDDOp, net.sf.javabdd.BDD)
+         * @see net.sf.javabdd.BDD#applyEx(net.sf.javabdd.BDD, net.sf.javabdd.BDDFactory.BDDOp, net.sf.javabdd.BDDVarSet)
          */
-        public BDD applyEx(BDD that, BDDOp opr, BDD var) {
+        public BDD applyEx(BDD that, BDDOp opr, BDDVarSet var) {
             BDD c1 = ((TestBDD)that).b1;
             BDD c2 = ((TestBDD)that).b2;
-            BDD e1 = ((TestBDD)var).b1;
-            BDD e2 = ((TestBDD)var).b2;
+            BDDVarSet e1 = ((TestBDDVarSet)var).b1;
+            BDDVarSet e2 = ((TestBDDVarSet)var).b2;
             BDD r1 = b1.applyEx(c1, opr, e1);
             BDD r2 = b2.applyEx(c2, opr, e2);
             return new TestBDD(r1, r2);
         }
 
         /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#applyUni(net.sf.javabdd.BDD, net.sf.javabdd.BDDFactory.BDDOp, net.sf.javabdd.BDD)
+         * @see net.sf.javabdd.BDD#applyUni(net.sf.javabdd.BDD, net.sf.javabdd.BDDFactory.BDDOp, net.sf.javabdd.BDDVarSet)
          */
-        public BDD applyUni(BDD that, BDDOp opr, BDD var) {
+        public BDD applyUni(BDD that, BDDOp opr, BDDVarSet var) {
             BDD c1 = ((TestBDD)that).b1;
             BDD c2 = ((TestBDD)that).b2;
-            BDD e1 = ((TestBDD)var).b1;
-            BDD e2 = ((TestBDD)var).b2;
+            BDDVarSet e1 = ((TestBDDVarSet)var).b1;
+            BDDVarSet e2 = ((TestBDDVarSet)var).b2;
             BDD r1 = b1.applyUni(c1, opr, e1);
             BDD r2 = b2.applyUni(c2, opr, e2);
             return new TestBDD(r1, r2);
@@ -359,11 +375,11 @@ public class TestBDDFactory extends BDDFactory {
         }
 
         /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#satOne(net.sf.javabdd.BDD, net.sf.javabdd.BDD)
+         * @see net.sf.javabdd.BDD#satOne(net.sf.javabdd.BDDVarSet, boolean)
          */
-        public BDD satOne(BDD var, boolean pol) {
-            BDD c1 = ((TestBDD)var).b1;
-            BDD c2 = ((TestBDD)var).b2;
+        public BDD satOne(BDDVarSet var, boolean pol) {
+            BDDVarSet c1 = ((TestBDDVarSet)var).b1;
+            BDDVarSet c2 = ((TestBDDVarSet)var).b2;
             BDD r1 = b1.satOne(c1, pol);
             BDD r2 = b2.satOne(c2, pol);
             return new TestBDD(r1, r2);
@@ -473,6 +489,128 @@ public class TestBDDFactory extends BDDFactory {
         }
     }
 
+    private class TestBDDVarSet extends BDDVarSet {
+        
+        BDDVarSet b1, b2;
+
+        TestBDDVarSet(BDDVarSet a, BDDVarSet b) {
+            this.b1 = a;
+            this.b2 = b;
+            assertSame(a, b, "constructor");
+        }
+
+        public void free() {
+            b1.free();
+            b2.free();
+        }
+
+        public BDDFactory getFactory() {
+            return TestBDDFactory.this;
+        }
+
+        public BDD toBDD() {
+            BDD r1 = b1.toBDD();
+            BDD r2 = b2.toBDD();
+            return new TestBDD(r1, r2);
+        }
+        
+        public BDDVarSet id() {
+            BDDVarSet r1 = b1.id();
+            BDDVarSet r2 = b2.id();
+            return new TestBDDVarSet(r1, r2);
+        }
+
+        public BDDVarSet intersect(BDDVarSet that) {
+            BDDVarSet c1 = ((TestBDDVarSet)that).b1;
+            BDDVarSet c2 = ((TestBDDVarSet)that).b2;
+            BDDVarSet r1 = b1.intersect(c1);
+            BDDVarSet r2 = b2.intersect(c2);
+            return new TestBDDVarSet(r1, r2);
+        }
+
+        public BDDVarSet intersectWith(BDDVarSet that) {
+            BDDVarSet c1 = ((TestBDDVarSet)that).b1;
+            BDDVarSet c2 = ((TestBDDVarSet)that).b2;
+            b1.intersectWith(c1);
+            b2.intersectWith(c2);
+            assertSame(b1, b2, "intersectWith");
+            return this;
+        }
+
+        public boolean isEmpty() {
+            boolean r1 = b1.isEmpty();
+            boolean r2 = b2.isEmpty();
+            assertSame(r1 == r2, b1, b2, "isEmpty");
+            return r1;
+        }
+
+        public int size() {
+            int r1 = b1.size();
+            int r2 = b2.size();
+            assertSame(r1 == r2, b1, b2, "size");
+            return r1;
+        }
+
+        public int[] toArray() {
+            int[] r1 = b1.toArray();
+            int[] r2 = b2.toArray();
+            assertSame(Arrays.equals(r1, r2), b1, b2, "toArray");
+            return r1;
+        }
+
+        public int[] toLevelArray() {
+            int[] r1 = b1.toLevelArray();
+            int[] r2 = b2.toLevelArray();
+            assertSame(Arrays.equals(r1, r2), b1, b2, "toLevelArray");
+            return r1;
+        }
+
+        public BDDVarSet union(BDDVarSet that) {
+            BDDVarSet c1 = ((TestBDDVarSet)that).b1;
+            BDDVarSet c2 = ((TestBDDVarSet)that).b2;
+            BDDVarSet r1 = b1.union(c1);
+            BDDVarSet r2 = b2.union(c2);
+            return new TestBDDVarSet(r1, r2);
+        }
+
+        public BDDVarSet union(int var) {
+            BDDVarSet r1 = b1.union(var);
+            BDDVarSet r2 = b2.union(var);
+            return new TestBDDVarSet(r1, r2);
+        }
+
+        public BDDVarSet unionWith(BDDVarSet that) {
+            BDDVarSet c1 = ((TestBDDVarSet)that).b1;
+            BDDVarSet c2 = ((TestBDDVarSet)that).b2;
+            b1.unionWith(c1);
+            b2.unionWith(c2);
+            assertSame(b1, b2, "unionWith");
+            return this;
+        }
+
+        public BDDVarSet unionWith(int var) {
+            b1.unionWith(var);
+            b2.unionWith(var);
+            assertSame(b1, b2, "unionWith");
+            return this;
+        }
+        
+        public int hashCode() {
+            // TODO Compare!
+            b1.hashCode();
+            return b2.hashCode();
+        }
+        
+        public boolean equals(BDDVarSet that) {
+            BDDVarSet c1 = ((TestBDDVarSet)that).b1;
+            BDDVarSet c2 = ((TestBDDVarSet)that).b2;
+            boolean r1 = b1.equals(c1);
+            boolean r2 = b2.equals(c2);
+            assertSame(r1 == r2, b1, b2, "equals");
+            return r1;
+        }
+    }
+    
     /* (non-Javadoc)
      * @see net.sf.javabdd.BDDFactory#zero()
      */
@@ -487,6 +625,13 @@ public class TestBDDFactory extends BDDFactory {
         return new TestBDD(f1.one(), f2.one());
     }
 
+    /* (non-Javadoc)
+     * @see net.sf.javabdd.BDDFactory#emptySet()
+     */
+    public BDDVarSet emptySet() {
+        return new TestBDDVarSet(f1.emptySet(), f2.emptySet());
+    }
+    
     /* (non-Javadoc)
      * @see net.sf.javabdd.BDDFactory#initialize(int, int)
      */

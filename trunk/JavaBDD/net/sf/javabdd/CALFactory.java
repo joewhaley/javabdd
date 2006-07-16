@@ -505,11 +505,11 @@ public class CALFactory extends BDDFactory {
         private static native long ite0(long b, long c, long d);
         
         /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#relprod(net.sf.javabdd.BDD, net.sf.javabdd.BDD)
+         * @see net.sf.javabdd.BDD#relprod(net.sf.javabdd.BDD, net.sf.javabdd.BDDVarSet)
          */
-        public BDD relprod(BDD that, BDD var) {
+        public BDD relprod(BDD that, BDDVarSet var) {
             CALBDD c = (CALBDD) that;
-            CALBDD d = (CALBDD) var;
+            CALBDD d = (CALBDD) ((BDDVarSet.DefaultImpl) var).b;
             long b = relprod0(_ddnode_ptr, c._ddnode_ptr, d._ddnode_ptr);
             return new CALBDD(b);
         }
@@ -534,25 +534,25 @@ public class CALFactory extends BDDFactory {
         }
 
         /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#exist(net.sf.javabdd.BDD)
+         * @see net.sf.javabdd.BDD#exist(net.sf.javabdd.BDDVarSet)
          */
-        public BDD exist(BDD var) {
+        public BDD exist(BDDVarSet var) {
             // TODO Implement this.
             throw new UnsupportedOperationException();
         }
 
         /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#forAll(net.sf.javabdd.BDD)
+         * @see net.sf.javabdd.BDD#forAll(net.sf.javabdd.BDDVarSet)
          */
-        public BDD forAll(BDD var) {
+        public BDD forAll(BDDVarSet var) {
             // TODO Implement this.
             throw new UnsupportedOperationException();
         }
 
         /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#unique(net.sf.javabdd.BDD)
+         * @see net.sf.javabdd.BDD#unique(net.sf.javabdd.BDDVarSet)
          */
-        public BDD unique(BDD var) {
+        public BDD unique(BDDVarSet var) {
             // TODO Implement this.
             throw new UnsupportedOperationException();
         }
@@ -584,9 +584,9 @@ public class CALFactory extends BDDFactory {
         }
         
         /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#simplify(net.sf.javabdd.BDD)
+         * @see net.sf.javabdd.BDD#simplify(net.sf.javabdd.BDDVarSet)
          */
-        public BDD simplify(BDD d) {
+        public BDD simplify(BDDVarSet d) {
             // TODO Implement this.
             throw new UnsupportedOperationException();
         }
@@ -627,25 +627,25 @@ public class CALFactory extends BDDFactory {
         }
         
         /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#applyAll(net.sf.javabdd.BDD, net.sf.javabdd.BDDFactory.BDDOp, net.sf.javabdd.BDD)
+         * @see net.sf.javabdd.BDD#applyAll(net.sf.javabdd.BDD, net.sf.javabdd.BDDFactory.BDDOp, net.sf.javabdd.BDDVarSet)
          */
-        public BDD applyAll(BDD that, BDDOp opr, BDD var) {
+        public BDD applyAll(BDD that, BDDOp opr, BDDVarSet var) {
             // TODO Implement this.
             throw new UnsupportedOperationException();
         }
 
         /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#applyEx(net.sf.javabdd.BDD, net.sf.javabdd.BDDFactory.BDDOp, net.sf.javabdd.BDD)
+         * @see net.sf.javabdd.BDD#applyEx(net.sf.javabdd.BDD, net.sf.javabdd.BDDFactory.BDDOp, net.sf.javabdd.BDDVarSet)
          */
-        public BDD applyEx(BDD that, BDDOp opr, BDD var) {
+        public BDD applyEx(BDD that, BDDOp opr, BDDVarSet var) {
             // TODO Implement this.
             throw new UnsupportedOperationException();
         }
 
         /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#applyUni(net.sf.javabdd.BDD, net.sf.javabdd.BDDFactory.BDDOp, net.sf.javabdd.BDD)
+         * @see net.sf.javabdd.BDD#applyUni(net.sf.javabdd.BDD, net.sf.javabdd.BDDFactory.BDDOp, net.sf.javabdd.BDDVarSet)
          */
-        public BDD applyUni(BDD that, BDDOp opr, BDD var) {
+        public BDD applyUni(BDD that, BDDOp opr, BDDVarSet var) {
             // TODO Implement this.
             throw new UnsupportedOperationException();
         }
@@ -668,9 +668,9 @@ public class CALFactory extends BDDFactory {
         }
 
         /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#satOne(net.sf.javabdd.BDD, boolean)
+         * @see net.sf.javabdd.BDD#satOne(net.sf.javabdd.BDDVarSet, boolean)
          */
-        public BDD satOne(BDD var, boolean pol) {
+        public BDD satOne(BDDVarSet var, boolean pol) {
             // TODO Implement this.
             throw new UnsupportedOperationException();
         }
@@ -785,6 +785,10 @@ public class CALFactory extends BDDFactory {
          */
         public int hashCode() {
             return (int) this._ddnode_ptr;
+        }
+
+        public BDDVarSet toVarSet() {
+            return new BDDVarSet.DefaultImpl(new CALBDD(this._ddnode_ptr));
         }
 
     }

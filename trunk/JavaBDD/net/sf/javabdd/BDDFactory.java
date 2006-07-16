@@ -177,6 +177,11 @@ public abstract class BDDFactory {
     }
     
     /**
+     * <p>Returns true if this is a ZDD factory, false otherwise.</p>
+     */
+    public boolean isZDD() { return false; }
+    
+    /**
      * <p>Get the constant false BDD.</p>
      * 
      * <p>Compare to bdd_false.</p>
@@ -189,6 +194,15 @@ public abstract class BDDFactory {
      * <p>Compare to bdd_true.</p>
      */
     public abstract BDD one();
+    
+    /**
+     * <p>Get an empty BDDVarSet.</p>
+     * 
+     * <p>Compare to bdd_true.</p>
+     */
+    public BDDVarSet emptySet() {
+        return new BDDVarSet.DefaultImpl(one());
+    }
     
     /**
      * <p>Build a cube from an array of variables.</p>
@@ -238,11 +252,11 @@ public abstract class BDDFactory {
      * 
      * <p>Compare to bdd_makeset.</p>
      */
-    public BDD makeSet(int[] varset) {
-        BDD res = one();
+    public BDDVarSet makeSet(int[] varset) {
+        BDDVarSet res = emptySet();
         int varnum = varset.length;
-        for (int v = varnum-1 ; v>=0 ; v--) {
-            res.andWith(ithVar(varset[v]));
+        for (int v = varnum-1; v >= 0; --v) {
+            res.unionWith(varset[v]);
         }
         return res;
     }
@@ -711,17 +725,12 @@ public abstract class BDDFactory {
             root.free();
             return 1;
         }
-        //Integer i = (Integer) visited.get(root);
         int i = root.hashCode();
-        //if (i != null) {
         if (visited.get(i)) {
             root.free();
-            //return i.intValue();
             return i;
         }
-        //int v = visited.size() + 2;
         int v = i;
-        //visited.put(root, new Integer(v));
         visited.set(i);
         
         BDD h = root.high();
@@ -735,7 +744,6 @@ public abstract class BDDFactory {
         
         int hi = save_rec(out, visited, h);
 
-        //out.write(v + " ");
         out.write(i + " ");
         out.write(rootvar + " ");
         out.write(lo + " ");
@@ -1449,12 +1457,12 @@ public abstract class BDDFactory {
      * 
      * <p>Compare to fdd_makeset.</p>
      */
-    public BDD makeSet(BDDDomain[] v) {
-        BDD res = one();
+    public BDDVarSet makeSet(BDDDomain[] v) {
+        BDDVarSet res = emptySet();
         int n;
 
         for (n = 0; n < v.length; n++) {
-            res.andWith(v[n].set());
+            res.unionWith(v[n].set());
         }
 
         return res;

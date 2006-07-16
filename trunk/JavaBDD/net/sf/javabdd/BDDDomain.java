@@ -33,7 +33,7 @@ public abstract class BDDDomain {
     /* Variable indices for the variable set */
     protected int[] ivar;
     /* The BDD variable set.  Actually constructed in extDomain(), etc. */
-    protected BDD var;
+    protected BDDVarSet var;
 
     /**
      * Default constructor.
@@ -203,9 +203,9 @@ public abstract class BDDDomain {
      * 
      * Compare to fdd_ithset.
      * 
-     * @return BDD
+     * @return BDDVarSet
      */
-    public BDD set() {
+    public BDDVarSet set() {
         return var.id();
     }
     
@@ -331,9 +331,9 @@ public abstract class BDDDomain {
         this.ivar = new_ivar;
         //System.out.println("Domain "+this+" old var = "+var);
         this.var.free();
-        BDD nvar = factory.one();
+        BDDVarSet nvar = factory.emptySet();
         for (int i = 0; i < ivar.length; ++i) {
-            nvar.andWith(factory.ithVar(ivar[i]));
+            nvar.unionWith(ivar[i]);
         }
         this.var = nvar;
         //System.out.println("Domain "+this+" new var = "+var);
@@ -375,7 +375,7 @@ public abstract class BDDDomain {
      * @see #ithVar(long)
      */
     public BigInteger[] getVarIndices(BDD bdd, int max) {
-        BDD myvarset = set(); // can't use var here, must respect subclass a factory may provide
+        BDDVarSet myvarset = set(); // can't use var here, must respect subclass a factory may provide
         int n = (int) bdd.satCount(myvarset);
         if (max != -1 && n > max)
             n = max;

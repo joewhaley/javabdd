@@ -6,6 +6,7 @@ package net.sf.javabdd;
 import java.util.Collection;
 import java.math.BigInteger;
 
+
 /**
  * JDDFactory
  * 
@@ -119,12 +120,12 @@ public class JDDFactory extends BDDFactory {
         }
 
         /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#relprod(net.sf.javabdd.BDD, net.sf.javabdd.BDD)
+         * @see net.sf.javabdd.BDD#relprod(net.sf.javabdd.BDD, net.sf.javabdd.BDDVarSet)
          */
-        public BDD relprod(BDD that, BDD var) {
+        public BDD relprod(BDD that, BDDVarSet var) {
             int x = _index;
             int y = ((bdd) that)._index;
-            int z = ((bdd) var)._index;
+            int z = ((bdd) ((BDDVarSet.DefaultImpl) var).b)._index;
             return new bdd(bdd.relProd(x, y, z));
         }
 
@@ -155,29 +156,29 @@ public class JDDFactory extends BDDFactory {
         }
 
         /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#exist(net.sf.javabdd.BDD)
+         * @see net.sf.javabdd.BDD#exist(net.sf.javabdd.BDDVarSet)
          */
-        public BDD exist(BDD var) {
+        public BDD exist(BDDVarSet var) {
             int x = _index;
-            int y = ((bdd) var)._index;
+            int y = ((bdd) ((BDDVarSet.DefaultImpl) var).b)._index;
             return new bdd(bdd.exists(x, y));
         }
 
         /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#forAll(net.sf.javabdd.BDD)
+         * @see net.sf.javabdd.BDD#forAll(net.sf.javabdd.BDDVarSet)
          */
-        public BDD forAll(BDD var) {
+        public BDD forAll(BDDVarSet var) {
             int x = _index;
-            int y = ((bdd) var)._index;
+            int y = ((bdd) ((BDDVarSet.DefaultImpl) var).b)._index;
             return new bdd(bdd.forall(x, y));
         }
 
         /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#unique(net.sf.javabdd.BDD)
+         * @see net.sf.javabdd.BDD#unique(net.sf.javabdd.BDDVarSet)
          */
-        public BDD unique(BDD var) {
+        public BDD unique(BDDVarSet var) {
             int x = _index;
-            int y = ((bdd) var)._index;
+            int y = ((bdd) ((BDDVarSet.DefaultImpl) var).b)._index;
             return null; // todo.
         }
 
@@ -207,11 +208,11 @@ public class JDDFactory extends BDDFactory {
         }
         
         /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#simplify(net.sf.javabdd.BDD)
+         * @see net.sf.javabdd.BDD#simplify(net.sf.javabdd.BDDVarSet)
          */
-        public BDD simplify(BDD d) {
+        public BDD simplify(BDDVarSet d) {
             int x = _index;
-            int y = ((bdd) d)._index;
+            int y = ((bdd) ((BDDVarSet.DefaultImpl) d).b)._index;
             return new bdd(bdd.simplify(x, y));
         }
 
@@ -267,13 +268,13 @@ public class JDDFactory extends BDDFactory {
         }
 
         /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#applyAll(net.sf.javabdd.BDD, net.sf.javabdd.BDDFactory.BDDOp, net.sf.javabdd.BDD)
+         * @see net.sf.javabdd.BDD#applyAll(net.sf.javabdd.BDD, net.sf.javabdd.BDDFactory.BDDOp, net.sf.javabdd.BDDVarSet)
          */
-        public BDD applyAll(BDD that, BDDOp opr, BDD var) {
+        public BDD applyAll(BDD that, BDDOp opr, BDDVarSet var) {
             int x = _index;
             int y = ((bdd) that)._index;
             int z = opr.id;
-            int a = ((bdd) var)._index;
+            int a = ((bdd) ((BDDVarSet.DefaultImpl) var).b)._index;
             // todo: combine.
             int r = apply0(x, y, z);
             bdd.ref(r);
@@ -283,13 +284,13 @@ public class JDDFactory extends BDDFactory {
         }
 
         /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#applyEx(net.sf.javabdd.BDD, net.sf.javabdd.BDDFactory.BDDOp, net.sf.javabdd.BDD)
+         * @see net.sf.javabdd.BDD#applyEx(net.sf.javabdd.BDD, net.sf.javabdd.BDDFactory.BDDOp, net.sf.javabdd.BDDVarSet)
          */
-        public BDD applyEx(BDD that, BDDOp opr, BDD var) {
+        public BDD applyEx(BDD that, BDDOp opr, BDDVarSet var) {
             int x = _index;
             int y = ((bdd) that)._index;
             int z = opr.id;
-            int a = ((bdd) var)._index;
+            int a = ((bdd) ((BDDVarSet.DefaultImpl) var).b)._index;
             // todo: combine.
             int r = apply0(x, y, z);
             bdd.ref(r);
@@ -299,13 +300,13 @@ public class JDDFactory extends BDDFactory {
         }
 
         /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#applyUni(net.sf.javabdd.BDD, net.sf.javabdd.BDDFactory.BDDOp, net.sf.javabdd.BDD)
+         * @see net.sf.javabdd.BDD#applyUni(net.sf.javabdd.BDD, net.sf.javabdd.BDDFactory.BDDOp, net.sf.javabdd.BDDVarSet)
          */
-        public BDD applyUni(BDD that, BDDOp opr, BDD var) {
+        public BDD applyUni(BDD that, BDDOp opr, BDDVarSet var) {
             int x = _index;
             int y = ((bdd) that)._index;
             int z = opr.id;
-            int a = ((bdd) var)._index;
+            int a = ((bdd) ((BDDVarSet.DefaultImpl) var).b)._index;
             throw new BDDException(); // todo.
         }
 
@@ -399,9 +400,9 @@ public class JDDFactory extends BDDFactory {
         }
 
         /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#satOne(net.sf.javabdd.BDD, boolean)
+         * @see net.sf.javabdd.BDD#satOne(net.sf.javabdd.BDDVarSet, boolean)
          */
-        public BDD satOne(BDD var, boolean pol) {
+        public BDD satOne(BDDVarSet var, boolean pol) {
             // TODO Implement this.
             throw new UnsupportedOperationException();
         }
@@ -418,6 +419,13 @@ public class JDDFactory extends BDDFactory {
          */
         public int[] varProfile() {
             throw new BDDException();
+        }
+
+        /* (non-Javadoc)
+         * @see net.sf.javabdd.BDD#toVarSet()
+         */
+        public BDDVarSet toVarSet() {
+            return new BDDVarSet.DefaultImpl(new bdd(_index));
         }
         
     }

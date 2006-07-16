@@ -294,6 +294,10 @@ public class MicroFactory extends BDDFactory {
         return b;
     }
     
+    private final BDDVarSet.DefaultImpl makeBDDVarSet(int id) {
+        return new BDDVarSet.DefaultImpl(makeBDD(id));
+    }
+    
     /**
      * Wrapper for the BDD index number used internally in the representation.
      */
@@ -372,20 +376,20 @@ public class MicroFactory extends BDDFactory {
         }
 
         /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#relprod(net.sf.javabdd.BDD, net.sf.javabdd.BDD)
+         * @see net.sf.javabdd.BDD#relprod(net.sf.javabdd.BDD, net.sf.javabdd.BDDVarSet)
          */
-        public BDD relprod(BDD that, BDD var) {
+        public BDD relprod(BDD that, BDDVarSet var) {
             int x = _index;
             int y = ((bdd) that)._index;
-            int z = ((bdd) var)._index;
+            int z = ((bdd) ((BDDVarSet.DefaultImpl) var).b)._index;
             return makeBDD(bdd_relprod(x, y, z));
         }
 
-        public BDD relprod(BDD t1, BDD t2, BDD var) {
+        public BDD relprod(BDD t1, BDD t2, BDDVarSet var) {
             int x = _index;
             int y1 = ((bdd) t1)._index;
             int y2 = ((bdd) t2)._index;
-            int z = ((bdd) var)._index;
+            int z = ((bdd) ((BDDVarSet.DefaultImpl) var).b)._index;
             return makeBDD(bdd_relprod3(x, y1, y2, z));
         }
         
@@ -416,29 +420,29 @@ public class MicroFactory extends BDDFactory {
         }
 
         /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#exist(net.sf.javabdd.BDD)
+         * @see net.sf.javabdd.BDD#exist(net.sf.javabdd.BDDVarSet)
          */
-        public BDD exist(BDD var) {
+        public BDD exist(BDDVarSet var) {
             int x = _index;
-            int y = ((bdd) var)._index;
+            int y = ((bdd) ((BDDVarSet.DefaultImpl) var).b)._index;
             return makeBDD(bdd_exist(x, y));
         }
 
         /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#forAll(net.sf.javabdd.BDD)
+         * @see net.sf.javabdd.BDD#forAll(net.sf.javabdd.BDDVarSet)
          */
-        public BDD forAll(BDD var) {
+        public BDD forAll(BDDVarSet var) {
             int x = _index;
-            int y = ((bdd) var)._index;
+            int y = ((bdd) ((BDDVarSet.DefaultImpl) var).b)._index;
             return makeBDD(bdd_forall(x, y));
         }
 
         /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#unique(net.sf.javabdd.BDD)
+         * @see net.sf.javabdd.BDD#unique(net.sf.javabdd.BDDVarSet)
          */
-        public BDD unique(BDD var) {
+        public BDD unique(BDDVarSet var) {
             int x = _index;
-            int y = ((bdd) var)._index;
+            int y = ((bdd) ((BDDVarSet.DefaultImpl) var).b)._index;
             return makeBDD(bdd_unique(x, y));
         }
 
@@ -467,11 +471,11 @@ public class MicroFactory extends BDDFactory {
         }
         
         /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#simplify(net.sf.javabdd.BDD)
+         * @see net.sf.javabdd.BDD#simplify(net.sf.javabdd.BDDVarSet)
          */
-        public BDD simplify(BDD d) {
+        public BDD simplify(BDDVarSet d) {
             int x = _index;
-            int y = ((bdd) d)._index;
+            int y = ((bdd) ((BDDVarSet.DefaultImpl) d).b)._index;
             return makeBDD(bdd_simplify(x, y));
         }
 
@@ -510,35 +514,35 @@ public class MicroFactory extends BDDFactory {
         }
 
         /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#applyAll(net.sf.javabdd.BDD, net.sf.javabdd.BDDFactory.BDDOp, net.sf.javabdd.BDD)
+         * @see net.sf.javabdd.BDD#applyAll(net.sf.javabdd.BDD, net.sf.javabdd.BDDFactory.BDDOp, net.sf.javabdd.BDDVarSet)
          */
-        public BDD applyAll(BDD that, BDDOp opr, BDD var) {
+        public BDD applyAll(BDD that, BDDOp opr, BDDVarSet var) {
             int x = _index;
             int y = ((bdd) that)._index;
             int z = opr.id;
-            int a = ((bdd) var)._index;
+            int a = ((bdd) ((BDDVarSet.DefaultImpl) var).b)._index;
             return makeBDD(bdd_appall(x, y, z, a));
         }
 
         /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#applyEx(net.sf.javabdd.BDD, net.sf.javabdd.BDDFactory.BDDOp, net.sf.javabdd.BDD)
+         * @see net.sf.javabdd.BDD#applyEx(net.sf.javabdd.BDD, net.sf.javabdd.BDDFactory.BDDOp, net.sf.javabdd.BDDVarSet)
          */
-        public BDD applyEx(BDD that, BDDOp opr, BDD var) {
+        public BDD applyEx(BDD that, BDDOp opr, BDDVarSet var) {
             int x = _index;
             int y = ((bdd) that)._index;
             int z = opr.id;
-            int a = ((bdd) var)._index;
+            int a = ((bdd) ((BDDVarSet.DefaultImpl) var).b)._index;
             return makeBDD(bdd_appex(x, y, z, a));
         }
 
         /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#applyUni(net.sf.javabdd.BDD, net.sf.javabdd.BDDFactory.BDDOp, net.sf.javabdd.BDD)
+         * @see net.sf.javabdd.BDD#applyUni(net.sf.javabdd.BDD, net.sf.javabdd.BDDFactory.BDDOp, net.sf.javabdd.BDDVarSet)
          */
-        public BDD applyUni(BDD that, BDDOp opr, BDD var) {
+        public BDD applyUni(BDD that, BDDOp opr, BDDVarSet var) {
             int x = _index;
             int y = ((bdd) that)._index;
             int z = opr.id;
-            int a = ((bdd) var)._index;
+            int a = ((bdd) ((BDDVarSet.DefaultImpl) var).b)._index;
             return makeBDD(bdd_appuni(x, y, z, a));
         }
 
@@ -559,11 +563,11 @@ public class MicroFactory extends BDDFactory {
         }
 
         /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#satOne(net.sf.javabdd.BDD, boolean)
+         * @see net.sf.javabdd.BDD#satOne(net.sf.javabdd.BDDVarSet, boolean)
          */
-        public BDD satOne(BDD var, boolean pol) {
+        public BDD satOne(BDDVarSet var, boolean pol) {
             int x = _index;
-            int y = ((bdd) var)._index;
+            int y = ((bdd) ((BDDVarSet.DefaultImpl) var).b)._index;
             int z = pol ? 1 : 0;
             return makeBDD(bdd_satoneset(x, y, z));
         }
@@ -638,6 +642,10 @@ public class MicroFactory extends BDDFactory {
         public void free() {
             bdd_delref(_index);
             _index = INVALID_BDD;
+        }
+
+        public BDDVarSet toVarSet() {
+            return makeBDDVarSet(_index);
         }
         
     }

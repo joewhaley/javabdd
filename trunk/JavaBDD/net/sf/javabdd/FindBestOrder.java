@@ -24,7 +24,7 @@ public class FindBestOrder {
     boolean newbdd = true;
     BDD b1 = null;
     BDD b2 = null;
-    BDD b3 = null;
+    BDDVarSet b3 = null;
 
     String filename0 = "fbo.bi";
     String filename1 = "fbo.1";
@@ -59,7 +59,7 @@ public class FindBestOrder {
         this.DELAY_TIME = delayTime;
     }
     
-    public void init(BDD b1, BDD b2, BDD dom, BDDFactory.BDDOp op) throws IOException {
+    public void init(BDD b1, BDD b2, BDDVarSet dom, BDDFactory.BDDOp op) throws IOException {
         this.op = op;
         f0 = File.createTempFile("fbo", "a");
         filename0 = f0.getAbsolutePath();
@@ -77,7 +77,7 @@ public class FindBestOrder {
         writeBDDConfig(b1.getFactory(), filename0);
         b1.getFactory().save(filename1, b1);
         b2.getFactory().save(filename2, b2);
-        dom.getFactory().save(filename3, dom);
+        dom.getFactory().save(filename3, dom.toBDD());
         //System.out.println("done.");
     }
     
@@ -167,7 +167,7 @@ public class FindBestOrder {
                 if (newbdd) {
                     b1 = bdd.load(filename1);
                     b2 = bdd.load(filename2);
-                    b3 = bdd.load(filename3);
+                    b3 = bdd.load(filename3).toVarSet();
                     newbdd = false;
                 }
                 long t = System.currentTimeMillis();
