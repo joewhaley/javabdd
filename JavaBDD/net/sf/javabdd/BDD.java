@@ -18,15 +18,6 @@ import java.math.BigInteger;
  * 
  * <p>Use an implementation of BDDFactory to create BDD objects.</p>
  *
- * <p>Some methods, namely <tt>exist()</tt>, <tt>forall()</tt>, <tt>unique()</tt>, 
- * <tt>relprod()</tt>, <tt>applyAll()</tt>, <tt>applyEx()</tt>, <tt>applyUni()</tt>, 
- * and <tt>satCount()</tt> take a 'set of variables' argument that is also of type BDD.
- * Those BDDs must be a boolean function that represents the all-true minterm
- * of the BDD variables of interest.  They only serve to identify the set of
- * variables of interest, however.  For example, for a given BDDDomain, a BDD var set
- * representing all BDD variables of that domain can be obtained 
- * by calling <tt>BDDDomain.set()</tt>.</p>
- * 
  * @see net.sf.javabdd.BDDFactory
  * @see net.sf.javabdd.BDDDomain#set()
  * 
@@ -55,6 +46,18 @@ public abstract class BDD {
      * @return true if this BDD is the one (true) BDD
      */
     public abstract boolean isOne();
+    
+    /**
+     * <p>Converts this BDD to a new BDDVarSet.</p>
+     * 
+     * <p>This BDD must be a boolean function that represents the all-true minterm
+     * of the BDD variables of interest.</p>
+     * 
+     * @return the contents of this BDD as a new BDDVarSet
+     */
+    public BDDVarSet toVarSet() {
+        return new BDDVarSet.DefaultImpl(id());
+    }
     
     /**
      * <p>Gets the variable labeling the BDD.</p>
@@ -265,11 +268,11 @@ public abstract class BDD {
      * <p>Compare to bdd_relprod.</p>
      * 
      * @param that the BDD to 'and' with
-     * @param var the BDD to existentially quantify with
+     * @param var the BDDVarSet to existentially quantify with
      * @return the result of the relational product
      * @see net.sf.javabdd.BDDDomain#set()
      */
-    public abstract BDD relprod(BDD that, BDD var);
+    public abstract BDD relprod(BDD that, BDDVarSet var);
     
     /**
      * <p>Functional composition.  Substitutes the variable var with the BDD that
@@ -317,11 +320,11 @@ public abstract class BDD {
      * 
      * <p>Compare to bdd_exist.</p>
      *
-     * @param var BDD containing the variables to be existentially quantified
+     * @param var BDDVarSet containing the variables to be existentially quantified
      * @return the result of the existential quantification
      * @see net.sf.javabdd.BDDDomain#set()
      */
-    public abstract BDD exist(BDD var);
+    public abstract BDD exist(BDDVarSet var);
 
     /**
      * <p>Universal quantification of variables.  Removes all occurrences of this
@@ -329,11 +332,11 @@ public abstract class BDD {
      * 
      * <p>Compare to bdd_forall.</p>
      * 
-     * @param var BDD containing the variables to be universally quantified
+     * @param var BDDVarSet containing the variables to be universally quantified
      * @return the result of the universal quantification
      * @see net.sf.javabdd.BDDDomain#set()
      */
-    public abstract BDD forAll(BDD var);
+    public abstract BDD forAll(BDDVarSet var);
 
     /**
      * <p>Unique quantification of variables.  This type of quantification uses a
@@ -342,11 +345,11 @@ public abstract class BDD {
      * 
      * <p>Compare to bdd_unique.</p>
      * 
-     * @param var BDD containing the variables to be uniquely quantified
+     * @param var BDDVarSet containing the variables to be uniquely quantified
      * @return the result of the unique quantification
      * @see net.sf.javabdd.BDDDomain#set()
      */
-    public abstract BDD unique(BDD var);
+    public abstract BDD unique(BDDVarSet var);
     
     /**
      * <p>Restrict a set of variables to constant values.  Restricts the variables
@@ -388,10 +391,10 @@ public abstract class BDD {
      * 
      * <p>Compare to bdd_simplify.</p>
      * 
-     * @param d BDD containing the variables in the domain
+     * @param d BDDVarSet containing the variables in the domain
      * @return the result of the simplify operation
      */
-    public abstract BDD simplify(BDD d);
+    public abstract BDD simplify(BDDVarSet d);
 
     /**
      * <p>Returns the variable support of this BDD.  The support is all the
@@ -436,11 +439,11 @@ public abstract class BDD {
      * 
      * @param that the BDD to apply the operator on
      * @param opr the operator to apply
-     * @param var BDD containing the variables to quantify
+     * @param var BDDVarSet containing the variables to quantify
      * @return the result
      * @see net.sf.javabdd.BDDDomain#set()
      */
-    public abstract BDD applyAll(BDD that, BDDFactory.BDDOp opr, BDD var);
+    public abstract BDD applyAll(BDD that, BDDFactory.BDDOp opr, BDDVarSet var);
 
     /**
      * <p>Applies the binary operator <tt>opr</tt> to two BDDs and then performs
@@ -451,11 +454,11 @@ public abstract class BDD {
      * 
      * @param that the BDD to apply the operator on
      * @param opr the operator to apply
-     * @param var BDD containing the variables to quantify
+     * @param var BDDVarSet containing the variables to quantify
      * @return the result
      * @see net.sf.javabdd.BDDDomain#set()
      */
-    public abstract BDD applyEx(BDD that, BDDFactory.BDDOp opr, BDD var);
+    public abstract BDD applyEx(BDD that, BDDFactory.BDDOp opr, BDDVarSet var);
 
     /**
      * <p>Applies the binary operator <tt>opr</tt> to two BDDs and then performs
@@ -466,11 +469,11 @@ public abstract class BDD {
      * 
      * @param that the BDD to apply the operator on
      * @param opr the operator to apply
-     * @param var BDD containing the variables to quantify
+     * @param var BDDVarSet containing the variables to quantify
      * @return the result
      * @see net.sf.javabdd.BDDDomain#set()
      */
-    public abstract BDD applyUni(BDD that, BDDFactory.BDDOp opr, BDD var);
+    public abstract BDD applyUni(BDD that, BDDFactory.BDDOp opr, BDDVarSet var);
 
     /**
      * <p>Finds one satisfying variable assignment.  Finds a BDD with at most one
@@ -504,12 +507,12 @@ public abstract class BDD {
      * 
      * <p>Compare to bdd_satoneset.</p>
      * 
-     * @param var BDD containing the set of variables that must be mentioned in the result
+     * @param var BDDVarSet containing the set of variables that must be mentioned in the result
      * @param pol the polarity of the result
      * @return one satisfying variable assignment
      * @see net.sf.javabdd.BDDDomain#set()
      */
-    public abstract BDD satOne(BDD var, boolean pol);
+    public abstract BDD satOne(BDDVarSet var, boolean pol);
 
     /**
      * <p>Finds all satisfying variable assignments.</p>
@@ -557,7 +560,8 @@ public abstract class BDD {
             useLevel = lev;
             if (r.isZero()) return;
             allsatProfile = new byte[f.varNum()];
-            Arrays.fill(allsatProfile, (byte) -1);
+            if (!f.isZDD())
+                Arrays.fill(allsatProfile, (byte) -1);
             loStack = new LinkedList();
             hiStack = new LinkedList();
             if (!r.isOne()) {
@@ -808,7 +812,8 @@ public abstract class BDD {
      * @param r  BDD varset
      * @return  array of levels
      */
-    private static int[] varset2levels(BDD r) {
+    /*
+    private static int[] varset2levels(BDDVarSet r) {
         int size = 0;
         BDD p = r.id();
         while (!p.isOne() && !p.isZero()) {
@@ -830,6 +835,7 @@ public abstract class BDD {
         p.free();
         return result;
     }
+    */
     
     /**
      * <p>Returns an iteration of the satisfying assignments of this BDD.  Returns
@@ -840,7 +846,7 @@ public abstract class BDD {
      * @return an iteration of minterms
      * @see net.sf.javabdd.BDDDomain#set()
      */
-    public BDDIterator iterator(final BDD var) {
+    public BDDIterator iterator(final BDDVarSet var) {
         return new BDDIterator(this, var);
     }
     
@@ -872,32 +878,14 @@ public abstract class BDD {
          * @param bdd  BDD to iterate over
          * @param var  variable set to mention in result
          */
-        public BDDIterator(BDD bdd, BDD var) {
+        public BDDIterator(BDD bdd, BDDVarSet var) {
             initialBDD = bdd;
             f = bdd.getFactory();
             i = new AllSatIterator(bdd, true);
             // init v[]
-            int n = 0;
-            BDD p = var.id();
-            while (!p.isOne()) {
-                ++n;
-                BDD q = p.high();
-                p.free();
-                p = q;
-            }
-            p.free();
-            v = new int[n];
-            n = 0;
-            p = var.id();
-            while (!p.isOne()) {
-                v[n++] = p.level();
-                BDD q = p.high();
-                p.free();
-                p = q;
-            }
-            p.free();
+            v = var.toLevelArray();
             // init b[]
-            b = new boolean[n];
+            b = new boolean[v.length];
             gotoNext();
         }
         
@@ -1291,21 +1279,14 @@ public abstract class BDD {
      * 
      * @return the number of satisfying variable assignments
      */
-    public double satCount(BDD varset) {
+    public double satCount(BDDVarSet varset) {
         BDDFactory factory = getFactory();
-        double unused = factory.varNum();
 
-        if (varset.isZero() || varset.isOne() || isZero()) /* empty set */
+        if (varset.isEmpty() || isZero()) /* empty set */
             return 0.;
 
-        BDD n = varset.id();
-        do {
-            BDD n2 = n.high();
-            n.free(); n = n2;
-            unused--;
-        } while (!n.isOne() && !n.isZero());
-        n.free();
-
+        double unused = factory.varNum();
+        unused -= varset.size();
         unused = satCount() / Math.pow(2.0, unused);
 
         return unused >= 1.0 ? unused : 1.0;
@@ -1330,7 +1311,7 @@ public abstract class BDD {
      * 
      * @return the logarithm of the number of satisfying variable assignments
      */
-    public double logSatCount(BDD varset) {
+    public double logSatCount(BDDVarSet varset) {
         return Math.log(satCount(varset));
     }
     

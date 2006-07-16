@@ -68,6 +68,14 @@ public class JFactory extends BDDFactory {
     }
     
     /**
+     * Private helper function to create BDD objects.
+     */
+    private BDDVarSet makeBDDVarSet(int id) {
+        BDDVarSet b = new BDDVarSet.DefaultImpl(makeBDD(id));
+        return b;
+    }
+    
+    /**
      * Wrapper for the BDD index number used internally in the representation.
      */
     private class bdd extends BDD {
@@ -85,6 +93,13 @@ public class JFactory extends BDDFactory {
             return JFactory.this;
         }
 
+        /* (non-Javadoc)
+         * @see net.sf.javabdd.BDD#toVarSet()
+         */
+        public BDDVarSet toVarSet() {
+            return makeBDDVarSet(_index);
+        }
+        
         /* (non-Javadoc)
          * @see net.sf.javabdd.BDD#isZero()
          */
@@ -145,12 +160,12 @@ public class JFactory extends BDDFactory {
         }
 
         /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#relprod(net.sf.javabdd.BDD, net.sf.javabdd.BDD)
+         * @see net.sf.javabdd.BDD#relprod(net.sf.javabdd.BDD, net.sf.javabdd.BDDVarSet)
          */
-        public BDD relprod(BDD that, BDD var) {
+        public BDD relprod(BDD that, BDDVarSet var) {
             int x = _index;
             int y = ((bdd) that)._index;
-            int z = ((bdd) var)._index;
+            int z = ((bdd) ((BDDVarSet.DefaultImpl) var).b)._index;
             return makeBDD(bdd_relprod(x, y, z));
         }
 
@@ -181,29 +196,29 @@ public class JFactory extends BDDFactory {
         }
 
         /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#exist(net.sf.javabdd.BDD)
+         * @see net.sf.javabdd.BDD#exist(net.sf.javabdd.BDDVarSet)
          */
-        public BDD exist(BDD var) {
+        public BDD exist(BDDVarSet var) {
             int x = _index;
-            int y = ((bdd) var)._index;
+            int y = ((bdd) ((BDDVarSet.DefaultImpl) var).b)._index;
             return makeBDD(bdd_exist(x, y));
         }
 
         /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#forAll(net.sf.javabdd.BDD)
+         * @see net.sf.javabdd.BDD#forAll(net.sf.javabdd.BDDVarSet)
          */
-        public BDD forAll(BDD var) {
+        public BDD forAll(BDDVarSet var) {
             int x = _index;
-            int y = ((bdd) var)._index;
+            int y = ((bdd) ((BDDVarSet.DefaultImpl) var).b)._index;
             return makeBDD(bdd_forall(x, y));
         }
 
         /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#unique(net.sf.javabdd.BDD)
+         * @see net.sf.javabdd.BDD#unique(net.sf.javabdd.BDDVarSet)
          */
-        public BDD unique(BDD var) {
+        public BDD unique(BDDVarSet var) {
             int x = _index;
-            int y = ((bdd) var)._index;
+            int y = ((bdd) ((BDDVarSet.DefaultImpl) var).b)._index;
             return makeBDD(bdd_unique(x, y));
         }
 
@@ -232,11 +247,11 @@ public class JFactory extends BDDFactory {
         }
         
         /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#simplify(net.sf.javabdd.BDD)
+         * @see net.sf.javabdd.BDD#simplify(net.sf.javabdd.BDDVarSet)
          */
-        public BDD simplify(BDD d) {
+        public BDD simplify(BDDVarSet d) {
             int x = _index;
-            int y = ((bdd) d)._index;
+            int y = ((bdd) ((BDDVarSet.DefaultImpl) d).b)._index;
             return makeBDD(bdd_simplify(x, y));
         }
 
@@ -275,35 +290,35 @@ public class JFactory extends BDDFactory {
         }
 
         /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#applyAll(net.sf.javabdd.BDD, net.sf.javabdd.BDDFactory.BDDOp, net.sf.javabdd.BDD)
+         * @see net.sf.javabdd.BDD#applyAll(net.sf.javabdd.BDD, net.sf.javabdd.BDDFactory.BDDOp, net.sf.javabdd.BDDVarSet)
          */
-        public BDD applyAll(BDD that, BDDOp opr, BDD var) {
+        public BDD applyAll(BDD that, BDDOp opr, BDDVarSet var) {
             int x = _index;
             int y = ((bdd) that)._index;
             int z = opr.id;
-            int a = ((bdd) var)._index;
+            int a = ((bdd) ((BDDVarSet.DefaultImpl) var).b)._index;
             return makeBDD(bdd_appall(x, y, z, a));
         }
 
         /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#applyEx(net.sf.javabdd.BDD, net.sf.javabdd.BDDFactory.BDDOp, net.sf.javabdd.BDD)
+         * @see net.sf.javabdd.BDD#applyEx(net.sf.javabdd.BDD, net.sf.javabdd.BDDFactory.BDDOp, net.sf.javabdd.BDDVarSet)
          */
-        public BDD applyEx(BDD that, BDDOp opr, BDD var) {
+        public BDD applyEx(BDD that, BDDOp opr, BDDVarSet var) {
             int x = _index;
             int y = ((bdd) that)._index;
             int z = opr.id;
-            int a = ((bdd) var)._index;
+            int a = ((bdd) ((BDDVarSet.DefaultImpl) var).b)._index;
             return makeBDD(bdd_appex(x, y, z, a));
         }
 
         /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#applyUni(net.sf.javabdd.BDD, net.sf.javabdd.BDDFactory.BDDOp, net.sf.javabdd.BDD)
+         * @see net.sf.javabdd.BDD#applyUni(net.sf.javabdd.BDD, net.sf.javabdd.BDDFactory.BDDOp, net.sf.javabdd.BDDVarSet)
          */
-        public BDD applyUni(BDD that, BDDOp opr, BDD var) {
+        public BDD applyUni(BDD that, BDDOp opr, BDDVarSet var) {
             int x = _index;
             int y = ((bdd) that)._index;
             int z = opr.id;
-            int a = ((bdd) var)._index;
+            int a = ((bdd) ((BDDVarSet.DefaultImpl) var).b)._index;
             return makeBDD(bdd_appuni(x, y, z, a));
         }
 
@@ -324,11 +339,11 @@ public class JFactory extends BDDFactory {
         }
 
         /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#satOne(net.sf.javabdd.BDD, boolean)
+         * @see net.sf.javabdd.BDD#satOne(net.sf.javabdd.BDDVarSet, boolean)
          */
-        public BDD satOne(BDD var, boolean pol) {
+        public BDD satOne(BDDVarSet var, boolean pol) {
             int x = _index;
-            int y = ((bdd) var)._index;
+            int y = ((bdd) ((BDDVarSet.DefaultImpl) var).b)._index;
             int z = pol ? 1 : 0;
             return makeBDD(bdd_satoneset(x, y, z));
         }
@@ -649,37 +664,27 @@ public class JFactory extends BDDFactory {
 
     static final int BDD_MEMORY = (-1); /* Out of memory */
     static final int BDD_VAR = (-2); /* Unknown variable */
-    static final int BDD_RANGE = (-3);
-    /* Variable value out of range (not in domain) */
-    static final int BDD_DEREF = (-4);
-    /* Removing external reference to unknown node */
-    static final int BDD_RUNNING = (-5);
-    /* Called bdd_init() twice whithout bdd_done() */
+    static final int BDD_RANGE = (-3); /* Variable value out of range (not in domain) */
+    static final int BDD_DEREF = (-4); /* Removing external reference to unknown node */
+    static final int BDD_RUNNING = (-5); /* Called bdd_init() twice without bdd_done() */
     static final int BDD_FILE = (-6); /* Some file operation failed */
     static final int BDD_FORMAT = (-7); /* Incorrect file format */
-    static final int BDD_ORDER = (-8);
-    /* Vars. not in order for vector based functions */
+    static final int BDD_ORDER = (-8); /* Vars. not in order for vector based functions */
     static final int BDD_BREAK = (-9); /* User called break */
-    static final int BDD_VARNUM = (-10);
-    /* Different number of vars. for vector pair */
-    static final int BDD_NODES = (-11);
-    /* Tried to set max. number of nodes to be fewer */
-    /* than there already has been allocated */
+    static final int BDD_VARNUM = (-10); /* Different number of vars. for vector pair */
+    static final int BDD_NODES = (-11); /* Tried to set max. number of nodes to be fewer */
+                                        /* than there already has been allocated */
     static final int BDD_OP = (-12); /* Unknown operator */
     static final int BDD_VARSET = (-13); /* Illegal variable set */
     static final int BDD_VARBLK = (-14); /* Bad variable block operation */
-    static final int BDD_DECVNUM = (-15);
-    /* Trying to decrease the number of variables */
-    static final int BDD_REPLACE = (-16);
-    /* Replacing to already existing variables */
-    static final int BDD_NODENUM = (-17);
-    /* Number of nodes reached user defined maximum */
+    static final int BDD_DECVNUM = (-15); /* Trying to decrease the number of variables */
+    static final int BDD_REPLACE = (-16); /* Replacing to already existing variables */
+    static final int BDD_NODENUM = (-17); /* Number of nodes reached user defined maximum */
     static final int BDD_ILLBDD = (-18); /* Illegal bdd argument */
     static final int BDD_SIZE = (-19); /* Illegal size argument */
 
     static final int BVEC_SIZE = (-20); /* Mismatch in bitvector size */
-    static final int BVEC_SHIFT = (-21);
-    /* Illegal shift-left/right parameter */
+    static final int BVEC_SHIFT = (-21); /* Illegal shift-left/right parameter */
     static final int BVEC_DIVZERO = (-22); /* Division by zero */
 
     static final int BDD_ERRNUM = 24;
@@ -729,6 +734,11 @@ public class JFactory extends BDDFactory {
     }
 
     /* (non-Javadoc)
+     * @see net.sf.javabdd.BDDFactory#isZDD()
+     */
+    public boolean isZDD() { return ZDD; }
+    
+    /* (non-Javadoc)
      * @see net.sf.javabdd.BDDFactory#zero()
      */
     public BDD zero() {
@@ -742,6 +752,10 @@ public class JFactory extends BDDFactory {
         return makeBDD(bddtrue);
     }
 
+    public BDDVarSet emptySet() {
+        return makeBDDVarSet(bddtrue);
+    }
+    
     int bdd_ithvar(int var) {
         if (var < 0 || var >= bddvarnum) {
             bdd_error(BDD_VAR);
@@ -900,7 +914,7 @@ public class JFactory extends BDDFactory {
 
                 if (firstReorder == 0)
                     bdd_disable_reorder();
-                res = not_rec(r);
+                res = ZDD ? znot_rec(r) : not_rec(r);
                 if (firstReorder == 0)
                     bdd_enable_reorder();
             } catch (ReorderException x) {
@@ -948,6 +962,36 @@ public class JFactory extends BDDFactory {
         return res;
     }
 
+    int znot_rec(int r) {
+        BddCacheDataI entry;
+        int res;
+
+        if (ISZERO(r))
+            return bddtrue;
+        if (ISONE(r))
+            return bddfalse;
+
+        entry = BddCache_lookupI(applycache, NOTHASH(r));
+
+        if (entry.a == r && entry.c == bddop_not) {
+            if (CACHESTATS)
+                cachestats.opHit++;
+            return entry.res;
+        }
+        if (CACHESTATS)
+            cachestats.opMiss++;
+
+        PUSHREF(znot_rec(LOW(r)));
+        res = bdd_makenode(LEVEL(r), READREF(1), HIGH(r));
+        POPREF(1);
+
+        entry.a = r;
+        entry.c = bddop_not;
+        entry.res = res;
+
+        return res;
+    }
+    
     int bdd_ite(int f, int g, int h) {
         int res;
         firstReorder = 1;
@@ -965,7 +1009,7 @@ public class JFactory extends BDDFactory {
 
                 if (firstReorder == 0)
                     bdd_disable_reorder();
-                res = ite_rec(f, g, h);
+                res = ZDD ? zite_rec(f, g, h) : ite_rec(f, g, h);
                 if (firstReorder == 0)
                     bdd_enable_reorder();
             } catch (ReorderException x) {
@@ -1061,6 +1105,87 @@ public class JFactory extends BDDFactory {
         return res;
     }
 
+    int zite_rec(int f, int g, int h) {
+        BddCacheDataI entry;
+        int res;
+
+        if (ISONE(f))
+            return g;
+        if (ISZERO(f))
+            return h;
+        if (g == h)
+            return g;
+        if (ISONE(g) && ISZERO(h))
+            return f;
+        if (ISZERO(g) && ISONE(h))
+            return znot_rec(f);
+        
+        int v = Math.min(LEVEL(g), LEVEL(h));
+        if (LEVEL(f) < v)
+            return zite_rec(LOW(f), g, h);
+
+        entry = BddCache_lookupI(itecache, ITEHASH(f, g, h));
+        if (entry.a == f && entry.b == g && entry.c == h) {
+            if (CACHESTATS)
+                cachestats.opHit++;
+            return entry.res;
+        }
+        if (CACHESTATS)
+            cachestats.opMiss++;
+
+        if (LEVEL(f) == LEVEL(g)) {
+            if (LEVEL(f) == LEVEL(h)) {
+                PUSHREF(zite_rec(LOW(f), LOW(g), LOW(h)));
+                PUSHREF(zite_rec(HIGH(f), HIGH(g), HIGH(h)));
+                res = bdd_makenode(LEVEL(f), READREF(2), READREF(1));
+                POPREF(2);
+            } else if (LEVEL(f) < LEVEL(h)) {
+                PUSHREF(zite_rec(LOW(f), LOW(g), h));
+                PUSHREF(zite_rec(HIGH(f), HIGH(g), 0));
+                res = bdd_makenode(LEVEL(f), READREF(2), READREF(1));
+                POPREF(2);
+            } else /* f > h */ {
+                PUSHREF(zite_rec(f, g, LOW(h)));
+                res = bdd_makenode(LEVEL(h), HIGH(h), READREF(1));
+                POPREF(1);
+            }
+        } else if (LEVEL(f) < LEVEL(g)) {
+            if (LEVEL(f) == LEVEL(h)) {
+                PUSHREF(zite_rec(LOW(f), g, LOW(h)));
+                PUSHREF(zite_rec(HIGH(f), 0, HIGH(h)));
+                res = bdd_makenode(LEVEL(f), READREF(2), READREF(1));
+                POPREF(2);
+            } else if (LEVEL(f) < LEVEL(h)) {
+                res = zite_rec(LOW(f), g, h);
+            } else /* f > h */ {
+                PUSHREF(zite_rec(f, g, LOW(h)));
+                res = bdd_makenode(LEVEL(h), HIGH(h), READREF(1));
+                POPREF(1);
+            }
+        } else /* f > g */ {
+            if (LEVEL(g) == LEVEL(h)) {
+                PUSHREF(zite_rec(f, LOW(g), LOW(h)));
+                res = bdd_makenode(LEVEL(g), HIGH(h), READREF(1));
+                POPREF(1);
+            } else if (LEVEL(g) < LEVEL(h)) {
+                PUSHREF(zite_rec(f, LOW(g), h));
+                res = bdd_makenode(LEVEL(g), 0, READREF(1));
+                POPREF(1);
+            } else /* g > h */ {
+                PUSHREF(zite_rec(f, g, LOW(h)));
+                res = bdd_makenode(LEVEL(h), HIGH(h), READREF(1));
+                POPREF(1);
+            }
+        }
+
+        entry.a = f;
+        entry.b = g;
+        entry.c = h;
+        entry.res = res;
+
+        return res;
+    }
+    
     int bdd_replace(int r, bddPair pair) {
         int res;
         firstReorder = 1;
@@ -1180,8 +1305,9 @@ public class JFactory extends BDDFactory {
                 if (firstReorder == 0)
                     bdd_disable_reorder();
                 switch (op) {
-                    case bddop_and: res = and_rec(l, r); break;
-                    case bddop_or: res = or_rec(l, r); break;
+                    case bddop_and: res = ZDD ? zand_rec(l, r) : and_rec(l, r); break;
+                    case bddop_or: res = ZDD ? zor_rec(l, r) : or_rec(l, r); break;
+                    case bddop_diff: res = ZDD ? zdiff_rec(l, r) : apply_rec(l, r); break;
                     default: res = apply_rec(l, r); break;
                 }
                 if (firstReorder == 0)
@@ -1207,6 +1333,7 @@ public class JFactory extends BDDFactory {
         BddCacheDataI entry;
         int res;
 
+        if (VERIFY_ASSERTIONS) _assert(!ZDD);
         if (VERIFY_ASSERTIONS) _assert(applyop != bddop_and && applyop != bddop_or);
         
         switch (applyop) {
@@ -1286,6 +1413,7 @@ public class JFactory extends BDDFactory {
             return r;
         if (ISONE(r))
             return l;
+        
         entry = BddCache_lookupI(applycache, APPLYHASH(l, r, bddop_and));
 
         if (entry.a == l && entry.b == r && entry.c == bddop_and) {
@@ -1309,6 +1437,47 @@ public class JFactory extends BDDFactory {
             PUSHREF(and_rec(l, HIGH(r)));
             res = bdd_makenode(LEVEL(r), READREF(2), READREF(1));
         }
+
+        POPREF(2);
+
+        entry.a = l;
+        entry.b = r;
+        entry.c = bddop_and;
+        entry.res = res;
+
+        return res;
+    }
+    
+    int zand_rec(int l, int r) {
+        BddCacheDataI entry;
+        int res;
+
+        if (l == r)
+            return l;
+        if (ISZERO(l) || ISZERO(r))
+            return 0;
+        if (ISONE(l))
+            return r;
+        if (ISONE(r))
+            return l;
+        if (LEVEL(l) < LEVEL(r))
+            return zand_rec(LOW(l), r);
+        else if (LEVEL(l) > LEVEL(r))
+            return zand_rec(l, LOW(r));
+        
+        entry = BddCache_lookupI(applycache, APPLYHASH(l, r, bddop_and));
+
+        if (entry.a == l && entry.b == r && entry.c == bddop_and) {
+            if (CACHESTATS)
+                cachestats.opHit++;
+            return entry.res;
+        }
+        if (CACHESTATS)
+            cachestats.opMiss++;
+
+        PUSHREF(zand_rec(LOW(l), LOW(r)));
+        PUSHREF(zand_rec(HIGH(l), HIGH(r)));
+        res = bdd_makenode(LEVEL(l), READREF(2), READREF(1));
 
         POPREF(2);
 
@@ -1366,10 +1535,98 @@ public class JFactory extends BDDFactory {
         return res;
     }
 
+    int zor_rec(int l, int r) {
+        BddCacheDataI entry;
+        int res;
+
+        if (l == r)
+            return l;
+        if (ISONE(l) || ISONE(r))
+            return 1;
+        if (ISZERO(l))
+            return r;
+        if (ISZERO(r))
+            return l;
+        entry = BddCache_lookupI(applycache, APPLYHASH(l, r, bddop_or));
+
+        if (entry.a == l && entry.b == r && entry.c == bddop_or) {
+            if (CACHESTATS)
+                cachestats.opHit++;
+            return entry.res;
+        }
+        if (CACHESTATS)
+            cachestats.opMiss++;
+
+        if (LEVEL(l) == LEVEL(r)) {
+            PUSHREF(zor_rec(LOW(l), LOW(r)));
+            PUSHREF(zor_rec(HIGH(l), HIGH(r)));
+            res = bdd_makenode(LEVEL(l), READREF(2), READREF(1));
+            POPREF(2);
+        } else {
+            if (LEVEL(l) < LEVEL(r)) {
+                PUSHREF(zor_rec(LOW(l), r));
+                res = bdd_makenode(LEVEL(l), READREF(1), HIGH(l));
+            } else {
+                PUSHREF(zor_rec(l, LOW(r)));
+                res = bdd_makenode(LEVEL(r), READREF(1), HIGH(r));
+            }
+            POPREF(1);
+        }
+
+        entry.a = l;
+        entry.b = r;
+        entry.c = bddop_or;
+        entry.res = res;
+
+        return res;
+    }
+    
+    int zdiff_rec(int l, int r) {
+        BddCacheDataI entry;
+        int res;
+
+        if (ISZERO(l) || ISONE(r) || l == r)
+            return 0;
+        if (ISZERO(r))
+            return l;
+        if (LEVEL(l) > LEVEL(r))
+            return zdiff_rec(l, LOW(r));
+        
+        entry = BddCache_lookupI(applycache, APPLYHASH(l, r, bddop_and));
+
+        if (entry.a == l && entry.b == r && entry.c == bddop_and) {
+            if (CACHESTATS)
+                cachestats.opHit++;
+            return entry.res;
+        }
+        if (CACHESTATS)
+            cachestats.opMiss++;
+
+        if (LEVEL(l) == LEVEL(r)) {
+            PUSHREF(zdiff_rec(LOW(l), LOW(r)));
+            PUSHREF(zdiff_rec(HIGH(l), HIGH(r)));
+            res = bdd_makenode(LEVEL(l), READREF(2), READREF(1));
+            POPREF(2);
+        } else {
+            PUSHREF(zdiff_rec(LOW(l), r));
+            res = bdd_makenode(LEVEL(l), READREF(1), HIGH(l));
+            POPREF(1);
+        }
+
+        entry.a = l;
+        entry.b = r;
+        entry.c = bddop_diff;
+        entry.res = res;
+
+        return res;
+    }
+    
     int relprod_rec(int l, int r) {
         BddCacheDataI entry;
         int res;
 
+        if (VERIFY_ASSERTIONS) _assert(!ZDD);
+        
         if (l == 0 || r == 0)
             return 0;
         if (l == r)
@@ -1784,8 +2041,8 @@ public class JFactory extends BDDFactory {
         if (INVARSET(LEVEL(r))) {
             int r2 = READREF(2), r1 = READREF(1);
             switch (applyop) {
-            case bddop_and: res = and_rec(r2, r1); break;
-            case bddop_or: res = or_rec(r2, r1); break;
+            case bddop_and: res = ZDD ? zand_rec(r2, r1) : and_rec(r2, r1); break;
+            case bddop_or: res = ZDD ? zor_rec(r2, r1) : or_rec(r2, r1); break;
             default: res = apply_rec(r2, r1); break;
             }
         } else {
@@ -2325,7 +2582,7 @@ public class JFactory extends BDDFactory {
         return res;
     }
 
-    static int supportSize = 0;
+    int supportSize = 0;
 
     int bdd_support(int r) {
         int n;
@@ -2765,6 +3022,9 @@ public class JFactory extends BDDFactory {
     }
 
     double bdd_satcount(int r) {
+        if (ZDD)
+            return bdd_pathcount(r);
+        
         double size = 1;
 
         CHECK(r);
@@ -2964,6 +3224,7 @@ public class JFactory extends BDDFactory {
     }
 
     public static final boolean CACHESTATS = false;
+    public boolean ZDD = false;
 
     int bdd_makenode(int level, int low, int high) {
         int hash2;
@@ -2972,9 +3233,15 @@ public class JFactory extends BDDFactory {
         if (CACHESTATS)
             cachestats.uniqueAccess++;
 
-        /* check whether childs are equal */
-        if (low == high)
-            return low;
+        if (ZDD) {
+            /* check whether high child is zero */
+            if (high == 0)
+                return low;
+        } else {
+            /* check whether childs are equal */
+            if (low == high)
+                return low;
+        }
 
         /* Try to find an existing node of this kind */
         hash2 = NODEHASH(level, low, high);
@@ -4331,7 +4598,6 @@ public class JFactory extends BDDFactory {
         List result = new LinkedList();
         int nDomains = numberOfDomains();
         StringTokenizer st = new StringTokenizer(ordering, "x_", true);
-        int numberOfDomains = 0, bitIndex = 0;
         boolean[] done = new boolean[nDomains];
         List last = null;
         for (int i=0; ; ++i) {
@@ -5556,10 +5822,18 @@ public class JFactory extends BDDFactory {
         /* Note: We know that low,high has a refcou greater than zero, so
         there is no need to add reference *recursively* */
 
-        /* check whether childs are equal */
-        if (low == high) {
-            INCREF(low);
-            return low;
+        if (ZDD) {
+            /* check whether high child is zero */
+            if (high == 0) {
+                INCREF(low);
+                return low;
+            }
+        } else {
+            /* check whether childs are equal */
+            if (low == high) {
+                INCREF(low);
+                return low;
+            }
         }
 
         /* Try to find an existing node of this kind */
