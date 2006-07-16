@@ -6,6 +6,7 @@ package regression;
 import junit.framework.Assert;
 import net.sf.javabdd.BDD;
 import net.sf.javabdd.BDDFactory;
+import net.sf.javabdd.BDDVarSet;
 import bdd.BDDTestCase;
 
 /**
@@ -25,37 +26,41 @@ public class R3 extends BDDTestCase {
             
             BDDFactory bdd = nextFactory();
             BDD x0,x1,y0,y1,z0,z1,t,or,one;
+            BDDVarSet xs0,xs1;
             bdd.setVarNum(5);
             x0 = bdd.ithVar(0);
             x1 = bdd.ithVar(1);
+            xs0 = x0.toVarSet();
+            xs1 = x1.toVarSet();
             one = bdd.one();
             or = x0.or(x1);
 
-            z0 = or.unique(x0);
+            z0 = or.unique(xs0);
             t = x1.not();
             Assert.assertTrue(z0.toString(), z0.equals(t));
             t.free();
 
-            z1 = or.unique(x1);
+            z1 = or.unique(xs1);
             t = x0.not();
             Assert.assertTrue(z1.toString(), z1.equals(t));
             t.free();
 
-            t = one.unique(x0);
+            t = one.unique(xs0);
             Assert.assertTrue(t.toString(), t.isZero());
             t.free();
 
-            y0 = x0.applyUni(x1, BDDFactory.or, x0);
+            y0 = x0.applyUni(x1, BDDFactory.or, xs0);
             t = x1.not();
             Assert.assertTrue(y0.toString(), y0.equals(t));
             t.free();
 
-            y1 = x0.applyUni(x1, BDDFactory.or, x1);
+            y1 = x0.applyUni(x1, BDDFactory.or, xs1);
             t = x0.not();
             Assert.assertTrue(y1.toString(), y1.equals(t));
             t.free();
 
             x0.free(); x1.free(); y0.free(); y1.free(); z0.free(); z1.free();
+            xs0.free(); xs1.free();
             or.free(); one.free();
             
         }

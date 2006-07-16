@@ -12,6 +12,7 @@ import junit.framework.Assert;
 import net.sf.javabdd.BDD;
 import net.sf.javabdd.BDDDomain;
 import net.sf.javabdd.BDDFactory;
+import net.sf.javabdd.BDDVarSet;
 
 /**
  * IteratorTests
@@ -33,7 +34,7 @@ public class IteratorTests extends BDDTestCase {
             BDDDomain[] ds = bdd.extDomain(new int[] { domainSize });
             BDDDomain d = ds[0];
             BDD b = bdd.zero();
-            BDD var = d.set();
+            BDDVarSet var = d.set();
             Iterator i = b.iterator(var);
             b.free();
             Assert.assertEquals(i.hasNext(), false);
@@ -107,8 +108,8 @@ public class IteratorTests extends BDDTestCase {
                     if (dual) c.andWith(d2.ithVar(r.nextInt(domainSize)));
                     b.orWith(c);
                 }
-                BDD var = d.set();
-                if (dual) var.andWith(d2.set());
+                BDDVarSet var = d.set();
+                if (dual) var.unionWith(d2.set());
                 Iterator i1 = b.iterator(var);
                 Iterator i2 = new MyBDDIterator(b, var);
                 b.free();
@@ -155,10 +156,10 @@ public class IteratorTests extends BDDTestCase {
 
         BDD orig;
         BDD b = null;
-        BDD myVar;
+        BDDVarSet myVar;
         BDD last = null;
         
-        MyBDDIterator(BDD dis, BDD var) {
+        MyBDDIterator(BDD dis, BDDVarSet var) {
             orig = dis;
             if (!dis.isZero()) {
                 b = dis.id();
