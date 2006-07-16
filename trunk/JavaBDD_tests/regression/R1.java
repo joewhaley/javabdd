@@ -7,6 +7,7 @@ import junit.framework.Assert;
 import net.sf.javabdd.BDD;
 import net.sf.javabdd.BDDDomain;
 import net.sf.javabdd.BDDFactory;
+import net.sf.javabdd.BDDVarSet;
 import bdd.BDDTestCase;
 
 /**
@@ -26,7 +27,7 @@ public class R1 extends BDDTestCase {
             BDDFactory bdd = nextFactory();
             BDDDomain d = bdd.extDomain(new int[] { 16 })[0];
             BDD x = d.ithVar(6).orWith(d.ithVar(13));
-            BDD set = d.set();
+            BDDVarSet set = d.set();
             double s1 = x.satCount(set);
             if (bdd.varNum() < 20) bdd.setVarNum(20);
             double s2 = x.satCount(set);
