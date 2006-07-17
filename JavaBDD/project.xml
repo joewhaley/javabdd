@@ -5,7 +5,7 @@
   <name>JavaBDD</name>
   <groupId>javabdd</groupId>
   <id>javabdd</id>
-  <currentVersion>1.0b2</currentVersion>
+  <currentVersion>2.0</currentVersion>
   <logo>/images/logo2_mid.jpg</logo>
   <organization>
     <name>John Whaley</name>
@@ -79,6 +79,11 @@
       <id>1.0b2</id>
       <name>1.0b2</name>
       <tag>v1_0b2</tag>
+    </version>
+    <version>
+      <id>2.0</id>
+      <name>2.0</name>
+      <tag>v2_0</tag>
     </version>
   </versions>
   <mailingLists>
