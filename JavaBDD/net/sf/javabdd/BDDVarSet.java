@@ -1,5 +1,5 @@
 // BDDVarSet.java, created Jul 13, 2006 8:53:13 PM by jwhaley
-// Copyright (C) 2004 John Whaley <jwhaley@alum.mit.edu>
+// Copyright (C) 2004-2006 John Whaley <jwhaley@alum.mit.edu>
 // Licensed under the terms of the GNU LGPL; see COPYING for details.
 package net.sf.javabdd;
 

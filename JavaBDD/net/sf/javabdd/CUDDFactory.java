@@ -627,9 +627,9 @@ public class CUDDFactory extends BDDFactory {
         /* (non-Javadoc)
          * @see net.sf.javabdd.BDD#support()
          */
-        public BDD support() {
+        public BDDVarSet support() {
             long b = support0(_ddnode_ptr);
-            return new CUDDBDD(b);
+            return new BDDVarSet.DefaultImpl(new CUDDBDD(b));
         }
         private static native long support0(long b);
         

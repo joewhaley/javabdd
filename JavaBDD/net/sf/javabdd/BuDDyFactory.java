@@ -597,13 +597,6 @@ public class BuDDyFactory extends BDDFactory {
     private static native void printStat0();
 
     /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#createDomain(int, java.math.BigInteger)
-     */
-    protected BDDDomain createDomain(int a, BigInteger b) {
-        return new BuDDyBDDDomain(a, b);
-    }
-
-    /* (non-Javadoc)
      * An implementation of a BDD class, used by the BuDDy interface.
      */
     private static class BuDDyBDD extends BDD {
@@ -793,9 +786,9 @@ public class BuDDyFactory extends BDDFactory {
         /* (non-Javadoc)
          * @see net.sf.javabdd.BDD#support()
          */
-        public BDD support() {
+        public BDDVarSet support() {
             int b = support0(_id);
-            return makeBDD(b);
+            return makeBDDVarSet(b);
         }
         private static native int support0(int b);
         
@@ -1055,22 +1048,6 @@ public class BuDDyFactory extends BDDFactory {
     }
     
     /* (non-Javadoc)
-     * An implementation of a BDDDomain, used by the BuDDy interface.
-     */
-    private static class BuDDyBDDDomain extends BDDDomain {
-
-        private BuDDyBDDDomain(int a, BigInteger b) {
-            super(a, b);
-        }
-
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDDDomain#getFactory()
-         */
-        public BDDFactory getFactory() { return INSTANCE; }
-
-    }
-    
-    /* (non-Javadoc)
      * An implementation of a BDDPairing, used by the BuDDy interface.
      */
     private static class BuDDyBDDPairing extends BDDPairing {
@@ -1147,29 +1124,6 @@ public class BuDDyFactory extends BDDFactory {
             super.finalize();
             free();
         }
-
-    }
-    
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#createBitVector(int)
-     */
-    protected BDDBitVector createBitVector(int a) {
-        return new BuDDyBDDBitVector(a);
-    }
-    
-    /* (non-Javadoc)
-     * An implementation of a BDDBitVector, used by the BuDDy interface.
-     */
-    private static class BuDDyBDDBitVector extends BDDBitVector {
-
-        private BuDDyBDDBitVector(int a) {
-            super(a);
-        }
-
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDDBitVector#getFactory()
-         */
-        public BDDFactory getFactory() { return INSTANCE; }
 
     }
     

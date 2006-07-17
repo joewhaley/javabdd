@@ -159,13 +159,6 @@ public class TypedBDDFactory extends BDDFactory {
         return factory.setVarNum(num);
     }
 
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#duplicateVar(int)
-     */
-    public int duplicateVar(int var) {
-        return factory.duplicateVar(var);
-    }
-    
     public BDDDomain whichDomain(int var) {
         for (int i = 0; i < numberOfDomains(); ++i) {
             int[] vars = getDomain(i).vars();
@@ -304,14 +297,6 @@ public class TypedBDDFactory extends BDDFactory {
      */
     public void setVarOrder(int[] neworder) {
         factory.setVarOrder(neworder);
-    }
-
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#addVarBlock(net.sf.javabdd.BDD, boolean)
-     */
-    public void addVarBlock(BDD var, boolean fixed) {
-        TypedBDD bdd1 = (TypedBDD) var;
-        factory.addVarBlock(bdd1.bdd, fixed);
     }
 
     /* (non-Javadoc)
@@ -781,11 +766,9 @@ public class TypedBDDFactory extends BDDFactory {
         /* (non-Javadoc)
          * @see net.sf.javabdd.BDD#support()
          */
-        public BDD support() {
-            // TODO How does this change the domains?
-            Set newDom = makeSet();
-            newDom.addAll(dom);
-            return new TypedBDD(bdd.support(), newDom);
+        public BDDVarSet support() {
+            Set newDom = makeSet(dom);
+            return new TypedBDDVarSet(bdd.support(), newDom);
         }
 
         void applyHelper(Set newDom, TypedBDD bdd0, TypedBDD bdd1, BDDOp opr) {

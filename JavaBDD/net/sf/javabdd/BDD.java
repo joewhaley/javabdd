@@ -272,7 +272,9 @@ public abstract class BDD {
      * @return the result of the relational product
      * @see net.sf.javabdd.BDDDomain#set()
      */
-    public abstract BDD relprod(BDD that, BDDVarSet var);
+    public BDD relprod(BDD that, BDDVarSet var) {
+        return applyEx(that, BDDFactory.and, var);
+    }
     
     /**
      * <p>Functional composition.  Substitutes the variable var with the BDD that
@@ -404,7 +406,7 @@ public abstract class BDD {
      * 
      * @return the variable support of this BDD
      */
-    public abstract BDD support();
+    public abstract BDDVarSet support();
 
     /**
      * <p>Returns the result of applying the binary operator <tt>opr</tt> to the
