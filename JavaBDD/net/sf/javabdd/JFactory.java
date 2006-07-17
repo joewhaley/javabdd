@@ -4920,8 +4920,6 @@ public class JFactory extends BDDFactoryIntImpl {
     static final int BDD_REORDER_FREE = 0;
     static final int BDD_REORDER_FIXED = 1;
 
-    static long c1;
-
     void bdd_reorder_done() {
         bddtree_del(vartree);
         bdd_operator_reset();
