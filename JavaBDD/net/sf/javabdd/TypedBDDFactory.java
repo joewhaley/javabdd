@@ -1044,10 +1044,10 @@ public class TypedBDDFactory extends BDDFactory {
         
     }
     
-    private class TypedBDDVarSet extends BDDVarSet {
+    public class TypedBDDVarSet extends BDDVarSet {
         
-        BDDVarSet bdd;
-        Set dom;
+        final BDDVarSet bdd;
+        final Set dom;
         
         protected TypedBDDVarSet(BDDVarSet bdd, Set dom) {
             this.bdd = bdd;

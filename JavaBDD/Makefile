@@ -12,7 +12,7 @@
 BUDDY_SRC = buddy/src
 CUDD_SRC = cudd-2.4.1
 CAL_SRC = cal-2.1
-VER = 1.0b2
+VER = 2.0
 
 ifeq (${OS},Windows_NT)
   JDK_ROOT = $(firstword $(wildcard c:/j2sdk*))

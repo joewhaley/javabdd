@@ -32,6 +32,58 @@ public abstract class BDDVarSet {
     public abstract int[] toLevelArray();
     
     /**
+     * <p>Scans this BDD and copies the stored variables into an array of BDDDomains.
+     * The domains returned are guaranteed to be in ascending order.</p>
+     * 
+     * <p>Compare to fdd_scanset.</p>
+     * 
+     * @return int[]
+     */
+    public BDDDomain[] getDomains() {
+        int[] fv;
+        BDDDomain[] varset;
+        int fn;
+        int num, n, m, i;
+
+        fv = this.toArray();
+        fn = fv.length;
+
+        BDDFactory factory = getFactory();
+
+        for (n = 0, num = 0; n < factory.numberOfDomains(); n++) {
+            BDDDomain dom = factory.getDomain(n);
+            int[] ivar = dom.vars();
+            boolean found = false;
+            for (m = 0; m < dom.varNum() && !found; m++) {
+                for (i = 0; i < fn && !found; i++) {
+                    if (ivar[m] == fv[i]) {
+                        num++;
+                        found = true;
+                    }
+                }
+            }
+        }
+
+        varset = new BDDDomain[num];
+
+        for (n = 0, num = 0; n < factory.numberOfDomains(); n++) {
+            BDDDomain dom = factory.getDomain(n);
+            int[] ivar = dom.vars();
+            boolean found = false;
+            for (m = 0; m < dom.varNum() && !found; m++) {
+                for (i = 0; i < fn && !found; i++) {
+                    if (ivar[m] == fv[i]) {
+                        varset[num++] = dom;
+                        found = true;
+                    }
+                }
+            }
+        }
+
+        return varset;
+    }
+    
+    /**
      * <p>Returns a new BDDVarSet that is the union of the current BDDVarSet
      * and the given BDDVarSet.  This constructs a new set; neither the current
      * nor the given BDDVarSet is modified.</p>

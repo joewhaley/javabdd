@@ -11,7 +11,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.math.BigInteger;
 
 /**
  * <p>An implementation of BDDFactory that relies on the BuDDy library through a

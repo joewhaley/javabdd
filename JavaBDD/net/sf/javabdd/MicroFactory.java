@@ -6008,14 +6008,6 @@ public class MicroFactory extends BDDFactory {
     }
 
     /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#addVarBlock(net.sf.javabdd.BDD, boolean)
-     */
-    public void addVarBlock(BDD var, boolean fixed) {
-        int[] set = var.scanSet();
-        bdd_addvarblock(set, fixed);
-    }
-
-    /* (non-Javadoc)
      * @see net.sf.javabdd.BDDFactory#addVarBlock(int, int, boolean)
      */
     public void addVarBlock(int first, int last, boolean fixed) {
