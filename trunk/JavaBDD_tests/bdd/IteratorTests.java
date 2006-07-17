@@ -95,8 +95,8 @@ public class IteratorTests extends BDDTestCase {
             BDDDomain d = ds[0]; d.setName("D0");
             BDDDomain d2 = ds[1]; d2.setName("D1");
             bdd.setVarOrder(bdd.makeVarOrdering(true, "D1xD0"));
-            Random r = new Random(666);
-            int times = 1000;
+            Random r = new Random(667);
+            int times = 500;
             int combine = 400;
             boolean dual = true;
             for (int i = 0; i < times; ++i) {

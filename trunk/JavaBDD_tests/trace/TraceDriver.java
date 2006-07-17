@@ -269,7 +269,7 @@ public class TraceDriver {
         private void do_s2sp() throws IOException { check(ops == 1); ret.bdd = op1.bdd.replace(s2sp); }
         private void do_sp2s() throws IOException { check(ops == 1); ret.bdd = op1.bdd.replace(sp2s); }
 
-        private void do_support() throws IOException { check(ops == 1); ret.bdd = op1.bdd.support(); }
+        private void do_support() throws IOException { check(ops == 1); ret.bdd = op1.bdd.support().toBDD(); }
         private void do_exists() throws IOException { check(ops == 2); ret.bdd = op2.bdd.exist(op1.bdd.toVarSet()); }
 
         private void do_forall() throws IOException { check(ops == 2); ret.bdd = op2.bdd.forAll(op1.bdd.toVarSet()); }

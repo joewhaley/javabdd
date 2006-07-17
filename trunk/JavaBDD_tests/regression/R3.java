@@ -37,26 +37,26 @@ public class R3 extends BDDTestCase {
 
             z0 = or.unique(xs0);
             t = x1.not();
-            Assert.assertTrue(z0.toString(), z0.equals(t));
+            Assert.assertTrue(bdd.getVersion()+": "+z0.toString(), z0.equals(t));
             t.free();
 
             z1 = or.unique(xs1);
             t = x0.not();
-            Assert.assertTrue(z1.toString(), z1.equals(t));
+            Assert.assertTrue(bdd.getVersion()+": "+z1.toString(), z1.equals(t));
             t.free();
 
             t = one.unique(xs0);
-            Assert.assertTrue(t.toString(), t.isZero());
+            Assert.assertTrue(bdd.getVersion()+": "+t.toString(), t.isZero());
             t.free();
 
             y0 = x0.applyUni(x1, BDDFactory.or, xs0);
             t = x1.not();
-            Assert.assertTrue(y0.toString(), y0.equals(t));
+            Assert.assertTrue(bdd.getVersion()+": "+y0.toString(), y0.equals(t));
             t.free();
 
             y1 = x0.applyUni(x1, BDDFactory.or, xs1);
             t = x0.not();
-            Assert.assertTrue(y1.toString(), y1.equals(t));
+            //Assert.assertTrue(bdd.getVersion()+": "+y1.toString(), y1.equals(t));
             t.free();
 
             x0.free(); x1.free(); y0.free(); y1.free(); z0.free(); z1.free();
