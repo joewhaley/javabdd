@@ -315,29 +315,7 @@ public abstract class BDDDomain {
         }
         if (ivar.length == binsize) return binsize;
         
-        if (true) {
-            throw new BDDException("Can't add bits to domains, requested domain "+name+" upper limit "+range);
-        }
-        int[] new_ivar = new int[binsize];
-        System.arraycopy(ivar, 0, new_ivar, 0, ivar.length);
-        BDDFactory factory = getFactory();
-        for (int i = ivar.length; i < new_ivar.length; ++i) {
-            //System.out.println("Domain "+this+" Duplicating var#"+new_ivar[i-1]);
-            int newVar = factory.duplicateVar(new_ivar[i-1]);
-            factory.firstbddvar++;
-            new_ivar[i] = newVar;
-            //System.out.println("Domain "+this+" var#"+i+" = "+newVar);
-        }
-        this.ivar = new_ivar;
-        //System.out.println("Domain "+this+" old var = "+var);
-        this.var.free();
-        BDDVarSet nvar = factory.emptySet();
-        for (int i = 0; i < ivar.length; ++i) {
-            nvar.unionWith(ivar[i]);
-        }
-        this.var = nvar;
-        //System.out.println("Domain "+this+" new var = "+var);
-        return binsize;
+        throw new BDDException("Can't add bits to domains, requested domain "+name+" upper limit "+range);
     }
     
     /* (non-Javadoc)

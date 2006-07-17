@@ -594,9 +594,9 @@ public class CALFactory extends BDDFactory {
         /* (non-Javadoc)
          * @see net.sf.javabdd.BDD#support()
          */
-        public BDD support() {
+        public BDDVarSet support() {
             long b = support0(_ddnode_ptr);
-            return new CALBDD(b);
+            return new BDDVarSet.DefaultImpl(new CALBDD(b));
         }
         private static native long support0(long b);
         

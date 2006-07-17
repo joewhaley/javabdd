@@ -288,10 +288,10 @@ public class TestBDDFactory extends BDDFactory {
         /* (non-Javadoc)
          * @see net.sf.javabdd.BDD#support()
          */
-        public BDD support() {
-            BDD r1 = b1.support();
-            BDD r2 = b2.support();
-            return new TestBDD(r1, r2);
+        public BDDVarSet support() {
+            BDDVarSet r1 = b1.support();
+            BDDVarSet r2 = b2.support();
+            return new TestBDDVarSet(r1, r2);
         }
 
         /* (non-Javadoc)
@@ -765,16 +765,6 @@ public class TestBDDFactory extends BDDFactory {
     }
 
     /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#duplicateVar(int)
-     */
-    public int duplicateVar(int var) {
-        int r1 = f1.duplicateVar(var);
-        int r2 = f2.duplicateVar(var);
-        assertSame(r1 == r2, "duplicateVar");
-        return r1;
-    }
-    
-    /* (non-Javadoc)
      * @see net.sf.javabdd.BDDFactory#ithVar(int)
      */
     public BDD ithVar(int var) {
@@ -917,16 +907,6 @@ public class TestBDDFactory extends BDDFactory {
     public void setVarOrder(int[] neworder) {
         f1.setVarOrder(neworder);
         f2.setVarOrder(neworder);
-    }
-
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#addVarBlock(net.sf.javabdd.BDD, boolean)
-     */
-    public void addVarBlock(BDD var, boolean fixed) {
-        BDD c1 = ((TestBDD)var).b1;
-        BDD c2 = ((TestBDD)var).b2;
-        f1.addVarBlock(c1, fixed);
-        f2.addVarBlock(c2, fixed);
     }
 
     /* (non-Javadoc)

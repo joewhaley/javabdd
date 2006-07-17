@@ -482,9 +482,9 @@ public class MicroFactory extends BDDFactory {
         /* (non-Javadoc)
          * @see net.sf.javabdd.BDD#support()
          */
-        public BDD support() {
+        public BDDVarSet support() {
             int x = _index;
-            return makeBDD(bdd_support(x));
+            return makeBDDVarSet(bdd_support(x));
         }
 
         /* (non-Javadoc)

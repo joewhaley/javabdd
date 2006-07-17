@@ -219,9 +219,9 @@ public class JDDFactory extends BDDFactory {
         /* (non-Javadoc)
          * @see net.sf.javabdd.BDD#support()
          */
-        public BDD support() {
+        public BDDVarSet support() {
             int x = _index;
-            return new bdd(bdd.support(x));
+            return new BDDVarSet.DefaultImpl(new bdd(bdd.support(x)));
         }
 
         private int apply0(int x, int y, int z) {

@@ -21,6 +21,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.math.BigInteger;
 import java.security.AccessControlException;
+import net.sf.javabdd.JFactory.BddTree;
 
 /**
  * <p>Interface for the creation and manipulation of BDDs.</p>
@@ -987,14 +988,6 @@ public abstract class BDDFactory {
      */
     public abstract void swapVar(int v1, int v2);
     
-    /**
-     * Duplicate a BDD variable.
-     * 
-     * @param var  var to duplicate
-     * @return  index of new variable
-     */
-    public abstract int duplicateVar(int var);
-    
     /**** VARIABLE BLOCKS ****/
     
     /**
@@ -1008,7 +1001,23 @@ public abstract class BDDFactory {
      * 
      * <p>Compare to bdd_addvarblock.</p>
      */
-    public abstract void addVarBlock(BDD var, boolean fixed);
+    public void addVarBlock(BDDVarSet var, boolean fixed) {
+        int[] v = var.toArray();
+        int first, last;
+        if (v.length < 1)
+            throw new BDDException("Invalid parameter for addVarBlock");
+
+        first = last = v[0];
+
+        for (int n = 1; n < v.length; n++) {
+            if (v[n] < first)
+                first = v[n];
+            if (v[n] > last)
+                last = v[n];
+        }
+
+        addVarBlock(first, last, fixed);
+    }
     // TODO: handle error code for addVarBlock.
     
     /**
@@ -1317,7 +1326,11 @@ public abstract class BDDFactory {
      * <p>Implementors must implement this factory method to create BDDDomain
      * objects of the correct type.</p>
      */
-    protected abstract BDDDomain createDomain(int a, BigInteger b);
+    protected BDDDomain createDomain(int a, BigInteger b) {
+        return new BDDDomain(a, b) {
+            public BDDFactory getFactory() { return BDDFactory.this; }
+        };
+    }
     
     /**
      * <p>Creates a new finite domain block of the given size.  Allocates
@@ -1640,7 +1653,11 @@ public abstract class BDDFactory {
      * <p>Implementors must implement this factory method to create BDDBitVector
      * objects of the correct type.</p>
      */
-    protected abstract BDDBitVector createBitVector(int a);
+    protected BDDBitVector createBitVector(int a) {
+        return new BDDBitVector(a) {
+            public BDDFactory getFactory() { return BDDFactory.this; }
+        };
+    }
     
     /**
      * <p>Build a bit vector that is constant true or constant false.</p>

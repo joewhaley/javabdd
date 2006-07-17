@@ -17,6 +17,7 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.math.BigInteger;
+import net.sf.javabdd.BDDFactory.BDDOp;
 
 /**
  * <p>This is a 100% Java implementation of the BDD factory.  It is based on
@@ -27,9 +28,13 @@ import java.math.BigInteger;
  * @author John Whaley
  * @version $Id$
  */
-public class JFactory extends BDDFactory {
+public class JFactory extends BDDFactoryIntImpl {
 
     static final boolean VERIFY_ASSERTIONS = false;
+    public static boolean FLUSH_CACHE_ON_GC = true;
+    static final boolean CACHESTATS = false;
+    static final boolean SWAPCOUNT = false;
+
     public static final String REVISION = "$Revision$";
     
     public String getVersion() {
@@ -47,401 +52,434 @@ public class JFactory extends BDDFactory {
         return f;
     }
 
-    static final boolean USE_FINALIZER = false;
-    public static boolean FLUSH_CACHE_ON_GC = true;
+    public boolean ZDD = false;
     
     /**
-     * Private helper function to create BDD objects.
+     * Implementation of BDDPairing used by JFactory.
      */
-    private bdd makeBDD(int id) {
-        bdd b;
-        if (USE_FINALIZER) {
-            b = new bddWithFinalizer(id);
-            if (false) { // can check for specific id's here.
-                System.out.println("Created "+System.identityHashCode(b)+" id "+id);
-                new Exception().printStackTrace(System.out);
-            }
-        } else {
-            b = new bdd(id);
-        }
-        return b;
-    }
-    
-    /**
-     * Private helper function to create BDD objects.
-     */
-    private BDDVarSet makeBDDVarSet(int id) {
-        BDDVarSet b = new BDDVarSet.DefaultImpl(makeBDD(id));
-        return b;
-    }
-    
-    /**
-     * Wrapper for the BDD index number used internally in the representation.
-     */
-    private class bdd extends BDD {
-        int _index;
-
-        bdd(int index) {
-            this._index = index;
-            bdd_addref(_index);
-        }
+    class bddPair extends BDDPairing {
+        int[] result;
+        int last;
+        int id;
+        bddPair next;
 
         /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#getFactory()
+         * @see net.sf.javabdd.BDDPairing#set(int, int)
          */
-        public BDDFactory getFactory() {
-            return JFactory.this;
+        public void set(int oldvar, int newvar) {
+            bdd_setpair(this, oldvar, newvar);
         }
-
         /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#toVarSet()
+         * @see net.sf.javabdd.BDDPairing#set(int, net.sf.javabdd.BDD)
          */
-        public BDDVarSet toVarSet() {
-            return makeBDDVarSet(_index);
+        public void set(int oldvar, BDD newvar) {
+            bdd_setbddpair(this, oldvar, unwrap(newvar));
+        }
+        /* (non-Javadoc)
+         * @see net.sf.javabdd.BDDPairing#reset()
+         */
+        public void reset() {
+            bdd_resetpair(this);
         }
         
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#isZero()
-         */
-        public boolean isZero() {
-            return _index == bddfalse;
-        }
-
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#isOne()
-         */
-        public boolean isOne() {
-            return _index == bddtrue;
-        }
-
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#var()
-         */
-        public int var() {
-            return bdd_var(_index);
-        }
-
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#high()
-         */
-        public BDD high() {
-            return makeBDD(HIGH(_index));
-        }
-
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#low()
-         */
-        public BDD low() {
-            return makeBDD(LOW(_index));
-        }
-
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#id()
-         */
-        public BDD id() {
-            return makeBDD(_index);
-        }
-
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#not()
-         */
-        public BDD not() {
-            return makeBDD(bdd_not(_index));
-        }
-
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#ite(net.sf.javabdd.BDD, net.sf.javabdd.BDD)
-         */
-        public BDD ite(BDD thenBDD, BDD elseBDD) {
-            int x = _index;
-            int y = ((bdd) thenBDD)._index;
-            int z = ((bdd) elseBDD)._index;
-            return makeBDD(bdd_ite(x, y, z));
-        }
-
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#relprod(net.sf.javabdd.BDD, net.sf.javabdd.BDDVarSet)
-         */
-        public BDD relprod(BDD that, BDDVarSet var) {
-            int x = _index;
-            int y = ((bdd) that)._index;
-            int z = ((bdd) ((BDDVarSet.DefaultImpl) var).b)._index;
-            return makeBDD(bdd_relprod(x, y, z));
-        }
-
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#compose(net.sf.javabdd.BDD, int)
-         */
-        public BDD compose(BDD g, int var) {
-            int x = _index;
-            int y = ((bdd) g)._index;
-            return makeBDD(bdd_compose(x, y, var));
-        }
-
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#veccompose(net.sf.javabdd.BDDPairing)
-         */
-        public BDD veccompose(BDDPairing pair) {
-            int x = _index;
-            return makeBDD(bdd_veccompose(x, ((bddPair) pair)));
-        }
-
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#constrain(net.sf.javabdd.BDD)
-         */
-        public BDD constrain(BDD that) {
-            int x = _index;
-            int y = ((bdd) that)._index;
-            return makeBDD(bdd_constrain(x, y));
-        }
-
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#exist(net.sf.javabdd.BDDVarSet)
-         */
-        public BDD exist(BDDVarSet var) {
-            int x = _index;
-            int y = ((bdd) ((BDDVarSet.DefaultImpl) var).b)._index;
-            return makeBDD(bdd_exist(x, y));
-        }
-
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#forAll(net.sf.javabdd.BDDVarSet)
-         */
-        public BDD forAll(BDDVarSet var) {
-            int x = _index;
-            int y = ((bdd) ((BDDVarSet.DefaultImpl) var).b)._index;
-            return makeBDD(bdd_forall(x, y));
-        }
-
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#unique(net.sf.javabdd.BDDVarSet)
-         */
-        public BDD unique(BDDVarSet var) {
-            int x = _index;
-            int y = ((bdd) ((BDDVarSet.DefaultImpl) var).b)._index;
-            return makeBDD(bdd_unique(x, y));
-        }
-
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#restrict(net.sf.javabdd.BDD)
-         */
-        public BDD restrict(BDD var) {
-            int x = _index;
-            int y = ((bdd) var)._index;
-            return makeBDD(bdd_restrict(x, y));
-        }
-
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#restrictWith(net.sf.javabdd.BDD)
-         */
-        public BDD restrictWith(BDD that) {
-            int x = _index;
-            int y = ((bdd) that)._index;
-            int a = bdd_restrict(x, y);
-            bdd_delref(x);
-            if (this != that)
-                that.free();
-            bdd_addref(a);
-            this._index = a;
-            return this;
-        }
-        
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#simplify(net.sf.javabdd.BDDVarSet)
-         */
-        public BDD simplify(BDDVarSet d) {
-            int x = _index;
-            int y = ((bdd) ((BDDVarSet.DefaultImpl) d).b)._index;
-            return makeBDD(bdd_simplify(x, y));
-        }
-
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#support()
-         */
-        public BDD support() {
-            int x = _index;
-            return makeBDD(bdd_support(x));
-        }
-
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#apply(net.sf.javabdd.BDD, net.sf.javabdd.BDDFactory.BDDOp)
-         */
-        public BDD apply(BDD that, BDDOp opr) {
-            int x = _index;
-            int y = ((bdd) that)._index;
-            int z = opr.id;
-            return makeBDD(bdd_apply(x, y, z));
-        }
-
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#applyWith(net.sf.javabdd.BDD, net.sf.javabdd.BDDFactory.BDDOp)
-         */
-        public BDD applyWith(BDD that, BDDOp opr) {
-            int x = _index;
-            int y = ((bdd) that)._index;
-            int z = opr.id;
-            int a = bdd_apply(x, y, z);
-            bdd_delref(x);
-            if (this != that)
-                that.free();
-            bdd_addref(a);
-            this._index = a;
-            return this;
-        }
-
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#applyAll(net.sf.javabdd.BDD, net.sf.javabdd.BDDFactory.BDDOp, net.sf.javabdd.BDDVarSet)
-         */
-        public BDD applyAll(BDD that, BDDOp opr, BDDVarSet var) {
-            int x = _index;
-            int y = ((bdd) that)._index;
-            int z = opr.id;
-            int a = ((bdd) ((BDDVarSet.DefaultImpl) var).b)._index;
-            return makeBDD(bdd_appall(x, y, z, a));
-        }
-
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#applyEx(net.sf.javabdd.BDD, net.sf.javabdd.BDDFactory.BDDOp, net.sf.javabdd.BDDVarSet)
-         */
-        public BDD applyEx(BDD that, BDDOp opr, BDDVarSet var) {
-            int x = _index;
-            int y = ((bdd) that)._index;
-            int z = opr.id;
-            int a = ((bdd) ((BDDVarSet.DefaultImpl) var).b)._index;
-            return makeBDD(bdd_appex(x, y, z, a));
-        }
-
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#applyUni(net.sf.javabdd.BDD, net.sf.javabdd.BDDFactory.BDDOp, net.sf.javabdd.BDDVarSet)
-         */
-        public BDD applyUni(BDD that, BDDOp opr, BDDVarSet var) {
-            int x = _index;
-            int y = ((bdd) that)._index;
-            int z = opr.id;
-            int a = ((bdd) ((BDDVarSet.DefaultImpl) var).b)._index;
-            return makeBDD(bdd_appuni(x, y, z, a));
-        }
-
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#satOne()
-         */
-        public BDD satOne() {
-            int x = _index;
-            return makeBDD(bdd_satone(x));
-        }
-
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#fullSatOne()
-         */
-        public BDD fullSatOne() {
-            int x = _index;
-            return makeBDD(bdd_fullsatone(x));
-        }
-
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#satOne(net.sf.javabdd.BDDVarSet, boolean)
-         */
-        public BDD satOne(BDDVarSet var, boolean pol) {
-            int x = _index;
-            int y = ((bdd) ((BDDVarSet.DefaultImpl) var).b)._index;
-            int z = pol ? 1 : 0;
-            return makeBDD(bdd_satoneset(x, y, z));
-        }
-
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#replace(net.sf.javabdd.BDDPairing)
-         */
-        public BDD replace(BDDPairing pair) {
-            int x = _index;
-            return makeBDD(bdd_replace(x, ((bddPair) pair)));
-        }
-
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#replaceWith(net.sf.javabdd.BDDPairing)
-         */
-        public BDD replaceWith(BDDPairing pair) {
-            int x = _index;
-            int y = bdd_replace(x, ((bddPair) pair));
-            bdd_delref(x);
-            bdd_addref(y);
-            _index = y;
-            return this;
-        }
-
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#nodeCount()
-         */
-        public int nodeCount() {
-            return bdd_nodecount(_index);
-        }
-
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#pathCount()
-         */
-        public double pathCount() {
-            return bdd_pathcount(_index);
-        }
-
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#satCount()
-         */
-        public double satCount() {
-            return bdd_satcount(_index);
-        }
-
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#varProfile()
-         */
-        public int[] varProfile() {
-            int x = _index;
-            return bdd_varprofile(x);
-        }
-
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#equals(net.sf.javabdd.BDD)
-         */
-        public boolean equals(BDD that) {
-            boolean b = this._index == ((bdd) that)._index; 
-            return b;
-        }
-
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#hashCode()
-         */
-        public int hashCode() {
-            return _index;
-        }
-
-        /**
-         * @see net.sf.javabdd.BDD#free()
-         */
-        public void free() {
-            bdd_delref(_index);
-            _index = INVALID_BDD;
-        }
-        
-    }
-
-    private class bddWithFinalizer extends bdd {
-        
-        bddWithFinalizer(int id) {
-            super(id);
-        }
-        
-        /**
-         * @see java.lang.Object#finalize()
-         */
-        protected void finalize() throws Throwable {
-            super.finalize();
-            if (USE_FINALIZER) {
-                if (false && _index >= 0) {
-                    System.out.println("BDD not freed! "+System.identityHashCode(this));
+        public String toString() {
+            StringBuffer sb = new StringBuffer();
+            sb.append('{');
+            boolean any = false;
+            for (int i = 0; i < result.length; ++i) {
+                if (result[i] != bdd_ithvar(bddlevel2var[i])) {
+                    if (any) sb.append(", ");
+                    any = true;
+                    sb.append(bddlevel2var[i]);
+                    sb.append('=');
+                    BDD b = makeBDD(result[i]);
+                    sb.append(b);
+                    b.free();
                 }
-                this.free();
+            }
+            sb.append('}');
+            return sb.toString();
+        }
+    }
+    
+    /* (non-Javadoc)
+     * @see net.sf.javabdd.BDDFactory#makePair()
+     */
+    public BDDPairing makePair() {
+        bddPair p = new bddPair();
+        p.result = new int[bddvarnum];
+        int n;
+        for (n = 0; n < bddvarnum; n++)
+            p.result[n] = bdd_ithvar(bddlevel2var[n]);
+
+        p.id = update_pairsid();
+        p.last = -1;
+
+        bdd_register_pair(p);
+        return p;
+    }
+
+    // Redirection functions.
+    
+    protected void addref_impl(int v) { bdd_addref(v); }
+    protected void delref_impl(int v) { bdd_delref(v); }
+    protected int zero_impl() { return BDDZERO; }
+    protected int one_impl() {return BDDONE; }
+    protected int invalid_bdd_impl() { return INVALID_BDD; }
+    protected int var_impl(int v) { return bdd_var(v); }
+    protected int level_impl(int v) { return LEVEL(v); }
+    protected int low_impl(int v) { return bdd_low(v); }
+    protected int high_impl(int v) { return bdd_high(v); }
+    protected int ithVar_impl(int var) { return bdd_ithvar(var); }
+    protected int nithVar_impl(int var) { return bdd_nithvar(var); }
+    
+    protected int ite_impl(int v1, int v2, int v3) { return bdd_ite(v1, v2, v3); }
+    protected int apply_impl(int v1, int v2, BDDOp opr) { return bdd_apply(v1, v2, opr.id); }
+    protected int not_impl(int v1) { return bdd_not(v1); }
+    protected int applyAll_impl(int v1, int v2, BDDOp opr, int v3) { return bdd_appall(v1, v2, opr.id, v3); }
+    protected int applyEx_impl(int v1, int v2, BDDOp opr, int v3) { return bdd_appex(v1, v2, opr.id, v3); }
+    protected int applyUni_impl(int v1, int v2, BDDOp opr, int v3) { return bdd_appuni(v1, v2, opr.id, v3); }
+    protected int compose_impl(int v1, int v2, int var) { return bdd_compose(v1, v2, var); }
+    protected int constrain_impl(int v1, int v2) { return bdd_constrain(v1, v2); }
+    protected int restrict_impl(int v1, int v2) { return bdd_restrict(v1, v2); }
+    protected int simplify_impl(int v1, int v2) { return bdd_simplify(v1, v2); }
+    protected int support_impl(int v) { return bdd_support(v); }
+    protected int exist_impl(int v1, int v2) { return bdd_exist(v1, v2); }
+    protected int forAll_impl(int v1, int v2) { return bdd_forall(v1, v2); }
+    protected int unique_impl(int v1, int v2) { return bdd_unique(v1, v2); }
+    protected int fullSatOne_impl(int v) { return bdd_fullsatone(v); }
+    
+    protected int replace_impl(int v, BDDPairing p) { return bdd_replace(v, (bddPair)p); }
+    protected int veccompose_impl(int v, BDDPairing p) { return bdd_veccompose(v, (bddPair)p); }
+    
+    protected int nodeCount_impl(int v) { return bdd_nodecount(v); }
+    protected double pathCount_impl(int v) { return bdd_pathcount(v); }
+    protected double satCount_impl(int v) { return bdd_satcount(v); }
+    protected int satOne_impl(int v) { return bdd_satone(v); }
+    protected int satOne_impl2(int v1, int v2, boolean pol) { return bdd_satoneset(v1, v2, pol); }
+    protected int nodeCount_impl2(int[] v) { return bdd_anodecount(v); }
+    protected int[] varProfile_impl(int v) { return bdd_varprofile(v); }
+    protected void printTable_impl(int v) { bdd_fprinttable(System.out, v); }
+    
+    // More redirection functions.
+    
+    protected void initialize(int initnodesize, int cs) { bdd_init(initnodesize, cs); }
+    public void addVarBlock(int first, int last, boolean fixed) { bdd_intaddvarblock(first, last, fixed); }
+    public void varBlockAll() { bdd_varblockall(); }
+    public void clearVarBlocks() { bdd_clrvarblocks(); }
+    public void printOrder() { bdd_fprintorder(System.out); }
+    public int getNodeTableSize() { return bdd_getallocnum(); }
+    public int setNodeTableSize(int size) { return bdd_setallocnum(size); }
+    public int setCacheSize(int v) { return bdd_setcachesize(v); }
+    public boolean isZDD() { return ZDD; }
+    public boolean isInitialized() { return bddrunning; }
+    public void done() { bdd_done(); }
+    public void setError(int code) { bdderrorcond = code; }
+    public void clearError() { bdderrorcond = 0; }
+    public int setMaxNodeNum(int size) { return bdd_setmaxnodenum(size); }
+    public double setMinFreeNodes(double x) { return bdd_setminfreenodes((int)(x * 100.)) / 100.; }
+    public int setMaxIncrease(int x) { return bdd_setmaxincrease(x); }
+    public double setIncreaseFactor(double x) { return bdd_setincreasefactor(x); }
+    public int getNodeNum() { return bdd_getnodenum(); }
+    public int getCacheSize() { return cachesize; }
+    public int reorderGain() { return bdd_reorder_gain(); }
+    public void printStat() { bdd_fprintstat(System.out); }
+    public double setCacheRatio(double x) { return bdd_setcacheratio((int)(x * 100)) / 100.; }
+    public int varNum() { return bdd_varnum(); }
+    public int setVarNum(int num) { return bdd_setvarnum(num); }
+    public void printAll() { bdd_fprintall(System.out); }
+    public BDD load(BufferedReader in, int[] translate) throws IOException { return makeBDD(bdd_load(in, translate)); }
+    public void save(BufferedWriter out, BDD b) throws IOException { bdd_save(out, unwrap(b)); }
+    public void setVarOrder(int[] neworder) { bdd_setvarorder(neworder); }
+    public int level2Var(int level) { return bddlevel2var[level]; }
+    public int var2Level(int var) { return bddvar2level[var]; }
+    public int getReorderTimes() { return bddreordertimes; }
+    public void disableReorder() { bdd_disable_reorder(); }
+    public void enableReorder() { bdd_enable_reorder(); }
+    public int reorderVerbose(int v) { return bdd_reorder_verbose(v); }
+    public void reorder(ReorderMethod m) { bdd_reorder(m.id); }
+    public void autoReorder(ReorderMethod method) { bdd_autoreorder(method.id); }
+    public void autoReorder(ReorderMethod method, int max) { bdd_autoreorder_times(method.id, max); }
+    public void swapVar(int v1, int v2) { bdd_swapvar(v1, v2); }
+
+    public ReorderMethod getReorderMethod() {
+        switch (bddreordermethod) {
+            case BDD_REORDER_NONE :
+                return REORDER_NONE;
+            case BDD_REORDER_WIN2 :
+                return REORDER_WIN2;
+            case BDD_REORDER_WIN2ITE :
+                return REORDER_WIN2ITE;
+            case BDD_REORDER_WIN3 :
+                return REORDER_WIN3;
+            case BDD_REORDER_WIN3ITE :
+                return REORDER_WIN3ITE;
+            case BDD_REORDER_SIFT :
+                return REORDER_SIFT;
+            case BDD_REORDER_SIFTITE :
+                return REORDER_SIFTITE;
+            case BDD_REORDER_RANDOM :
+                return REORDER_RANDOM;
+            default :
+                throw new BDDException();
+        }
+    }
+
+    // Experimental functions.
+    
+    public void validateAll() { bdd_validate_all(); }
+    public void validateBDD(BDD b) { bdd_validate(unwrap(b)); }
+    
+    public JFactory cloneFactory() {
+        JFactory INSTANCE = new JFactory();
+        if (applycache != null)
+            INSTANCE.applycache = this.applycache.copy();
+        if (itecache != null)
+            INSTANCE.itecache = this.itecache.copy();
+        if (quantcache != null)
+            INSTANCE.quantcache = this.quantcache.copy();
+        INSTANCE.appexcache = this.appexcache.copy();
+        if (replacecache != null)
+            INSTANCE.replacecache = this.replacecache.copy();
+        if (misccache != null)
+            INSTANCE.misccache = this.misccache.copy();
+        if (countcache != null)
+            INSTANCE.countcache = this.countcache.copy();
+        // TODO: potential difference here (!)
+        INSTANCE.rng = new Random();
+        INSTANCE.verbose = this.verbose;
+        INSTANCE.cachestats.copyFrom(this.cachestats);
+        
+        INSTANCE.bddrunning = this.bddrunning;
+        INSTANCE.bdderrorcond = this.bdderrorcond;
+        INSTANCE.bddnodesize = this.bddnodesize;
+        INSTANCE.bddmaxnodesize = this.bddmaxnodesize;
+        INSTANCE.bddmaxnodeincrease = this.bddmaxnodeincrease;
+        INSTANCE.bddfreepos = this.bddfreepos;
+        INSTANCE.bddfreenum = this.bddfreenum;
+        INSTANCE.bddproduced = this.bddproduced;
+        INSTANCE.bddvarnum = this.bddvarnum;
+
+        INSTANCE.gbcollectnum = this.gbcollectnum;
+        INSTANCE.cachesize = this.cachesize;
+        INSTANCE.gbcclock = this.gbcclock;
+        INSTANCE.usednodes_nextreorder = this.usednodes_nextreorder;
+        
+        INSTANCE.bddrefstacktop = this.bddrefstacktop;
+        INSTANCE.bddresized = this.bddresized;
+        INSTANCE.minfreenodes = this.minfreenodes;
+        INSTANCE.bddnodes = new int[this.bddnodes.length];
+        System.arraycopy(this.bddnodes, 0, INSTANCE.bddnodes, 0, this.bddnodes.length);
+        INSTANCE.bddrefstack = new int[this.bddrefstack.length];
+        System.arraycopy(this.bddrefstack, 0, INSTANCE.bddrefstack, 0, this.bddrefstack.length);
+        INSTANCE.bddvar2level = new int[this.bddvar2level.length];
+        System.arraycopy(this.bddvar2level, 0, INSTANCE.bddvar2level, 0, this.bddvar2level.length);
+        INSTANCE.bddlevel2var = new int[this.bddlevel2var.length];
+        System.arraycopy(this.bddlevel2var, 0, INSTANCE.bddlevel2var, 0, this.bddlevel2var.length);
+        INSTANCE.bddvarset = new int[this.bddvarset.length];
+        System.arraycopy(this.bddvarset, 0, INSTANCE.bddvarset, 0, this.bddvarset.length);
+        
+        INSTANCE.domain = new BDDDomain[this.domain.length];
+        for (int i = 0; i < INSTANCE.domain.length; ++i) {
+            INSTANCE.domain[i] = INSTANCE.createDomain(i, this.domain[i].realsize);
+        }
+        return INSTANCE;
+    }
+    
+    /**
+     * Use this function to translate BDD's from a JavaFactory into its clone.
+     * This will only work immediately after cloneFactory() is called, and
+     * before any other BDD operations are performed. 
+     * 
+     * @param that BDD in old factory
+     * @return a BDD in the new factory
+     */
+    public BDD copyNode(BDD that) {
+        return makeBDD(unwrap(that));
+    }
+    
+    public void reverseAllDomains() {
+        reorder_init();
+        for (int i = 0; i < fdvarnum; ++i) {
+            reverseDomain0(domain[i]);
+        }
+        reorder_done();
+    }
+    
+    public void reverseDomain(BDDDomain d) {
+        reorder_init();
+        reverseDomain0(d);
+        reorder_done();
+    }
+    
+    protected void reverseDomain0(BDDDomain d) {
+        int n = d.varNum();
+        BddTree[] trees = new BddTree[n];
+        int v = d.ivar[0];
+        addVarBlock(v, v, true);
+        trees[0] = getBlock(vartree, v, v);
+        BddTree parent = getParent(trees[0]);
+        for (int i = 1; i < n; ++i) {
+            v = d.ivar[i];
+            addVarBlock(v, v, true);
+            trees[i] = getBlock(vartree, v, v);
+            BddTree parent2 = getParent(trees[i]);
+            if (parent != parent2) {
+                throw new BDDException();
+            }
+        }
+        for (int i = 0; i < n; ++i) {
+            for (int j = i + 1; j < n; ++j) {
+                blockdown(trees[i]);
+            }
+        }
+        BddTree newchild = trees[n-1];
+        while (newchild.prev != null) newchild = newchild.prev;
+        if (parent == null) vartree = newchild;
+        else parent.nextlevel = newchild;
+    }
+    
+    public void setVarOrder(String ordering) {
+        List result = new LinkedList();
+        int nDomains = numberOfDomains();
+        StringTokenizer st = new StringTokenizer(ordering, "x_", true);
+        boolean[] done = new boolean[nDomains];
+        List last = null;
+        for (int i=0; ; ++i) {
+            String s = st.nextToken();
+            BDDDomain d;
+            for (int j=0; ; ++j) {
+                if (j == nDomains)
+                    throw new BDDException("bad domain: "+s);
+                d = getDomain(j);
+                if (s.equals(d.getName())) break;
+            }
+            if (done[d.getIndex()])
+                throw new BDDException("duplicate domain: "+s);
+            done[d.getIndex()] = true;
+            if (last != null) last.add(d);
+            if (st.hasMoreTokens()) {
+                s = st.nextToken();
+                if (s.equals("x")) {
+                    if (last == null) {
+                        last = new LinkedList();
+                        last.add(d);
+                        result.add(last);
+                    }
+                } else if (s.equals("_")) {
+                    if (last == null) {
+                        result.add(d);
+                    }
+                    last = null;
+                } else {
+                    throw new BDDException("bad token: "+s);
+                }
+            } else {
+                if (last == null) {
+                    result.add(d);
+                }
+                break;
             }
         }
         
+        for (int i=0; i<done.length; ++i) {
+            if (!done[i]) {
+                throw new BDDException("missing domain #"+i+": "+getDomain(i));
+            }
+        }
+        
+        setVarOrder(result);
     }
+    
+    /**
+     * <p>Set the variable order to be the given list of domains.</p>
+     * 
+     * @param domains  domain order
+     */
+    public void setVarOrder(List domains) {
+        BddTree[] my_vartree = new BddTree[fdvarnum];
+        boolean[] interleaved = new boolean[fdvarnum];
+        int k = 0;
+        for (Iterator i = domains.iterator(); i.hasNext(); ) {
+            Object o = i.next();
+            Collection c;
+            if (o instanceof BDDDomain) c = Collections.singleton(o);
+            else c = (Collection) o;
+            for (Iterator j = c.iterator(); j.hasNext(); ) {
+                BDDDomain d = (BDDDomain) j.next();
+                int low = d.ivar[0];
+                int high = d.ivar[d.ivar.length-1];
+                bdd_intaddvarblock(low, high, false);
+                BddTree b = getBlock(vartree, low, high);
+                my_vartree[k] = b;
+                interleaved[k] = j.hasNext();
+                k++;
+            }
+        }
+        if (k <= 1) return;
+        BddTree parent = getParent(my_vartree[0]);
+        for (int i = 0; i < k; ++i) {
+            if (parent != getParent(my_vartree[i])) {
+                throw new BDDException("var block "+my_vartree[i].firstVar+".."+my_vartree[i].lastVar+" is in wrong place in tree");
+            }
+        }
+        reorder_init();
+        BddTree prev = null; boolean prev_interleaved = false;
+        for (int i = 0; i < k; ++i) {
+            BddTree t = my_vartree[i];
+            while (t.prev != prev) {
+                blockdown(t.prev);
+            }
+            boolean inter = interleaved[i];
+            if (prev_interleaved) {
+                blockinterleave(t.prev);
+                //++i;
+                prev = t.prev;
+            } else {
+                prev = t;
+            }
+            prev_interleaved = inter;
+        }
+        BddTree newchild = my_vartree[0];
+        _assert(newchild.prev == null);
+        //while (newchild.prev != null) newchild = newchild.prev;
+        if (parent == null) vartree = newchild;
+        else parent.nextlevel = newchild;
+        reorder_done();
+    }
+    
+    protected BddTree getParent(BddTree child) {
+        for (BddTree p = vartree; p != null; p = p.next) {
+            if (p == child) return null;
+            BddTree q = getParent(p, child);
+            if (q != null) return q;
+        }
+        throw new BDDException("Cannot find tree node "+child);
+    }
+    
+    protected BddTree getParent(BddTree parent, BddTree child) {
+        if (parent.nextlevel == null) return null;
+        for (BddTree p = parent.nextlevel; p != null; p = p.next) {
+            if (p == child) return parent;
+            BddTree q = getParent(p, child);
+            if (q != null) return q;
+        }
+        return null;
+    }
+    
+    protected BddTree getBlock(BddTree t, int low, int high) {
+        if (t == null) return null;
+        for (BddTree p = t; p != null; p = p.next) {
+            if (p.firstVar == low && p.lastVar == high) return p;
+            BddTree q = getBlock(p.nextlevel, low, high);
+            if (q != null) return q;
+        }
+        return null;
+    }
+    
+    
+    
+    /***** IMPLEMENTATION BELOW *****/
     
     static final int REF_MASK = 0xFFC00000;
     static final int MARK_MASK = 0x00200000;
@@ -733,29 +771,6 @@ public class JFactory extends BDDFactory {
         return Math.abs(TRIPLE(lvl, l, h) % bddnodesize);
     }
 
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#isZDD()
-     */
-    public boolean isZDD() { return ZDD; }
-    
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#zero()
-     */
-    public BDD zero() {
-        return makeBDD(bddfalse);
-    }
-
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#one()
-     */
-    public BDD one() {
-        return makeBDD(bddtrue);
-    }
-
-    public BDDVarSet emptySet() {
-        return makeBDDVarSet(bddtrue);
-    }
-    
     int bdd_ithvar(int var) {
         if (var < 0 || var >= bddvarnum) {
             bdd_error(BDD_VAR);
@@ -2787,16 +2802,12 @@ public class JFactory extends BDDFactory {
         }
     }
 
-    int bdd_satoneset(int r, int var, int pol) {
+    int bdd_satoneset(int r, int var, boolean pol) {
         int res;
 
         CHECKa(r, bddfalse);
         if (ISZERO(r))
             return r;
-        if (!ISCONST(pol)) {
-            bdd_error(BDD_ILLBDD);
-            return bddfalse;
-        }
 
         bdd_disable_reorder();
 
@@ -2828,7 +2839,7 @@ public class JFactory extends BDDFactory {
             }
         } else if (LEVEL(var) < LEVEL(r)) {
             int res = satoneset_rec(r, HIGH(var));
-            if (satPolarity == BDDONE) {
+            if (satPolarity) {
                 int m = bdd_makenode(LEVEL(var), BDDZERO, res);
                 PUSHREF(m);
                 return m;
@@ -3223,9 +3234,6 @@ public class JFactory extends BDDFactory {
         bdd_unmark(HIGH(i));
     }
 
-    public static final boolean CACHESTATS = false;
-    public boolean ZDD = false;
-
     int bdd_makenode(int level, int low, int high) {
         int hash2;
         int res;
@@ -3335,15 +3343,6 @@ public class JFactory extends BDDFactory {
         return doResize(doRehash, oldsize, newsize);
     }
     
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#setNodeTableSize(int)
-     */
-    public int setNodeTableSize(int size) {
-        int old = bddnodesize;
-        doResize(true, old, size);
-        return old;
-    }
-    
     int doResize(boolean doRehash, int oldsize, int newsize) {
         
         newsize = bdd_prime_lte(newsize);
@@ -3382,10 +3381,7 @@ public class JFactory extends BDDFactory {
         return 0;
     }
 
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#initialize(int, int)
-     */
-    protected void initialize(int initnodesize, int cs) {
+    void bdd_init(int initnodesize, int cs) {
         int n;
 
         if (bddrunning)
@@ -3500,7 +3496,7 @@ public class JFactory extends BDDFactory {
     BddCache misccache; /* Cache for other results */
     BddCache countcache; /* Cache for count results */
     int cacheratio;
-    int satPolarity;
+    boolean satPolarity;
     int firstReorder;
     /* Used instead of local variable in order
                    to avoid compiler warning about 'first'
@@ -3577,7 +3573,7 @@ public class JFactory extends BDDFactory {
         BddCache_reset(countcache);
     }
 
-    public int setCacheSize(int newcachesize) {
+    int bdd_setcachesize(int newcachesize) {
         int old = cachesize;
         BddCache_resize(applycache, newcachesize);
         BddCache_resize(itecache, newcachesize);
@@ -3787,51 +3783,6 @@ public class JFactory extends BDDFactory {
         for (n = 0; n < bddvarnum; n++)
             p.result[n] = bdd_ithvar(bddlevel2var[n]);
         p.last = 0;
-    }
-
-    class bddPair extends BDDPairing {
-        int[] result;
-        int last;
-        int id;
-        bddPair next;
-
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDDPairing#set(int, int)
-         */
-        public void set(int oldvar, int newvar) {
-            bdd_setpair(this, oldvar, newvar);
-        }
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDDPairing#set(int, net.sf.javabdd.BDD)
-         */
-        public void set(int oldvar, BDD newvar) {
-            bdd_setbddpair(this, oldvar, ((bdd) newvar)._index);
-        }
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDDPairing#reset()
-         */
-        public void reset() {
-            bdd_resetpair(this);
-        }
-        
-        public String toString() {
-            StringBuffer sb = new StringBuffer();
-            sb.append('{');
-            boolean any = false;
-            for (int i = 0; i < result.length; ++i) {
-                if (result[i] != bdd_ithvar(bddlevel2var[i])) {
-                    if (any) sb.append(", ");
-                    any = true;
-                    sb.append(bddlevel2var[i]);
-                    sb.append('=');
-                    bdd b = new bdd(result[i]);
-                    sb.append(b);
-                    b.free();
-                }
-            }
-            sb.append('}');
-            return sb.toString();
-        }
     }
 
     bddPair pairs; /* List of all replacement pairs in use */
@@ -4553,185 +4504,6 @@ public class JFactory extends BDDFactory {
         return first;
     }
 
-    public void reverseAllDomains() {
-        reorder_init();
-        for (int i = 0; i < fdvarnum; ++i) {
-            reverseDomain0(domain[i]);
-        }
-        reorder_done();
-    }
-    
-    public void reverseDomain(BDDDomain d) {
-        reorder_init();
-        reverseDomain0(d);
-        reorder_done();
-    }
-    
-    protected void reverseDomain0(BDDDomain d) {
-        int n = d.varNum();
-        BddTree[] trees = new BddTree[n];
-        int v = d.ivar[0];
-        addVarBlock(v, v, true);
-        trees[0] = getBlock(vartree, v, v);
-        BddTree parent = getParent(trees[0]);
-        for (int i = 1; i < n; ++i) {
-            v = d.ivar[i];
-            addVarBlock(v, v, true);
-            trees[i] = getBlock(vartree, v, v);
-            BddTree parent2 = getParent(trees[i]);
-            if (parent != parent2) {
-                throw new BDDException();
-            }
-        }
-        for (int i = 0; i < n; ++i) {
-            for (int j = i + 1; j < n; ++j) {
-                blockdown(trees[i]);
-            }
-        }
-        BddTree newchild = trees[n-1];
-        while (newchild.prev != null) newchild = newchild.prev;
-        if (parent == null) vartree = newchild;
-        else parent.nextlevel = newchild;
-    }
-    
-    public void setVarOrder(String ordering) {
-        List result = new LinkedList();
-        int nDomains = numberOfDomains();
-        StringTokenizer st = new StringTokenizer(ordering, "x_", true);
-        boolean[] done = new boolean[nDomains];
-        List last = null;
-        for (int i=0; ; ++i) {
-            String s = st.nextToken();
-            BDDDomain d;
-            for (int j=0; ; ++j) {
-                if (j == nDomains)
-                    throw new BDDException("bad domain: "+s);
-                d = getDomain(j);
-                if (s.equals(d.getName())) break;
-            }
-            if (done[d.getIndex()])
-                throw new BDDException("duplicate domain: "+s);
-            done[d.getIndex()] = true;
-            if (last != null) last.add(d);
-            if (st.hasMoreTokens()) {
-                s = st.nextToken();
-                if (s.equals("x")) {
-                    if (last == null) {
-                        last = new LinkedList();
-                        last.add(d);
-                        result.add(last);
-                    }
-                } else if (s.equals("_")) {
-                    if (last == null) {
-                        result.add(d);
-                    }
-                    last = null;
-                } else {
-                    throw new BDDException("bad token: "+s);
-                }
-            } else {
-                if (last == null) {
-                    result.add(d);
-                }
-                break;
-            }
-        }
-        
-        for (int i=0; i<done.length; ++i) {
-            if (!done[i]) {
-                throw new BDDException("missing domain #"+i+": "+getDomain(i));
-            }
-        }
-        
-        setVarOrder(result);
-    }
-    
-    /**
-     * <p>Set the variable order to be the given list of domains.</p>
-     * 
-     * @param domains  domain order
-     */
-    public void setVarOrder(List domains) {
-        BddTree[] my_vartree = new BddTree[fdvarnum];
-        boolean[] interleaved = new boolean[fdvarnum];
-        int k = 0;
-        for (Iterator i = domains.iterator(); i.hasNext(); ) {
-            Object o = i.next();
-            Collection c;
-            if (o instanceof BDDDomain) c = Collections.singleton(o);
-            else c = (Collection) o;
-            for (Iterator j = c.iterator(); j.hasNext(); ) {
-                BDDDomain d = (BDDDomain) j.next();
-                int low = d.ivar[0];
-                int high = d.ivar[d.ivar.length-1];
-                bdd_intaddvarblock(low, high, false);
-                BddTree b = getBlock(vartree, low, high);
-                my_vartree[k] = b;
-                interleaved[k] = j.hasNext();
-                k++;
-            }
-        }
-        if (k <= 1) return;
-        BddTree parent = getParent(my_vartree[0]);
-        for (int i = 0; i < k; ++i) {
-            if (parent != getParent(my_vartree[i])) {
-                throw new BDDException("var block "+my_vartree[i].firstVar+".."+my_vartree[i].lastVar+" is in wrong place in tree");
-            }
-        }
-        reorder_init();
-        BddTree prev = null; boolean prev_interleaved = false;
-        for (int i = 0; i < k; ++i) {
-            BddTree t = my_vartree[i];
-            while (t.prev != prev) {
-                blockdown(t.prev);
-            }
-            boolean inter = interleaved[i];
-            if (prev_interleaved) {
-                blockinterleave(t.prev);
-                //++i;
-                prev = t.prev;
-            } else {
-                prev = t;
-            }
-            prev_interleaved = inter;
-        }
-        BddTree newchild = my_vartree[0];
-        _assert(newchild.prev == null);
-        //while (newchild.prev != null) newchild = newchild.prev;
-        if (parent == null) vartree = newchild;
-        else parent.nextlevel = newchild;
-        reorder_done();
-    }
-    
-    protected BddTree getParent(BddTree child) {
-        for (BddTree p = vartree; p != null; p = p.next) {
-            if (p == child) return null;
-            BddTree q = getParent(p, child);
-            if (q != null) return q;
-        }
-        throw new BDDException("Cannot find tree node "+child);
-    }
-    
-    protected BddTree getParent(BddTree parent, BddTree child) {
-        if (parent.nextlevel == null) return null;
-        for (BddTree p = parent.nextlevel; p != null; p = p.next) {
-            if (p == child) return parent;
-            BddTree q = getParent(p, child);
-            if (q != null) return q;
-        }
-        return null;
-    }
-    
-    protected BddTree getBlock(BddTree t, int low, int high) {
-        if (t == null) return null;
-        for (BddTree p = t; p != null; p = p.next) {
-            if (p.firstVar == low && p.lastVar == high) return p;
-            BddTree q = getBlock(p.nextlevel, low, high);
-            if (q != null) return q;
-        }
-        return null;
-    }
-    
     void blockinterleave(BddTree left) {
         BddTree right = left.next;
         //System.out.println("Interleaving "+left.first+".."+left.last+" and "+right.first+".."+right.last);
@@ -4886,20 +4658,6 @@ public class JFactory extends BDDFactory {
         return (100 * (usednum_before - usednum_after)) / usednum_before;
     }
 
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#isInitialized()
-     */
-    public boolean isInitialized() {
-        return this.bddrunning;
-    }
-
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#done()
-     */
-    public void done() {
-        bdd_done();
-    }
-
     void bdd_done() {
         /*sanitycheck(); FIXME */
         //bdd_fdd_done();
@@ -4931,27 +4689,6 @@ public class JFactory extends BDDFactory {
         //resize_handler = null;
     }
 
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#setError(int)
-     */
-    public void setError(int code) {
-        bdderrorcond = code;
-    }
-    
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#clearError()
-     */
-    public void clearError() {
-        bdderrorcond = 0;
-    }
-   
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#setMaxNodeNum(int)
-     */
-    public int setMaxNodeNum(int size) {
-        return bdd_setmaxnodenum(size);
-    }
-
     int bdd_setmaxnodenum(int size) {
         if (size > bddnodesize || size == 0) {
             int old = bddmaxnodesize;
@@ -4962,13 +4699,6 @@ public class JFactory extends BDDFactory {
         return bdd_error(BDD_NODES);
     }
 
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#setMinFreeNodes(double)
-     */
-    public double setMinFreeNodes(double x) {
-        return bdd_setminfreenodes((int)(x * 100.)) / 100.;
-    }
-
     int bdd_setminfreenodes(int mf) {
         int old = minfreenodes;
 
@@ -4977,13 +4707,6 @@ public class JFactory extends BDDFactory {
 
         minfreenodes = mf;
         return old;
-    }
-
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#setMaxIncrease(int)
-     */
-    public int setMaxIncrease(int x) {
-        return bdd_setmaxincrease(x);
     }
 
     int bdd_setmaxincrease(int size) {
@@ -4998,7 +4721,7 @@ public class JFactory extends BDDFactory {
 
     double increasefactor;
     
-    public double setIncreaseFactor(double x) {
+    double bdd_setincreasefactor(double x) {
         if (x < 0)
             return bdd_error(BDD_RANGE);
         double old = increasefactor;
@@ -5006,13 +4729,6 @@ public class JFactory extends BDDFactory {
         return old;
     }
     
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#setCacheRatio(double)
-     */
-    public double setCacheRatio(double x) {
-        return bdd_setcacheratio((int)(x * 100)) / 100.;
-    }
-
     int bdd_setcacheratio(int r) {
         int old = cacheratio;
 
@@ -5026,77 +4742,6 @@ public class JFactory extends BDDFactory {
         return old;
     }
 
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#varNum()
-     */
-    public int varNum() {
-        return bdd_varnum();
-    }
-
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#setVarNum(int)
-     */
-    public int setVarNum(int num) {
-        return bdd_setvarnum(num);
-    }
-
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#duplicateVar(int)
-     */
-    public int duplicateVar(int var) {
-        if (var < 0 || var >= bddvarnum) {
-            bdd_error(BDD_VAR);
-            return bddfalse;
-        }
-        
-        bdd_disable_reorder();
-        
-        int newVar = bddvarnum;
-        int lev = bddvar2level[var];
-        //System.out.println("Adding new variable "+newVar+" at level "+(lev+1));
-        // Increase the size of the various data structures.
-        bdd_setvarnum(bddvarnum+1);
-        // Actually duplicate the var in all BDDs.
-        insert_level(lev);
-        dup_level(lev, 0);
-        // Fix up bddvar2level
-        for (int i = 0; i < bddvarnum; ++i) {
-            if (bddvar2level[i] > lev && bddvar2level[i] < bddvarnum)
-                ++bddvar2level[i];
-        }
-        bddvar2level[newVar] = lev+1;
-        // Fix up bddlevel2var
-        for (int i = bddvarnum-2; i > lev; --i) {
-            bddlevel2var[i+1] = bddlevel2var[i];
-        }
-        bddlevel2var[lev+1] = newVar;
-        // Fix up bddvarset
-        for (int bdv = 0; bdv < bddvarnum; bdv++) {
-            bddvarset[bdv * 2] = PUSHREF(bdd_makenode(bddvar2level[bdv], 0, 1));
-            bddvarset[bdv * 2 + 1] = bdd_makenode(bddvar2level[bdv], 1, 0);
-            POPREF(1);
-
-            SETMAXREF(bddvarset[bdv * 2]);
-            SETMAXREF(bddvarset[bdv * 2 + 1]);
-        }
-        // Fix up pairs
-        for (bddPair pair = pairs; pair != null; pair = pair.next) {
-            bdd_delref(pair.result[bddvarnum-1]);
-            for (int i = bddvarnum-1; i > lev+1; --i) {
-                pair.result[i] = pair.result[i-1];
-                if (i != LEVEL(pair.result[i]) && i > pair.last) {
-                    pair.last = i;
-                }
-            }
-            pair.result[lev+1] = bdd_ithvar(newVar);
-            //System.out.println("Pair "+pair);
-        }
-        
-        bdd_enable_reorder();
-        
-        return newVar;
-    }
-    
     int bdd_setvarnum(int num) {
         int bdv;
         int oldbddvarnum = bddvarnum;
@@ -5171,150 +4816,6 @@ public class JFactory extends BDDFactory {
         bdd_enable_reorder();
 
         return 0;
-    }
-
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#ithVar(int)
-     */
-    public BDD ithVar(int var) {
-        return makeBDD(bdd_ithvar(var));
-    }
-
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#nithVar(int)
-     */
-    public BDD nithVar(int var) {
-        return makeBDD(bdd_nithvar(var));
-    }
-
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#printAll()
-     */
-    public void printAll() {
-        bdd_fprintall(System.out);
-    }
-
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#printTable(net.sf.javabdd.BDD)
-     */
-    public void printTable(BDD b) {
-        int x = ((bdd) b)._index;
-        bdd_fprinttable(System.out, x);
-    }
-
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#load(java.io.BufferedReader)
-     */
-    public BDD load(BufferedReader in, int[] translate) throws IOException {
-        int result = bdd_load(in, translate);
-        return makeBDD(result);
-    }
-
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#save(java.io.BufferedWriter, net.sf.javabdd.BDD)
-     */
-    public void save(BufferedWriter out, BDD b) throws IOException {
-        int x = ((bdd) b)._index;
-        bdd_save(out, x);
-    }
-
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#level2Var(int)
-     */
-    public int level2Var(int level) {
-        return bddlevel2var[level];
-    }
-
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#var2Level(int)
-     */
-    public int var2Level(int var) {
-        return bddvar2level[var];
-    }
-
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#reorder(net.sf.javabdd.BDDFactory.ReorderMethod)
-     */
-    public void reorder(ReorderMethod m) {
-        int x = m.id;
-        bdd_reorder(x);
-    }
-
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#autoReorder(net.sf.javabdd.BDDFactory.ReorderMethod)
-     */
-    public void autoReorder(ReorderMethod method) {
-        int x = method.id;
-        bdd_autoreorder(x);
-    }
-
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#autoReorder(net.sf.javabdd.BDDFactory.ReorderMethod, int)
-     */
-    public void autoReorder(ReorderMethod method, int max) {
-        int x = method.id;
-        bdd_autoreorder_times(x, max);
-    }
-
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#getReorderMethod()
-     */
-    public ReorderMethod getReorderMethod() {
-        switch (bddreordermethod) {
-            case BDD_REORDER_NONE :
-                return REORDER_NONE;
-            case BDD_REORDER_WIN2 :
-                return REORDER_WIN2;
-            case BDD_REORDER_WIN2ITE :
-                return REORDER_WIN2ITE;
-            case BDD_REORDER_WIN3 :
-                return REORDER_WIN3;
-            case BDD_REORDER_WIN3ITE :
-                return REORDER_WIN3ITE;
-            case BDD_REORDER_SIFT :
-                return REORDER_SIFT;
-            case BDD_REORDER_SIFTITE :
-                return REORDER_SIFTITE;
-            case BDD_REORDER_RANDOM :
-                return REORDER_RANDOM;
-            default :
-                throw new BDDException();
-        }
-    }
-
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#getReorderTimes()
-     */
-    public int getReorderTimes() {
-        return bddreordertimes;
-    }
-
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#disableReorder()
-     */
-    public void disableReorder() {
-        bdd_disable_reorder();
-    }
-
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#enableReorder()
-     */
-    public void enableReorder() {
-        bdd_enable_reorder();
-    }
-
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#reorderVerbose(int)
-     */
-    public int reorderVerbose(int v) {
-        return bdd_reorder_verbose(v);
-    }
-
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#setVarOrder(int[])
-     */
-    public void setVarOrder(int[] neworder) {
-        bdd_setvarorder(neworder);
     }
 
     static class BddTree {
@@ -5596,8 +5097,6 @@ public class JFactory extends BDDFactory {
             }
         }
     }
-
-    public static final boolean SWAPCOUNT = false;
 
     int reorder_downSimple(int var0) {
         int toBeProcessed = 0;
@@ -5929,103 +5428,6 @@ public class JFactory extends BDDFactory {
         return 0;
     }
 
-    void insert_level(int levToInsert) {
-        for (int n = 2; n < bddnodesize; n++) {
-            if (LOW(n) == INVALID_BDD) continue;
-            int lev = LEVEL(n);
-            if (lev <= levToInsert || lev == bddvarnum-1) {
-                // Stays the same.
-                continue;
-            }
-            int lo, hi, newLev;
-            lo = LOW(n);
-            hi = HIGH(n);
-            // Need to increase level by one.
-            newLev = lev+1;
-            
-            // Find this node in its hash chain.
-            int hash = NODEHASH(lev, lo, hi);
-            int r = HASH(hash), r2 = 0;
-            while (r != n && r != 0) {
-                r2 = r;
-                r = NEXT(r);
-            }
-            if (r == 0) {
-                // Cannot find node in the hash chain ?!
-                throw new InternalError();
-            }
-            // Remove from this hash chain.
-            int NEXT_r = NEXT(r);
-            if (r2 == 0) {
-                SETHASH(hash, NEXT_r);
-            } else {
-                SETNEXT(r2, NEXT_r);
-            }
-            // Set level of this node.
-            SETLEVEL(n, newLev);
-            lo = LOW(n); hi = HIGH(n);
-            // Add to new hash chain.
-            hash = NODEHASH(newLev, lo, hi);
-            r = HASH(hash);
-            SETHASH(hash, n);
-            SETNEXT(n, r);
-        }
-    }
-
-    void dup_level(int levToInsert, int val) {
-        for (int n = 2; n < bddnodesize; n++) {
-            if (LOW(n) == INVALID_BDD) continue;
-            int lev = LEVEL(n);
-            if (lev != levToInsert || lev == bddvarnum-1) {
-                // Stays the same.
-                continue;
-            }
-            int lo, hi, newLev;
-            lo = LOW(n);
-            hi = HIGH(n);
-            // Duplicate this node.
-            _assert(LEVEL(lo) > levToInsert + 1);
-            _assert(LEVEL(hi) > levToInsert + 1);
-            int n_low, n_high;
-            bdd_addref(n);
-            // 0 = var is zero, 1 = var is one, -1 = var equals other
-            n_low = bdd_makenode(levToInsert+1, val<=0 ? lo : 0, val<=0 ? 0 : lo);
-            n_high = bdd_makenode(levToInsert+1, val==0 ? hi : 0, val==0 ? 0 : hi);
-            bdd_delref(n);
-            //System.out.println("Lev = "+lev+" old low = "+lo+" old high = "+hi+" new low = "+n_low+" ("+new bdd(n_low)+") new high = "+n_high+" ("+new bdd(n_high)+")");
-            newLev = lev;
-            SETLOW(n, n_low);
-            SETHIGH(n, n_high);
-            
-            // Find this node in its hash chain.
-            int hash = NODEHASH(lev, lo, hi);
-            int r = HASH(hash), r2 = 0;
-            while (r != n && r != 0) {
-                r2 = r;
-                r = NEXT(r);
-            }
-            if (r == 0) {
-                // Cannot find node in the hash chain ?!
-                throw new InternalError();
-            }
-            // Remove from this hash chain.
-            int NEXT_r = NEXT(r);
-            if (r2 == 0) {
-                SETHASH(hash, NEXT_r);
-            } else {
-                SETNEXT(r2, NEXT_r);
-            }
-            // Set level of this node.
-            SETLEVEL(n, newLev);
-            lo = LOW(n); hi = HIGH(n);
-            // Add to new hash chain.
-            hash = NODEHASH(newLev, lo, hi);
-            r = HASH(hash);
-            SETHASH(hash, n);
-            SETNEXT(n, r);
-        }
-    }
-
     int mark_roots() {
         boolean[] dep = new boolean[bddvarnum];
         int n;
@@ -6196,119 +5598,16 @@ public class JFactory extends BDDFactory {
         free(mtx);
     }
 
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#addVarBlock(net.sf.javabdd.BDD, boolean)
-     */
-    public void addVarBlock(BDD var, boolean fixed) {
-        //int x = ((bdd) var)._index;
-        int[] set = var.scanSet();
-        bdd_addvarblock(set, fixed);
-    }
-
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#addVarBlock(int, int, boolean)
-     */
-    public void addVarBlock(int first, int last, boolean fixed) {
-        bdd_intaddvarblock(first, last, fixed);
-    }
-
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#varBlockAll()
-     */
-    public void varBlockAll() {
-        bdd_varblockall();
-    }
-
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#clearVarBlocks()
-     */
-    public void clearVarBlocks() {
-        bdd_clrvarblocks();
-    }
-
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#printOrder()
-     */
-    public void printOrder() {
-        bdd_fprintorder(System.out);
-    }
-
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#nodeCount(java.util.Collection)
-     */
-    public int nodeCount(Collection r) {
-        int[] a = new int[r.size()];
-        int j = 0;
-        for (Iterator i = r.iterator(); i.hasNext();) {
-            bdd b = (bdd) i.next();
-            a[j++] = b._index;
-        }
-        return bdd_anodecount(a);
-    }
-
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#getNodeTableSize()
-     */
-    public int getNodeTableSize() {
-        return bdd_getallocnum();
-    }
-
     int bdd_getallocnum() {
         return bddnodesize;
     }
 
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#getNodeNum()
-     */
-    public int getNodeNum() {
-        return bdd_getnodenum();
-    }
-
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#getCacheSize()
-     */
-    public int getCacheSize() {
-        return cachesize;
+    int bdd_setallocnum(int size) {
+        int old = bddnodesize;
+        doResize(true, old, size);
+        return old;
     }
     
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#reorderGain()
-     */
-    public int reorderGain() {
-        return bdd_reorder_gain();
-    }
-
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#printStat()
-     */
-    public void printStat() {
-        bdd_fprintstat(System.out);
-    }
-
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#makePair()
-     */
-    public BDDPairing makePair() {
-        bddPair p = new bddPair();
-        p.result = new int[bddvarnum];
-        int n;
-        for (n = 0; n < bddvarnum; n++)
-            p.result[n] = bdd_ithvar(bddlevel2var[n]);
-
-        p.id = update_pairsid();
-        p.last = -1;
-
-        bdd_register_pair(p);
-        return p;
-    }
-
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#swapVar(int, int)
-     */
-    public void swapVar(int v1, int v2) {
-        bdd_swapvar(v1, v2);
-    }
-
     int bdd_swapvar(int v1, int v2) {
         int l1, l2;
 
@@ -6559,30 +5858,6 @@ public class JFactory extends BDDFactory {
         return b.toString();
     }
 
-    int bdd_addvarblock(int[] v, boolean fixed) {
-        BddTree t;
-        int first, last;
-
-        if (v.length < 1)
-            return bdd_error(BDD_VARBLK);
-
-        first = last = v[0];
-
-        for (int n = 0; n < v.length; n++) {
-            if (v[n] < first)
-                first = v[n];
-            if (v[n] > last)
-                last = v[n];
-        }
-
-        if ((t = bddtree_addrange(vartree, first, last, fixed, blockid))
-            == null)
-            return bdd_error(BDD_VARBLK);
-
-        vartree = t;
-        return blockid++;
-    }
-
     int bdd_intaddvarblock(int first, int last, boolean fixed) {
         BddTree t;
 
@@ -6762,23 +6037,15 @@ public class JFactory extends BDDFactory {
         out.print(s.toString());
     }
     
-    public void validateAll() {
-        validate_all();
-    }
-
-    public void validateBDD(BDD b) {
-        validate(((bdd)b)._index);
-    }
-    
-    void validate_all() {
+    void bdd_validate_all() {
         int n;
         for (n = bddnodesize - 1; n >= 2; n--) {
             if (HASREF(n)) {
-                validate(n);
+                bdd_validate(n);
             }
         }
     }
-    void validate(int k) {
+    void bdd_validate(int k) {
         validate(k, -1);
     }
     void validate(int k, int lastLevel) {
@@ -6791,53 +6058,6 @@ public class JFactory extends BDDFactory {
         validate(LOW(k), lev);
         //System.out.println("High:");
         validate(HIGH(k), lev);
-    }
-    
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#createDomain(int, java.math.BigInteger)
-     */
-    protected BDDDomain createDomain(int a, BigInteger b) {
-        return new bddDomain(a, b);
-    }
-
-    private class bddDomain extends BDDDomain {
-
-        bddDomain(int a, BigInteger b) {
-            super(a, b);
-        }
-
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDDDomain#getFactory()
-         */
-        public BDDFactory getFactory() {
-            return JFactory.this;
-        }
-
-    }
-
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#createBitVector(int)
-     */
-    protected BDDBitVector createBitVector(int a) {
-        return new bvec(a);
-    }
-
-    private class bvec extends BDDBitVector {
-
-        /**
-         * @param bitnum
-         */
-        protected bvec(int bitnum) {
-            super(bitnum);
-        }
-
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDDBitVector#getFactory()
-         */
-        public BDDFactory getFactory() {
-            return JFactory.this;
-        }
-
     }
 
     //// Prime stuff below.
@@ -6959,72 +6179,4 @@ public class JFactory extends BDDFactory {
         return src;
     }
 
-    public JFactory cloneFactory() {
-        JFactory INSTANCE = new JFactory();
-        if (applycache != null)
-            INSTANCE.applycache = this.applycache.copy();
-        if (itecache != null)
-            INSTANCE.itecache = this.itecache.copy();
-        if (quantcache != null)
-            INSTANCE.quantcache = this.quantcache.copy();
-        INSTANCE.appexcache = this.appexcache.copy();
-        if (replacecache != null)
-            INSTANCE.replacecache = this.replacecache.copy();
-        if (misccache != null)
-            INSTANCE.misccache = this.misccache.copy();
-        if (countcache != null)
-            INSTANCE.countcache = this.countcache.copy();
-        // TODO: potential difference here (!)
-        INSTANCE.rng = new Random();
-        INSTANCE.verbose = this.verbose;
-        INSTANCE.cachestats.copyFrom(this.cachestats);
-        
-        INSTANCE.bddrunning = this.bddrunning;
-        INSTANCE.bdderrorcond = this.bdderrorcond;
-        INSTANCE.bddnodesize = this.bddnodesize;
-        INSTANCE.bddmaxnodesize = this.bddmaxnodesize;
-        INSTANCE.bddmaxnodeincrease = this.bddmaxnodeincrease;
-        INSTANCE.bddfreepos = this.bddfreepos;
-        INSTANCE.bddfreenum = this.bddfreenum;
-        INSTANCE.bddproduced = this.bddproduced;
-        INSTANCE.bddvarnum = this.bddvarnum;
-
-        INSTANCE.gbcollectnum = this.gbcollectnum;
-        INSTANCE.cachesize = this.cachesize;
-        INSTANCE.gbcclock = this.gbcclock;
-        INSTANCE.usednodes_nextreorder = this.usednodes_nextreorder;
-        
-        INSTANCE.bddrefstacktop = this.bddrefstacktop;
-        INSTANCE.bddresized = this.bddresized;
-        INSTANCE.minfreenodes = this.minfreenodes;
-        INSTANCE.bddnodes = new int[this.bddnodes.length];
-        System.arraycopy(this.bddnodes, 0, INSTANCE.bddnodes, 0, this.bddnodes.length);
-        INSTANCE.bddrefstack = new int[this.bddrefstack.length];
-        System.arraycopy(this.bddrefstack, 0, INSTANCE.bddrefstack, 0, this.bddrefstack.length);
-        INSTANCE.bddvar2level = new int[this.bddvar2level.length];
-        System.arraycopy(this.bddvar2level, 0, INSTANCE.bddvar2level, 0, this.bddvar2level.length);
-        INSTANCE.bddlevel2var = new int[this.bddlevel2var.length];
-        System.arraycopy(this.bddlevel2var, 0, INSTANCE.bddlevel2var, 0, this.bddlevel2var.length);
-        INSTANCE.bddvarset = new int[this.bddvarset.length];
-        System.arraycopy(this.bddvarset, 0, INSTANCE.bddvarset, 0, this.bddvarset.length);
-        
-        INSTANCE.domain = new BDDDomain[this.domain.length];
-        for (int i = 0; i < INSTANCE.domain.length; ++i) {
-            INSTANCE.domain[i] = INSTANCE.createDomain(i, this.domain[i].realsize);
-        }
-        return INSTANCE;
-    }
-    
-    /**
-     * Use this function to translate BDD's from a JavaFactory into its clone.
-     * This will only work immediately after cloneFactory() is called, and
-     * before any other BDD operations are performed. 
-     * 
-     * @param that BDD in old factory
-     * @return a BDD in the new factory
-     */
-    public BDD copyNode(BDD that) {
-        bdd b = (bdd) that;
-        return makeBDD(b._index);
-    }
 }
