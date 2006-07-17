@@ -6,6 +6,7 @@ package regression;
 import junit.framework.Assert;
 import net.sf.javabdd.BDD;
 import net.sf.javabdd.BDDFactory;
+import net.sf.javabdd.BDDVarSet;
 import bdd.BDDTestCase;
 
 /**
@@ -27,10 +28,10 @@ public class R2 extends BDDTestCase {
             BDD one = bdd.one();
             Assert.assertTrue(bdd.toString(), zero.isZero());
             Assert.assertTrue(bdd.toString(), one.isOne());
-            BDD s0 = zero.support();
-            BDD s1 = one.support();
-            Assert.assertTrue(bdd.toString(), s0.isOne());
-            Assert.assertTrue(bdd.toString(), s1.isOne());
+            BDDVarSet s0 = zero.support();
+            BDDVarSet s1 = one.support();
+            Assert.assertTrue(bdd.toString(), s0.isEmpty());
+            Assert.assertTrue(bdd.toString(), s1.isEmpty());
             zero.free(); one.free();
             s0.free(); s1.free();
         }
