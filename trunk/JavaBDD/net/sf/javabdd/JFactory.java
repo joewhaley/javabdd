@@ -16,8 +16,6 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.math.BigInteger;
-import net.sf.javabdd.BDDFactory.BDDOp;
 
 /**
  * <p>This is a 100% Java implementation of the BDD factory.  It is based on

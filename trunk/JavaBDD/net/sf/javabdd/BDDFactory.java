@@ -4,13 +4,13 @@
 package net.sf.javabdd;
 
 import java.util.Arrays;
+import java.util.BitSet;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
-import java.util.BitSet;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.FileReader;
@@ -21,7 +21,6 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.math.BigInteger;
 import java.security.AccessControlException;
-import net.sf.javabdd.JFactory.BddTree;
 
 /**
  * <p>Interface for the creation and manipulation of BDDs.</p>
