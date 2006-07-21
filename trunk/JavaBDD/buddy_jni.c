@@ -984,10 +984,10 @@ JNIEXPORT void JNICALL Java_net_sf_javabdd_BuDDyFactory_printOrder0
 
 /*
  * Class:     net_sf_javabdd_BuDDyFactory
- * Method:    nodeCount0
+ * Method:    nodeCount1
  * Signature: ([I)I
  */
-JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_nodeCount0
+JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_nodeCount1
   (JNIEnv *env, jclass cl, jintArray arr)
 {
   jint *a;
@@ -1116,11 +1116,11 @@ JNIEXPORT jstring JNICALL Java_net_sf_javabdd_BuDDyFactory_getVersion0
 }
 
 /*
- * Class:     net_sf_javabdd_BuDDyFactory_BuDDyBDD
+ * Class:     net_sf_javabdd_BuDDyFactory
  * Method:    var0
  * Signature: (I)I
  */
-JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDD_var0
+JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_var0
   (JNIEnv *env, jclass cl, jint b)
 {
   int result;
@@ -1134,11 +1134,11 @@ JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDD_var0
 }
 
 /*
- * Class:     net_sf_javabdd_BuDDyFactory_BuDDyBDD
+ * Class:     net_sf_javabdd_BuDDyFactory
  * Method:    high0
  * Signature: (I)I
  */
-JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDD_high0
+JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_high0
   (JNIEnv *env, jclass cl, jint b)
 {
   int result;
@@ -1152,11 +1152,11 @@ JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDD_high0
 }
 
 /*
- * Class:     net_sf_javabdd_BuDDyFactory_BuDDyBDD
+ * Class:     net_sf_javabdd_BuDDyFactory
  * Method:    low0
  * Signature: (I)I
  */
-JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDD_low0
+JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_low0
   (JNIEnv *env, jclass cl, jint b)
 {
   int result;
@@ -1169,11 +1169,11 @@ JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDD_low0
   return result;}
 
 /*
- * Class:     net_sf_javabdd_BuDDyFactory_BuDDyBDD
+ * Class:     net_sf_javabdd_BuDDyFactory
  * Method:    not0
  * Signature: (I)I
  */
-JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDD_not0
+JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_not0
   (JNIEnv *env, jclass cl, jint b)
 {
   int result;
@@ -1187,11 +1187,11 @@ JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDD_not0
 }
 
 /*
- * Class:     net_sf_javabdd_BuDDyFactory_BuDDyBDD
+ * Class:     net_sf_javabdd_BuDDyFactory
  * Method:    ite0
  * Signature: (III)I
  */
-JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDD_ite0
+JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_ite0
   (JNIEnv *env, jclass cl, jint b, jint c, jint d)
 {
   int result;
@@ -1205,11 +1205,11 @@ JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDD_ite0
 }
 
 /*
- * Class:     net_sf_javabdd_BuDDyFactory_BuDDyBDD
+ * Class:     net_sf_javabdd_BuDDyFactory
  * Method:    relprod0
  * Signature: (III)I
  */
-JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDD_relprod0
+JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_relprod0
   (JNIEnv *env, jclass cl, jint b, jint c, jint d)
 {
   int result;
@@ -1223,11 +1223,11 @@ JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDD_relprod0
 }
 
 /*
- * Class:     net_sf_javabdd_BuDDyFactory_BuDDyBDD
+ * Class:     net_sf_javabdd_BuDDyFactory
  * Method:    compose0
  * Signature: (III)I
  */
-JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDD_compose0
+JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_compose0
   (JNIEnv *env, jclass cl, jint b, jint c, jint v)
 {
   int result;
@@ -1241,11 +1241,11 @@ JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDD_compose0
 }
 
 /*
- * Class:     net_sf_javabdd_BuDDyFactory_BuDDyBDD
+ * Class:     net_sf_javabdd_BuDDyFactory
  * Method:    constrain0
  * Signature: (II)I
  */
-JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDD_constrain0
+JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_constrain0
   (JNIEnv *env, jclass cl, jint b, jint c)
 {
   int result;
@@ -1259,11 +1259,11 @@ JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDD_constrain0
 }
 
 /*
- * Class:     net_sf_javabdd_BuDDyFactory_BuDDyBDD
+ * Class:     net_sf_javabdd_BuDDyFactory
  * Method:    exist0
  * Signature: (II)I
  */
-JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDD_exist0
+JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_exist0
   (JNIEnv *env, jclass cl, jint b, jint c)
 {
   int result;
@@ -1277,11 +1277,11 @@ JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDD_exist0
 }
 
 /*
- * Class:     net_sf_javabdd_BuDDyFactory_BuDDyBDD
+ * Class:     net_sf_javabdd_BuDDyFactory
  * Method:    forAll0
  * Signature: (II)I
  */
-JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDD_forAll0
+JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_forAll0
   (JNIEnv *env, jclass cl, jint b, jint c)
 {
   int result;
@@ -1295,11 +1295,11 @@ JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDD_forAll0
 }
 
 /*
- * Class:     net_sf_javabdd_BuDDyFactory_BuDDyBDD
+ * Class:     net_sf_javabdd_BuDDyFactory
  * Method:    unique0
  * Signature: (II)I
  */
-JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDD_unique0
+JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_unique0
   (JNIEnv *env, jclass cl, jint b, jint c)
 {
   int result;
@@ -1313,11 +1313,11 @@ JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDD_unique0
 }
 
 /*
- * Class:     net_sf_javabdd_BuDDyFactory_BuDDyBDD
+ * Class:     net_sf_javabdd_BuDDyFactory
  * Method:    restrict0
  * Signature: (II)I
  */
-JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDD_restrict0
+JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_restrict0
   (JNIEnv *env, jclass cl, jint b, jint c)
 {
   int result;
@@ -1331,11 +1331,11 @@ JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDD_restrict0
 }
 
 /*
- * Class:     net_sf_javabdd_BuDDyFactory_BuDDyBDD
+ * Class:     net_sf_javabdd_BuDDyFactory
  * Method:    simplify0
  * Signature: (II)I
  */
-JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDD_simplify0
+JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_simplify0
   (JNIEnv *env, jclass cl, jint b, jint c)
 {
   int result;
@@ -1349,11 +1349,11 @@ JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDD_simplify0
 }
 
 /*
- * Class:     net_sf_javabdd_BuDDyFactory_BuDDyBDD
+ * Class:     net_sf_javabdd_BuDDyFactory
  * Method:    support0
  * Signature: (I)I
  */
-JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDD_support0
+JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_support0
   (JNIEnv *env, jclass cl, jint b)
 {
   int result;
@@ -1367,11 +1367,11 @@ JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDD_support0
 }
 
 /*
- * Class:     net_sf_javabdd_BuDDyFactory_BuDDyBDD
+ * Class:     net_sf_javabdd_BuDDyFactory
  * Method:    apply0
  * Signature: (III)I
  */
-JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDD_apply0
+JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_apply0
   (JNIEnv *env, jclass cl, jint b, jint c, jint operation)
 {
   int result;
@@ -1385,11 +1385,11 @@ JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDD_apply0
 }
 
 /*
- * Class:     net_sf_javabdd_BuDDyFactory_BuDDyBDD
+ * Class:     net_sf_javabdd_BuDDyFactory
  * Method:    applyAll0
  * Signature: (IIII)I
  */
-JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDD_applyAll0
+JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_applyAll0
   (JNIEnv *env, jclass cl, jint b, jint c, jint operation, jint d)
 {
   int result;
@@ -1403,11 +1403,11 @@ JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDD_applyAll0
 }
 
 /*
- * Class:     net_sf_javabdd_BuDDyFactory_BuDDyBDD
+ * Class:     net_sf_javabdd_BuDDyFactory
  * Method:    applyEx0
  * Signature: (IIII)I
  */
-JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDD_applyEx0
+JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_applyEx0
   (JNIEnv *env, jclass cl, jint b, jint c, jint operation, jint d)
 {
   int result;
@@ -1421,11 +1421,11 @@ JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDD_applyEx0
 }
 
 /*
- * Class:     net_sf_javabdd_BuDDyFactory_BuDDyBDD
+ * Class:     net_sf_javabdd_BuDDyFactory
  * Method:    applyUni0
  * Signature: (IIII)I
  */
-JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDD_applyUni0
+JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_applyUni0
   (JNIEnv *env, jclass cl, jint b, jint c, jint operation, jint d)
 {
   int result;
@@ -1439,11 +1439,11 @@ JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDD_applyUni0
 }
 
 /*
- * Class:     net_sf_javabdd_BuDDyFactory_BuDDyBDD
+ * Class:     net_sf_javabdd_BuDDyFactory
  * Method:    satOne0
  * Signature: (I)I
  */
-JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDD_satOne0
+JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_satOne0
   (JNIEnv *env, jclass cl, jint b)
 {
   int result;
@@ -1457,11 +1457,11 @@ JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDD_satOne0
 }
 
 /*
- * Class:     net_sf_javabdd_BuDDyFactory_BuDDyBDD
+ * Class:     net_sf_javabdd_BuDDyFactory
  * Method:    fullSatOne0
  * Signature: (I)I
  */
-JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDD_fullSatOne0
+JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_fullSatOne0
   (JNIEnv *env, jclass cl, jint b)
 {
   int result;
@@ -1475,11 +1475,11 @@ JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDD_fullSatOne
 }
 
 /*
- * Class:     net_sf_javabdd_BuDDyFactory_BuDDyBDD
+ * Class:     net_sf_javabdd_BuDDyFactory
  * Method:    satOne1
  * Signature: (III)I
  */
-JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDD_satOne1
+JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_satOne1
   (JNIEnv *env, jclass cl, jint b, jint c, jint d)
 {
   int result;
@@ -1493,11 +1493,11 @@ JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDD_satOne1
 }
 
 /*
- * Class:     net_sf_javabdd_BuDDyFactory_BuDDyBDD
+ * Class:     net_sf_javabdd_BuDDyFactory
  * Method:    printSet0
  * Signature: (I)V
  */
-JNIEXPORT void JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDD_printSet0
+JNIEXPORT void JNICALL Java_net_sf_javabdd_BuDDyFactory_printSet0
   (JNIEnv *env, jclass cl, jint b)
 {
   jnienv = env;
@@ -1510,11 +1510,11 @@ JNIEXPORT void JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDD_printSet0
 }
 
 /*
- * Class:     net_sf_javabdd_BuDDyFactory_BuDDyBDD
+ * Class:     net_sf_javabdd_BuDDyFactory
  * Method:    printDot0
  * Signature: (I)V
  */
-JNIEXPORT void JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDD_printDot0
+JNIEXPORT void JNICALL Java_net_sf_javabdd_BuDDyFactory_printDot0
   (JNIEnv *env, jclass cl, jint b)
 {
   jnienv = env;
@@ -1527,11 +1527,11 @@ JNIEXPORT void JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDD_printDot0
 }
 
 /*
- * Class:     net_sf_javabdd_BuDDyFactory_BuDDyBDD
+ * Class:     net_sf_javabdd_BuDDyFactory
  * Method:    nodeCount0
  * Signature: (I)I
  */
-JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDD_nodeCount0
+JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_nodeCount0
   (JNIEnv *env, jclass cl, jint b)
 {
   int result;
@@ -1545,11 +1545,11 @@ JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDD_nodeCount0
 }
 
 /*
- * Class:     net_sf_javabdd_BuDDyFactory_BuDDyBDD
+ * Class:     net_sf_javabdd_BuDDyFactory
  * Method:    pathCount0
  * Signature: (I)D
  */
-JNIEXPORT jdouble JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDD_pathCount0
+JNIEXPORT jdouble JNICALL Java_net_sf_javabdd_BuDDyFactory_pathCount0
   (JNIEnv *env, jclass cl, jint b)
 {
   double result;
@@ -1563,11 +1563,11 @@ JNIEXPORT jdouble JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDD_pathCou
 }
 
 /*
- * Class:     net_sf_javabdd_BuDDyFactory_BuDDyBDD
+ * Class:     net_sf_javabdd_BuDDyFactory
  * Method:    satCount0
  * Signature: (I)D
  */
-JNIEXPORT jdouble JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDD_satCount0
+JNIEXPORT jdouble JNICALL Java_net_sf_javabdd_BuDDyFactory_satCount0
   (JNIEnv *env, jclass cl, jint b)
 {
   double result;
@@ -1581,11 +1581,11 @@ JNIEXPORT jdouble JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDD_satCoun
 }
 
 /*
- * Class:     net_sf_javabdd_BuDDyFactory_BuDDyBDD
+ * Class:     net_sf_javabdd_BuDDyFactory
  * Method:    satCount1
  * Signature: (II)D
  */
-JNIEXPORT jdouble JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDD_satCount1
+JNIEXPORT jdouble JNICALL Java_net_sf_javabdd_BuDDyFactory_satCount1
   (JNIEnv *env, jclass cl, jint b, jint c)
 {
   double result;
@@ -1599,11 +1599,11 @@ JNIEXPORT jdouble JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDD_satCoun
 }
 
 /*
- * Class:     net_sf_javabdd_BuDDyFactory_BuDDyBDD
+ * Class:     net_sf_javabdd_BuDDyFactory
  * Method:    logSatCount0
  * Signature: (I)D
  */
-JNIEXPORT jdouble JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDD_logSatCount0
+JNIEXPORT jdouble JNICALL Java_net_sf_javabdd_BuDDyFactory_logSatCount0
   (JNIEnv *env, jclass cl, jint b)
 {
   double result;
@@ -1617,11 +1617,11 @@ JNIEXPORT jdouble JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDD_logSatC
 }
 
 /*
- * Class:     net_sf_javabdd_BuDDyFactory_BuDDyBDD
+ * Class:     net_sf_javabdd_BuDDyFactory
  * Method:    logSatCount1
  * Signature: (II)D
  */
-JNIEXPORT jdouble JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDD_logSatCount1
+JNIEXPORT jdouble JNICALL Java_net_sf_javabdd_BuDDyFactory_logSatCount1
   (JNIEnv *env, jclass cl, jint b, jint c)
 {
   double result;
@@ -1635,11 +1635,11 @@ JNIEXPORT jdouble JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDD_logSatC
 }
 
 /*
- * Class:     net_sf_javabdd_BuDDyFactory_BuDDyBDD
+ * Class:     net_sf_javabdd_BuDDyFactory
  * Method:    varProfile0
  * Signature: (I)[I
  */
-JNIEXPORT jintArray JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDD_varProfile0
+JNIEXPORT jintArray JNICALL Java_net_sf_javabdd_BuDDyFactory_varProfile0
   (JNIEnv *env, jclass cl, jint b)
 {
   jintArray result;
@@ -1664,11 +1664,11 @@ JNIEXPORT jintArray JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDD_varPr
 }
 
 /*
- * Class:     net_sf_javabdd_BuDDyFactory_BuDDyBDD
+ * Class:     net_sf_javabdd_BuDDyFactory
  * Method:    addRef
  * Signature: (I)V
  */
-JNIEXPORT void JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDD_addRef
+JNIEXPORT void JNICALL Java_net_sf_javabdd_BuDDyFactory_addRef
   (JNIEnv *env, jclass cl, jint b)
 {
   jnienv = env;
@@ -1680,11 +1680,11 @@ JNIEXPORT void JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDD_addRef
 }
 
 /*
- * Class:     net_sf_javabdd_BuDDyFactory_BuDDyBDD
+ * Class:     net_sf_javabdd_BuDDyFactory
  * Method:    delRef
  * Signature: (I)V
  */
-JNIEXPORT void JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDD_delRef
+JNIEXPORT void JNICALL Java_net_sf_javabdd_BuDDyFactory_delRef
   (JNIEnv *env, jclass cl, jint b)
 {
   jnienv = env;
@@ -1702,7 +1702,7 @@ JNIEXPORT void JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDD_delRef
  * Method:    veccompose0
  * Signature: (IJ)I
  */
-JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDD_veccompose0
+JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_veccompose0
   (JNIEnv *env, jclass cl, jint b, jlong pair)
 {
   int result;
@@ -1722,7 +1722,7 @@ JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDD_veccompose
  * Method:    replace0
  * Signature: (IJ)I
  */
-JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDD_replace0
+JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_replace0
   (JNIEnv *env, jclass cl, jint b, jlong pair)
 {
   int result;
@@ -1737,14 +1737,14 @@ JNIEXPORT jint JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDD_replace0
   return result;
 }
 
-/* class net_sf_javabdd_BuDDyFactory_BuDDyBDDPairing */
+/* class net_sf_javabdd_BuDDyFactory_BuDDyPairing */
 
 /*
- * Class:     net_sf_javabdd_BuDDyFactory_BuDDyBDDPairing
+ * Class:     net_sf_javabdd_BuDDyFactory_BuDDyPairing
  * Method:    set0
  * Signature: (JII)V
  */
-JNIEXPORT void JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDDPairing_set0
+JNIEXPORT void JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyPairing_set0
   (JNIEnv *env, jclass cl, jlong pair, jint i, jint j)
 {
   bddPair* p;
@@ -1758,11 +1758,11 @@ JNIEXPORT void JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDDPairing_set
 }
 
 /*
- * Class:     net_sf_javabdd_BuDDyFactory_BuDDyBDDPairing
+ * Class:     net_sf_javabdd_BuDDyFactory_BuDDyPairing
  * Method:    set1
  * Signature: (J[I[I)V
  */
-JNIEXPORT void JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDDPairing_set1
+JNIEXPORT void JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyPairing_set1
   (JNIEnv *env, jclass cl, jlong pair, jintArray arr1, jintArray arr2)
 {
   jint size1, size2;
@@ -1795,11 +1795,11 @@ JNIEXPORT void JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDDPairing_set
 }
 
 /*
- * Class:     net_sf_javabdd_BuDDyFactory_BuDDyBDDPairing
+ * Class:     net_sf_javabdd_BuDDyFactory_BuDDyPairing
  * Method:    set2
  * Signature: (JII)V
  */
-JNIEXPORT void JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDDPairing_set2
+JNIEXPORT void JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyPairing_set2
   (JNIEnv *env, jclass cl, jlong pair, jint b, jint c)
 {
   bddPair* p;
@@ -1813,11 +1813,11 @@ JNIEXPORT void JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDDPairing_set
 }
 
 /*
- * Class:     net_sf_javabdd_BuDDyFactory_BuDDyBDDPairing
+ * Class:     net_sf_javabdd_BuDDyFactory_BuDDyPairing
  * Method:    set3
  * Signature: (J[I[I)V
  */
-JNIEXPORT void JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDDPairing_set3
+JNIEXPORT void JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyPairing_set3
   (JNIEnv *env, jclass cl, jlong pair, jintArray arr1, jintArray arr2)
 {
   jint size1, size2;
@@ -1850,11 +1850,11 @@ JNIEXPORT void JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDDPairing_set
 }
 
 /*
- * Class:     net_sf_javabdd_BuDDyFactory_BuDDyBDDPairing
+ * Class:     net_sf_javabdd_BuDDyFactory_BuDDyPairing
  * Method:    reset0
  * Signature: (J)V
  */
-JNIEXPORT void JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDDPairing_reset0
+JNIEXPORT void JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyPairing_reset0
   (JNIEnv *env, jclass cl, jlong pair)
 {
   bddPair* p;
@@ -1868,11 +1868,11 @@ JNIEXPORT void JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDDPairing_res
 }
 
 /*
- * Class:     net_sf_javabdd_BuDDyFactory_BuDDyBDDPairing
+ * Class:     net_sf_javabdd_BuDDyFactory_BuDDyPairing
  * Method:    free0
  * Signature: (J)V
  */
-JNIEXPORT void JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyBDDPairing_free0
+JNIEXPORT void JNICALL Java_net_sf_javabdd_BuDDyFactory_00024BuDDyPairing_free0
   (JNIEnv *env, jclass cl, jlong pair)
 {
   bddPair* p;

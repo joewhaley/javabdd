@@ -208,7 +208,7 @@ public class JDDFactory extends BDDFactoryIntImpl {
         return 0;
     }
     public boolean isInitialized() { return true; }
-    public void done() { bdd.cleanup(); bdd = null; }
+    public void done() { super.done(); bdd.cleanup(); bdd = null; }
     public void setError(int code) {
         // todo: implement this
     }
