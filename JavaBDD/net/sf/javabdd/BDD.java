@@ -588,7 +588,8 @@ public abstract class BDD {
                 allsatProfile[useLevel?LEVEL_r:f.level2Var(LEVEL_r)] =
                     lo_empty ? (byte)1 : (byte)0;
                 BDD rn = lo_empty ? r.high() : r.low();
-                for (int v = rn.level() - 1; v > LEVEL_r; --v) {
+                int v = rn.isOne()||rn.isZero() ? f.varNum() - 1 : rn.level() - 1;
+                for ( ; v > LEVEL_r; --v) {
                     allsatProfile[useLevel?v:f.level2Var(v)] = -1;
                 }
                 if (!lo_empty) {

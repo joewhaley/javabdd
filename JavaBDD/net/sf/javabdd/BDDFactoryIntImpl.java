@@ -16,49 +16,49 @@ public abstract class BDDFactoryIntImpl extends BDDFactory {
     
     static final boolean USE_FINALIZER = false;
     
-    protected abstract void addref_impl(int v);
-    protected abstract void delref_impl(int v);
-    protected abstract int zero_impl();
-    protected abstract int one_impl();
-    protected abstract int invalid_bdd_impl();
-    protected abstract int var_impl(int v);
-    protected abstract int level_impl(int v);
-    protected abstract int low_impl(int v);
-    protected abstract int high_impl(int v);
-    protected abstract int ithVar_impl(int var);
-    protected abstract int nithVar_impl(int var);
+    protected abstract void addref_impl(/*bdd*/int v);
+    protected abstract void delref_impl(/*bdd*/int v);
+    protected abstract /*bdd*/int zero_impl();
+    protected abstract /*bdd*/int one_impl();
+    protected abstract /*bdd*/int invalid_bdd_impl();
+    protected abstract int var_impl(/*bdd*/int v);
+    protected abstract int level_impl(/*bdd*/int v);
+    protected abstract /*bdd*/int low_impl(/*bdd*/int v);
+    protected abstract /*bdd*/int high_impl(/*bdd*/int v);
+    protected abstract /*bdd*/int ithVar_impl(int var);
+    protected abstract /*bdd*/int nithVar_impl(int var);
     
-    protected abstract int ite_impl(int v1, int v2, int v3);
-    protected abstract int apply_impl(int v1, int v2, BDDOp opr);
-    protected abstract int not_impl(int v1);
-    protected abstract int applyAll_impl(int v1, int v2, BDDOp opr, int v3);
-    protected abstract int applyEx_impl(int v1, int v2, BDDOp opr, int v3);
-    protected abstract int applyUni_impl(int v1, int v2, BDDOp opr, int v3);
-    protected abstract int compose_impl(int v1, int v2, int var);
-    protected abstract int constrain_impl(int v1, int v2);
-    protected abstract int restrict_impl(int v1, int v2);
-    protected abstract int simplify_impl(int v1, int v2);
-    protected abstract int support_impl(int v);
-    protected abstract int exist_impl(int v1, int v2);
-    protected abstract int forAll_impl(int v1, int v2);
-    protected abstract int unique_impl(int v1, int v2);
-    protected abstract int fullSatOne_impl(int v);
+    protected abstract /*bdd*/int ite_impl(/*bdd*/int v1, /*bdd*/int v2, /*bdd*/int v3);
+    protected abstract /*bdd*/int apply_impl(/*bdd*/int v1, /*bdd*/int v2, BDDOp opr);
+    protected abstract /*bdd*/int not_impl(/*bdd*/int v1);
+    protected abstract /*bdd*/int applyAll_impl(/*bdd*/int v1, /*bdd*/int v2, BDDOp opr, /*bdd*/int v3);
+    protected abstract /*bdd*/int applyEx_impl(/*bdd*/int v1, /*bdd*/int v2, BDDOp opr, /*bdd*/int v3);
+    protected abstract /*bdd*/int applyUni_impl(/*bdd*/int v1, /*bdd*/int v2, BDDOp opr, /*bdd*/int v3);
+    protected abstract /*bdd*/int compose_impl(/*bdd*/int v1, /*bdd*/int v2, int var);
+    protected abstract /*bdd*/int constrain_impl(/*bdd*/int v1, /*bdd*/int v2);
+    protected abstract /*bdd*/int restrict_impl(/*bdd*/int v1, /*bdd*/int v2);
+    protected abstract /*bdd*/int simplify_impl(/*bdd*/int v1, /*bdd*/int v2);
+    protected abstract /*bdd*/int support_impl(/*bdd*/int v);
+    protected abstract /*bdd*/int exist_impl(/*bdd*/int v1, /*bdd*/int v2);
+    protected abstract /*bdd*/int forAll_impl(/*bdd*/int v1, /*bdd*/int v2);
+    protected abstract /*bdd*/int unique_impl(/*bdd*/int v1, /*bdd*/int v2);
+    protected abstract /*bdd*/int fullSatOne_impl(/*bdd*/int v);
     
-    protected abstract int replace_impl(int v, BDDPairing p);
-    protected abstract int veccompose_impl(int v, BDDPairing p);
+    protected abstract /*bdd*/int replace_impl(/*bdd*/int v, BDDPairing p);
+    protected abstract /*bdd*/int veccompose_impl(/*bdd*/int v, BDDPairing p);
     
-    protected abstract int nodeCount_impl(int v);
-    protected abstract double pathCount_impl(int v);
-    protected abstract double satCount_impl(int v);
-    protected abstract int satOne_impl(int v);
-    protected abstract int satOne_impl2(int v1, int v2, boolean pol);
-    protected abstract int nodeCount_impl2(int[] v);
-    protected abstract int[] varProfile_impl(int v);
-    protected abstract void printTable_impl(int v);
+    protected abstract int nodeCount_impl(/*bdd*/int v);
+    protected abstract double pathCount_impl(/*bdd*/int v);
+    protected abstract double satCount_impl(/*bdd*/int v);
+    protected abstract /*bdd*/int satOne_impl(/*bdd*/int v);
+    protected abstract /*bdd*/int satOne_impl2(/*bdd*/int v1, /*bdd*/int v2, boolean pol);
+    protected abstract int nodeCount_impl2(/*bdd*/int[] v);
+    protected abstract int[] varProfile_impl(/*bdd*/int v);
+    protected abstract void printTable_impl(/*bdd*/int v);
     
     public class IntBDD extends BDD {
-        protected int v;
-        protected IntBDD(int v) {
+        protected /*bdd*/int v;
+        protected IntBDD(/*bdd*/int v) {
             this.v = v;
             addref_impl(v);
         }
@@ -75,8 +75,8 @@ public abstract class BDDFactoryIntImpl extends BDDFactory {
             return makeBDD(applyUni_impl(v, unwrap(that), opr, unwrap(var)));
         }
         public BDD applyWith(BDD that, BDDOp opr) {
-            int v2 = unwrap(that);
-            int v3 = apply_impl(v, v2, opr);
+            /*bdd*/int v2 = unwrap(that);
+            /*bdd*/int v3 = apply_impl(v, v2, opr);
             addref_impl(v3);
             delref_impl(v);
             if (this != that)
@@ -146,7 +146,7 @@ public abstract class BDDFactoryIntImpl extends BDDFactory {
             return makeBDD(replace_impl(v, pair));
         }
         public BDD replaceWith(BDDPairing pair) {
-            int v3 = replace_impl(v, pair);
+            /*bdd*/int v3 = replace_impl(v, pair);
             addref_impl(v3);
             delref_impl(v);
             v = v3;
@@ -156,8 +156,8 @@ public abstract class BDDFactoryIntImpl extends BDDFactory {
             return makeBDD(restrict_impl(v, unwrap(var)));
         }
         public BDD restrictWith(BDD that) {
-            int v2 = unwrap(that);
-            int v3 = restrict_impl(v, v2);
+            /*bdd*/int v2 = unwrap(that);
+            /*bdd*/int v3 = restrict_impl(v, v2);
             addref_impl(v3);
             delref_impl(v);
             if (this != that)
@@ -198,7 +198,7 @@ public abstract class BDDFactoryIntImpl extends BDDFactory {
     }
     
     public class IntBDDWithFinalizer extends IntBDD {
-        protected IntBDDWithFinalizer(int v) {
+        protected IntBDDWithFinalizer(/*bdd*/int v) {
             super(v);
         }
         
@@ -214,19 +214,19 @@ public abstract class BDDFactoryIntImpl extends BDDFactory {
         
     }
     
-    protected IntBDD makeBDD(int v) {
+    protected IntBDD makeBDD(/*bdd*/int v) {
         if (USE_FINALIZER)
             return new IntBDDWithFinalizer(v);
         else
             return new IntBDD(v);
     }
     
-    protected static final int unwrap(BDD b) {
+    protected static final /*bdd*/int unwrap(BDD b) {
         return ((IntBDD) b).v;
     }
     
-    protected static final int[] unwrap(Collection/*<BDD>*/ c) {
-        int[] result = new int[c.size()];
+    protected static final /*bdd*/int[] unwrap(Collection/*<BDD>*/ c) {
+        /*bdd*/int[] result = new /*bdd*/int[c.size()];
         int k = -1;
         for (Iterator i = c.iterator(); i.hasNext(); ) {
             result[++k] = ((IntBDD) i.next()).v;
@@ -235,8 +235,8 @@ public abstract class BDDFactoryIntImpl extends BDDFactory {
     }
     
     public class IntBDDVarSet extends BDDVarSet {
-        int v;
-        private IntBDDVarSet(int v) {
+        /*bdd*/int v;
+        private IntBDDVarSet(/*bdd*/int v) {
             this.v = v;
             addref_impl(v);
         }
@@ -260,8 +260,8 @@ public abstract class BDDFactoryIntImpl extends BDDFactory {
             return makeBDDVarSet(apply_impl(v, unwrap(b), or));
         }
         public BDDVarSet intersectWith(BDDVarSet b) {
-            int v2 = unwrap(b);
-            int v3 = apply_impl(v, v2, or);
+            /*bdd*/int v2 = unwrap(b);
+            /*bdd*/int v3 = apply_impl(v, v2, or);
             addref_impl(v3);
             delref_impl(v);
             if (this != b)
@@ -274,7 +274,7 @@ public abstract class BDDFactoryIntImpl extends BDDFactory {
         }
         public int size() {
             int result = 0;
-            for (int p = v; p != one_impl(); p = high_impl(p)) {
+            for (/*bdd*/int p = v; p != one_impl(); p = high_impl(p)) {
                 if (p == zero_impl())
                     throw new BDDException("varset contains zero");
                 ++result;
@@ -284,7 +284,7 @@ public abstract class BDDFactoryIntImpl extends BDDFactory {
         public int[] toArray() {
             int[] result = new int[size()];
             int k = -1;
-            for (int p = v; p != one_impl(); p = high_impl(p)) {
+            for (/*bdd*/int p = v; p != one_impl(); p = high_impl(p)) {
                 result[++k] = var_impl(p);
             }
             return result;
@@ -304,14 +304,14 @@ public abstract class BDDFactoryIntImpl extends BDDFactory {
             return makeBDDVarSet(apply_impl(v, unwrap(b), and));
         }
         public BDDVarSet union(int var) {
-            int v2 = ithVar_impl(var);
-            int v3 = apply_impl(v, v2, and);
+            /*bdd*/int v2 = ithVar_impl(var);
+            /*bdd*/int v3 = apply_impl(v, v2, and);
             delref_impl(v2);
             return makeBDDVarSet(v3);
         }
         public BDDVarSet unionWith(BDDVarSet b) {
-            int v2 = unwrap(b);
-            int v3 = apply_impl(v, v2, and);
+            /*bdd*/int v2 = unwrap(b);
+            /*bdd*/int v3 = apply_impl(v, v2, and);
             addref_impl(v3);
             delref_impl(v);
             if (this != b)
@@ -320,8 +320,8 @@ public abstract class BDDFactoryIntImpl extends BDDFactory {
             return this;
         }
         public BDDVarSet unionWith(int var) {
-            int v2 = ithVar_impl(var);
-            int v3 = apply_impl(v, v2, and);
+            /*bdd*/int v2 = ithVar_impl(var);
+            /*bdd*/int v3 = apply_impl(v, v2, and);
             addref_impl(v3);
             delref_impl(v);
             delref_impl(v2);
@@ -348,14 +348,14 @@ public abstract class BDDFactoryIntImpl extends BDDFactory {
         
     }
     
-    protected IntBDDVarSet makeBDDVarSet(int v) {
+    protected IntBDDVarSet makeBDDVarSet(/*bdd*/int v) {
         if (USE_FINALIZER)
             return new IntBDDVarSetWithFinalizer(v);
         else
             return new IntBDDVarSet(v);
     }
     
-    protected static final int unwrap(BDDVarSet b) {
+    protected static final /*bdd*/int unwrap(BDDVarSet b) {
         return ((IntBDDVarSet) b).v;
     }
     
@@ -371,11 +371,11 @@ public abstract class BDDFactoryIntImpl extends BDDFactory {
         
     }
     
-    public BDD ithVar(int var) {
+    public BDD ithVar(/*bdd*/int var) {
         return makeBDD(ithVar_impl(var));
     }
 
-    public BDD nithVar(int var) {
+    public BDD nithVar(/*bdd*/int var) {
         return makeBDD(nithVar_impl(var));
     }
 
@@ -399,12 +399,12 @@ public abstract class BDDFactoryIntImpl extends BDDFactory {
         return makeBDD(zero_impl());
     }
     
-    protected int[] to_free = new int[8];
-    protected int to_free_length = 0;
+    protected /*bdd*/int[] to_free = new /*bdd*/int[8];
+    protected /*bdd*/int to_free_length = 0;
     public void deferredFree(int v) {
         synchronized(to_free) {
             if (to_free_length == to_free.length) {
-                int[] t = new int[to_free.length * 2];
+                /*bdd*/int[] t = new /*bdd*/int[to_free.length * 2];
                 System.arraycopy(to_free, 0, t, 0, to_free.length);
                 to_free = t;
             }
