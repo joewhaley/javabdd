@@ -188,7 +188,7 @@ public class JFactory extends BDDFactoryIntImpl {
     public int setCacheSize(int v) { return bdd_setcachesize(v); }
     public boolean isZDD() { return ZDD; }
     public boolean isInitialized() { return bddrunning; }
-    public void done() { bdd_done(); }
+    public void done() { super.done(); bdd_done(); }
     public void setError(int code) { bdderrorcond = code; }
     public void clearError() { bdderrorcond = 0; }
     public int setMaxNodeNum(int size) { return bdd_setmaxnodenum(size); }
@@ -3075,6 +3075,9 @@ public class JFactory extends BDDFactoryIntImpl {
             gbc_handler(true, gcstats);
         }
 
+        // Handle nodes that were marked as free by finalizer.
+        handleDeferredFree();
+        
         for (r = 0; r < bddrefstacktop; r++)
             bdd_mark(bddrefstack[r]);
 

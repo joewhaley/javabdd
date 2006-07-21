@@ -399,6 +399,19 @@ public abstract class BDDFactoryIntImpl extends BDDFactory {
         return makeBDD(zero_impl());
     }
     
+    public void done() {
+        if (USE_FINALIZER) {
+            System.gc();
+            System.runFinalization();
+            handleDeferredFree();
+        }
+    }
+    
+    protected void finalize() throws Throwable {
+        super.finalize();
+        this.done();
+    }
+    
     protected /*bdd*/int[] to_free = new /*bdd*/int[8];
     protected /*bdd*/int to_free_length = 0;
     public void deferredFree(int v) {

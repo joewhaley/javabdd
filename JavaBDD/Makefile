@@ -141,8 +141,7 @@ BUDDY_CLASSFILE = net/sf/javabdd/BuDDyFactory.class
 CUDD_CLASSFILE = net/sf/javabdd/CUDDFactory.class
 CAL_CLASSFILE = net/sf/javabdd/CALFactory.class
 BUDDY_CLASSNAMES = net.sf.javabdd.BuDDyFactory \
-	net.sf.javabdd.BuDDyFactory\$$BuDDyBDD \
-	net.sf.javabdd.BuDDyFactory\$$BuDDyBDDPairing
+	net.sf.javabdd.BuDDyFactory\$$BuDDyPairing
 CUDD_CLASSNAMES = net.sf.javabdd.CUDDFactory \
 	net.sf.javabdd.CUDDFactory\$$CUDDBDD \
 	net.sf.javabdd.CUDDFactory\$$CUDDBDDPairing

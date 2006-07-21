@@ -4,9 +4,6 @@
 package net.sf.javabdd;
 
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -26,8 +23,8 @@ import java.io.IOException;
  * you are _completely_ sure that all BDD objects that reference the old
  * factory have been freed.</p>
  * 
- * <p>If you really need multiple BDD factories, consider using the JavaFactory
- * class for the additional BDD factories --- JavaFactory can have multiple
+ * <p>If you really need multiple BDD factories, consider using the JFactory
+ * class for the additional BDD factories --- JFactory can have multiple
  * factory instances active at a time.</p>
  * 
  * @see net.sf.javabdd.BDDFactory
@@ -35,14 +32,10 @@ import java.io.IOException;
  * @author John Whaley
  * @version $Id$
  */
-public class BuDDyFactory extends BDDFactory {
+public class BuDDyFactory extends BDDFactoryIntImpl {
 
     public static BDDFactory init(int nodenum, int cachesize) {
-        BuDDyFactory f;
-        if (USE_FINALIZER)
-            f = new BuDDyFactoryWithFinalizer();
-        else
-            f = new BuDDyFactory();
+        BuDDyFactory f = new BuDDyFactory();
         f.initialize(nodenum, cachesize);
         return f;
     }
@@ -98,92 +91,127 @@ public class BuDDyFactory extends BDDFactory {
     
     private BuDDyFactory() {}
 
-    private static final boolean USE_FINALIZER = false;
+    /** An invalid id, for use in invalidating BDDs. */
+    static final int INVALID_BDD = -1;
     
-    private static class BuDDyFactoryWithFinalizer extends BuDDyFactory {
-        
-        /**
-         * @see java.lang.Object#finalize()
-         */
-        protected void finalize() throws Throwable {
-            super.finalize();
-            this.done();
-        }
-        
-    }
+    // Redirection functions.
     
-    private static BuDDyBDD makeBDD(int id) {
-        BuDDyBDD b;
-        if (USE_FINALIZER) {
-            b = new BuDDyBDDWithFinalizer(id);
-            if (false) { // can check for specific id's here.
-                System.out.println("Created "+System.identityHashCode(b)+" id "+id);
-                new Exception().printStackTrace(System.out);
-            }
-        } else {
-            b = new BuDDyBDD(id);
-        }
-        return b;
-    }
+    protected void addref_impl(int v) { addRef(v); }
+    private static native void addRef(int b);
+    protected void delref_impl(int v) { delRef(v); }
+    private static native void delRef(int b);
+    protected int zero_impl() { return 0; }
+    protected int one_impl() { return 1; }
+    protected int invalid_bdd_impl() { return INVALID_BDD; }
+    protected int var_impl(int v) { return var0(v); }
+    private static native int var0(int b);
+    protected int level_impl(int v) { return var2Level0(var0(v)); }
+    protected int low_impl(int v) { return low0(v); }
+    private static native int low0(int b);
+    protected int high_impl(int v) { return high0(v); }
+    private static native int high0(int b);
+    protected int ithVar_impl(int var) { return ithVar0(var); }
+    private static native int ithVar0(int var);
+    protected int nithVar_impl(int var) { return nithVar0(var); }
+    private static native int nithVar0(int var);
     
-    private static BDDVarSet.DefaultImpl makeBDDVarSet(int id) {
-        return new BDDVarSet.DefaultImpl(makeBDD(id));
-    }
+    protected int ite_impl(int v1, int v2, int v3) { return ite0(v1, v2, v3); }
+    private static native int ite0(int b, int c, int d);
+    protected int apply_impl(int v1, int v2, BDDOp opr) { return apply0(v1, v2, opr.id); }
+    private static native int apply0(int b, int c, int opr);
+    protected int not_impl(int v1) { return not0(v1); }
+    private static native int not0(int b);
+    protected int applyAll_impl(int v1, int v2, BDDOp opr, int v3) { return applyAll0(v1, v2, opr.id, v3); }
+    private static native int applyAll0(int b, int c, int opr, int d);
+    protected int applyEx_impl(int v1, int v2, BDDOp opr, int v3) { return applyEx0(v1, v2, opr.id, v3); }
+    private static native int applyEx0(int b, int c, int opr, int d);
+    protected int applyUni_impl(int v1, int v2, BDDOp opr, int v3) { return applyUni0(v1, v2, opr.id, v3); }
+    private static native int applyUni0(int b, int c, int opr, int d);
+    protected int compose_impl(int v1, int v2, int var) { return compose0(v1, v2, var); }
+    private static native int compose0(int b, int c, int var);
+    protected int constrain_impl(int v1, int v2) { return constrain0(v1, v2); }
+    private static native int constrain0(int b, int c);
+    protected int restrict_impl(int v1, int v2) { return restrict0(v1, v2); }
+    private static native int restrict0(int b, int var);
+    protected int simplify_impl(int v1, int v2) { return simplify0(v1, v2); }
+    private static native int simplify0(int b, int d);
+    protected int support_impl(int v) { return support0(v); }
+    private static native int support0(int b);
+    protected int exist_impl(int v1, int v2) { return exist0(v1, v2); }
+    private static native int exist0(int b, int var);
+    protected int forAll_impl(int v1, int v2) { return forAll0(v1, v2); }
+    private static native int forAll0(int b, int var);
+    protected int unique_impl(int v1, int v2) { return unique0(v1, v2); }
+    private static native int unique0(int b, int var);
+    protected int fullSatOne_impl(int v) { return fullSatOne0(v); }
+    private static native int fullSatOne0(int b);
     
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#zero()
-     */
-    public BDD zero() { return makeBDD(0); }
-
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#one()
-     */
-    public BDD one() { return makeBDD(1); }
+    protected int replace_impl(int v, BDDPairing p) { return replace0(v, unwrap(p)); }
+    private static native int replace0(int b, long p);
+    protected int veccompose_impl(int v, BDDPairing p) { return veccompose0(v, unwrap(p)); }
+    private static native int veccompose0(int b, long p);
     
-    /**
-     * Converts collection of BuDDyBDD's into an int array, for passing to
-     * native code.
-     * 
-     * @param c  collection of BuDDyBDD's
-     * @return  int array of indices
-     */
-    private static int[] toBuDDyArray(Collection c) {
-        int[] a = new int[c.size()];
-        int k = 0;
-        for (Iterator i = c.iterator(); k < a.length; ++k) {
-            BuDDyBDD b = (BuDDyBDD) i.next();
-            a[k] = b._id;
-        }
-        return a;
-    }
+    protected int nodeCount_impl(int v) { return nodeCount0(v); }
+    private static native int nodeCount0(int b);
+    protected double pathCount_impl(int v) { return pathCount0(v); }
+    private static native double pathCount0(int b);
+    protected double satCount_impl(int v) { return satCount0(v); }
+    private static native double satCount0(int b);
+    protected int satOne_impl(int v) { return satOne0(v); }
+    private static native int satOne0(int b);
+    protected int satOne_impl2(int v1, int v2, boolean pol) { return satOne1(v1, v2, pol?1:0); }
+    private static native int satOne1(int b, int c, int d);
+    protected int nodeCount_impl2(int[] v) { return nodeCount1(v); }
+    private static native int nodeCount1(int[] a);
+    protected int[] varProfile_impl(int v) { return varProfile0(v); }
+    private static native int[] varProfile0(int b);
+    protected void printTable_impl(int v) { printTable0(v); }
+    private static native void printTable0(int b);
     
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#buildCube(int, java.util.List)
-     */
-    public BDD buildCube(int value, List var) {
-        int[] a = toBuDDyArray(var);
-        int id = buildCube0(value, a);
-        return makeBDD(id);
-    }
-    private static native int buildCube0(int value, int[] var);
-
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#buildCube(int, int[])
-     */
-    public BDD buildCube(int value, int[] var) {
-        int id = buildCube1(value, var);
-        return makeBDD(id);
-    }
-    private static native int buildCube1(int value, int[] var);
-
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#makeSet(int[])
-     */
-    public BDDVarSet makeSet(int[] v) {
-        int id = makeSet0(v);
-        return makeBDDVarSet(id);
-    }
-    private static native int makeSet0(int[] var);
+    // More redirection functions.
+    
+    public void addVarBlock(int first, int last, boolean fixed) { addVarBlock1(first, last, fixed); }
+    private static native void addVarBlock1(int first, int last, boolean fixed);
+    public void varBlockAll() { varBlockAll0(); }
+    private static native void varBlockAll0();
+    public void clearVarBlocks() { clearVarBlocks0(); }
+    private static native void clearVarBlocks0();
+    public void printOrder() { printOrder0(); }
+    private static native void printOrder0();
+    public int getNodeTableSize() { return getAllocNum0(); }
+    private static native int getAllocNum0();
+    public int getNodeNum() { return getNodeNum0(); }
+    private static native int getNodeNum0();
+    public int getCacheSize() { return getCacheSize0(); }
+    private static native int getCacheSize0();
+    public int reorderGain() { return reorderGain0(); }
+    private static native int reorderGain0();
+    public void printStat() { printStat0(); }
+    private static native void printStat0();
+    public void printAll() { printAll0(); }
+    private static native void printAll0();
+    public void setVarOrder(int[] neworder) { setVarOrder0(neworder); }
+    private static native void setVarOrder0(int[] neworder);
+    public int level2Var(int level) { return level2Var0(level); }
+    private static native int level2Var0(int level);
+    public int var2Level(int var) { return var2Level0(var); }
+    private static native int var2Level0(int var);
+    public int getReorderTimes() { return getReorderTimes0(); }
+    private static native int getReorderTimes0();
+    public void disableReorder() { disableReorder0(); }
+    private static native void disableReorder0();
+    public void enableReorder() { enableReorder0(); }
+    private static native void enableReorder0();
+    public int reorderVerbose(int v) { return reorderVerbose0(v); }
+    private static native int reorderVerbose0(int v);
+    public void reorder(ReorderMethod m) { reorder0(m.id); }
+    private static native void reorder0(int method);
+    public void autoReorder(ReorderMethod method) { autoReorder0(method.id); }
+    private static native void autoReorder0(int method);
+    public void autoReorder(ReorderMethod method, int max) { autoReorder1(method.id, max); }
+    private static native void autoReorder1(int method, int max);
+    public void swapVar(int v1, int v2) { swapVar0(v1, v2); }
+    private static native void swapVar0(int v1, int v2);
     
     /* (non-Javadoc)
      * @see net.sf.javabdd.BDDFactory#initialize(int, int)
@@ -208,26 +236,12 @@ public class BuDDyFactory extends BDDFactory {
      * @see net.sf.javabdd.BDDFactory#done()
      */
     public void done() {
-        if (USE_FINALIZER) {
-            System.gc();
-            System.runFinalization();
-        }
+        super.done();
         INSTANCE = null;
         done0();
     }
     private static native void done0();
 
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#reset()
-     */
-    public void reset() {
-        if (USE_FINALIZER) {
-            System.gc();
-            System.runFinalization();
-        }
-        super.reset();
-    }
-    
     /* (non-Javadoc)
      * @see net.sf.javabdd.BDDFactory#setError(int)
      */
@@ -317,77 +331,18 @@ public class BuDDyFactory extends BDDFactory {
     private static native int setVarNum0(int num);
     
     /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#duplicateVar(int)
-     */
-    public int duplicateVar(int var) {
-        return duplicateVar0(var);
-    }
-    private static native int duplicateVar0(int var);
-    
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#extVarNum(int)
-     */
-    public int extVarNum(int num) {
-        return extVarNum0(num);
-    }
-    private static native int extVarNum0(int num);
-    
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#ithVar(int)
-     */
-    public BDD ithVar(int var) {
-        int id = ithVar0(var);
-        return makeBDD(id);
-    }
-    private static native int ithVar0(int var);
-
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#nithVar(int)
-     */
-    public BDD nithVar(int var) {
-        int id = nithVar0(var);
-        return makeBDD(id);
-    }
-    private static native int nithVar0(int var);
-
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#swapVar(int, int)
-     */
-    public void swapVar(int v1, int v2) {
-        swapVar0(v1, v2);
-    }
-    private static native void swapVar0(int v1, int v2);
-
-    /* (non-Javadoc)
      * @see net.sf.javabdd.BDDFactory#makePair()
      */
     public BDDPairing makePair() {
         long ptr = makePair0();
         if (USE_FINALIZER) {
-            return new BuDDyBDDPairingWithFinalizer(ptr);
+            return new BuDDyPairingWithFinalizer(ptr);
         } else {
-            return new BuDDyBDDPairing(ptr);
+            return new BuDDyPairing(ptr);
         }
     }
     private static native long makePair0();
     
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#printAll()
-     */
-    public void printAll() {
-        printAll0();
-    }
-    private static native void printAll0();
-
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#printTable(net.sf.javabdd.BDD)
-     */
-    public void printTable(BDD b) {
-        BuDDyBDD bb = (BuDDyBDD) b;
-        printTable0(bb._id);
-    }
-    private static native void printTable0(int b);
-
     /* (non-Javadoc)
      * @see net.sf.javabdd.BDDFactory#load(java.lang.String)
      */
@@ -401,50 +356,9 @@ public class BuDDyFactory extends BDDFactory {
      * @see net.sf.javabdd.BDDFactory#save(java.lang.String, net.sf.javabdd.BDD)
      */
     public void save(String filename, BDD b) {
-        BuDDyBDD bb = (BuDDyBDD) b;
-        save0(filename, bb._id);
+        save0(filename, unwrap(b));
     }
     private static native void save0(String filename, int b);
-
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#level2Var(int)
-     */
-    public int level2Var(int level) {
-        return level2Var0(level);
-    }
-    private static native int level2Var0(int level);
-
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#var2Level(int)
-     */
-    public int var2Level(int var) {
-        return var2Level0(var);
-    }
-    private static native int var2Level0(int var);
-
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#reorder(net.sf.javabdd.BDDFactory.ReorderMethod)
-     */
-    public void reorder(BDDFactory.ReorderMethod method) {
-        reorder0(method.id);
-    }
-    private static native void reorder0(int method);
-
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#autoReorder(net.sf.javabdd.BDDFactory.ReorderMethod)
-     */
-    public void autoReorder(BDDFactory.ReorderMethod method) {
-        autoReorder0(method.id);
-    }
-    private static native void autoReorder0(int method);
-
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#autoReorder(net.sf.javabdd.BDDFactory.ReorderMethod, int)
-     */
-    public void autoReorder(BDDFactory.ReorderMethod method, int max) {
-        autoReorder1(method.id, max);
-    }
-    private static native void autoReorder1(int method, int max);
 
     /* (non-Javadoc)
      * @see net.sf.javabdd.BDDFactory#getReorderMethod()
@@ -465,595 +379,18 @@ public class BuDDyFactory extends BDDFactory {
     }
     private static native int getReorderMethod0();
 
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#getReorderTimes()
-     */
-    public int getReorderTimes() {
-        return getReorderTimes0();
-    }
-    private static native int getReorderTimes0();
-
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#disableReorder()
-     */
-    public void disableReorder() {
-        disableReorder0();
-    }
-    private static native void disableReorder0();
-
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#enableReorder()
-     */
-    public void enableReorder() {
-        enableReorder0();
-    }
-    private static native void enableReorder0();
-
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#reorderVerbose(int)
-     */
-    public int reorderVerbose(int v) {
-        return reorderVerbose0(v);
-    }
-    private static native int reorderVerbose0(int v);
-
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#setVarOrder(int[])
-     */
-    public void setVarOrder(int[] neworder) {
-        setVarOrder0(neworder);
-    }
-    private static native void setVarOrder0(int[] neworder);
-    
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#addVarBlock(net.sf.javabdd.BDD, boolean)
-     */
-    public void addVarBlock(BDD var, boolean fixed) {
-        BuDDyBDD bb = (BuDDyBDD) var;
-        addVarBlock0(bb._id, fixed);
-    }
-    private static native void addVarBlock0(int var, boolean fixed);
-
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#addVarBlock(int, int, boolean)
-     */
-    public void addVarBlock(int first, int last, boolean fixed) {
-        addVarBlock1(first, last, fixed);
-    }
-    private static native void addVarBlock1(int first, int last, boolean fixed);
-
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#varBlockAll()
-     */
-    public void varBlockAll() {
-        varBlockAll0();
-    }
-    private static native void varBlockAll0();
-
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#clearVarBlocks()
-     */
-    public void clearVarBlocks() {
-        clearVarBlocks0();
-    }
-    private static native void clearVarBlocks0();
-
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#printOrder()
-     */
-    public void printOrder() {
-        printOrder0();
-    }
-    private static native void printOrder0();
-
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#nodeCount(java.util.Collection)
-     */
-    public int nodeCount(Collection r) {
-        int[] a = toBuDDyArray(r);
-        return nodeCount0(a);
-    }
-    private static native int nodeCount0(int[] a);
-
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#getNodeTableSize()
-     */
-    public int getNodeTableSize() {
-        return getAllocNum0();
-    }
-    private static native int getAllocNum0();
-
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#getCacheSize()
-     */
-    public int getCacheSize() {
-        return getCacheSize0();
-    }
-    private static native int getCacheSize0();
-    
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#getNodeNum()
-     */
-    public int getNodeNum() {
-        return getNodeNum0();
-    }
-    private static native int getNodeNum0();
-
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#reorderGain()
-     */
-    public int reorderGain() {
-        return reorderGain0();
-    }
-    private static native int reorderGain0();
-
-    /* (non-Javadoc)
-     * @see net.sf.javabdd.BDDFactory#printStat()
-     */
-    public void printStat() {
-        printStat0();
-    }
-    private static native void printStat0();
-
-    /* (non-Javadoc)
-     * An implementation of a BDD class, used by the BuDDy interface.
-     */
-    private static class BuDDyBDD extends BDD {
-    
-        /** The value used by the BDD library. */
-        protected int _id;
-        
-        /** An invalid id, for use in invalidating BDDs. */
-        static final int INVALID_BDD = -1;
-        
-        protected BuDDyBDD(int id) {
-            _id = id;
-            addRef(_id);
-        }
-        
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#getFactory()
-         */
-        public BDDFactory getFactory() {
-            return INSTANCE;
-        }
-        
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#isZero()
-         */
-        public boolean isZero() {
-            return _id == 0;
-        }
-        
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#isOne()
-         */
-        public boolean isOne() {
-            return _id == 1;
-        }
-        
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#var()
-         */
-        public int var() {
-            return var0(_id);
-        }
-        private static native int var0(int b);
-        
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#high()
-         */
-        public BDD high() {
-            int b = high0(_id);
-            return makeBDD(b);
-        }
-        private static native int high0(int b);
-        
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#low()
-         */
-        public BDD low() {
-            int b = low0(_id);
-            return makeBDD(b);
-        }
-        private static native int low0(int b);
-        
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#id()
-         */
-        public BDD id() {
-            return makeBDD(_id);
-        }
-        
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#not()
-         */
-        public BDD not() {
-            int b = not0(_id);
-            return makeBDD(b);
-        }
-        private static native int not0(int b);
-        
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#ite(net.sf.javabdd.BDD, net.sf.javabdd.BDD)
-         */
-        public BDD ite(BDD thenBDD, BDD elseBDD) {
-            BuDDyBDD c = (BuDDyBDD) thenBDD;
-            BuDDyBDD d = (BuDDyBDD) elseBDD;
-            int b = ite0(_id, c._id, d._id);
-            return makeBDD(b);
-        }
-        private static native int ite0(int b, int c, int d);
-        
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#relprod(net.sf.javabdd.BDD, net.sf.javabdd.BDDVarSet)
-         */
-        public BDD relprod(BDD that, BDDVarSet var) {
-            BuDDyBDD c = (BuDDyBDD) that;
-            BuDDyBDD d = (BuDDyBDD) ((BDDVarSet.DefaultImpl) var).b;
-            int b = relprod0(_id, c._id, d._id);
-            return makeBDD(b);
-        }
-        private static native int relprod0(int b, int c, int d);
-        
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#compose(net.sf.javabdd.BDD, int)
-         */
-        public BDD compose(BDD that, int var) {
-            BuDDyBDD c = (BuDDyBDD) that;
-            int b = compose0(_id, c._id, var);
-            return makeBDD(b);
-        }
-        private static native int compose0(int b, int c, int var);
-        
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#constrain(net.sf.javabdd.BDD)
-         */
-        public BDD constrain(BDD that) {
-            BuDDyBDD c = (BuDDyBDD) that;
-            int b = constrain0(_id, c._id);
-            return makeBDD(b);
-        }
-        private static native int constrain0(int b, int c);
-        
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#exist(net.sf.javabdd.BDDVarSet)
-         */
-        public BDD exist(BDDVarSet var) {
-            BuDDyBDD c = (BuDDyBDD) ((BDDVarSet.DefaultImpl) var).b;
-            int b = exist0(_id, c._id);
-            return makeBDD(b);
-        }
-        private static native int exist0(int b, int var);
-        
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#forAll(net.sf.javabdd.BDDVarSet)
-         */
-        public BDD forAll(BDDVarSet var) {
-            BuDDyBDD c = (BuDDyBDD) ((BDDVarSet.DefaultImpl) var).b;
-            int b = forAll0(_id, c._id);
-            return makeBDD(b);
-        }
-        private static native int forAll0(int b, int var);
-        
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#unique(net.sf.javabdd.BDDVarSet)
-         */
-        public BDD unique(BDDVarSet var) {
-            BuDDyBDD c = (BuDDyBDD) ((BDDVarSet.DefaultImpl) var).b;
-            int b = unique0(_id, c._id);
-            return makeBDD(b);
-        }
-        private static native int unique0(int b, int var);
-        
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#restrict(net.sf.javabdd.BDD)
-         */
-        public BDD restrict(BDD var) {
-            BuDDyBDD c = (BuDDyBDD) var;
-            int b = restrict0(_id, c._id);
-            return makeBDD(b);
-        }
-        private static native int restrict0(int b, int var);
-        
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#restrictWith(net.sf.javabdd.BDD)
-         */
-        public BDD restrictWith(BDD var) {
-            BuDDyBDD c = (BuDDyBDD) var;
-            int b = restrict0(_id, c._id);
-            addRef(b);
-            delRef(_id);
-            if (this != c) {
-                delRef(c._id);
-                c._id = INVALID_BDD;
-            }
-            _id = b;
-            return this;
-        }
-        
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#simplify(net.sf.javabdd.BDDVarSet)
-         */
-        public BDD simplify(BDDVarSet d) {
-            BuDDyBDD c = (BuDDyBDD) ((BDDVarSet.DefaultImpl) d).b;
-            int b = simplify0(_id, c._id);
-            return makeBDD(b);
-        }
-        private static native int simplify0(int b, int d);
-        
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#support()
-         */
-        public BDDVarSet support() {
-            int b = support0(_id);
-            return makeBDDVarSet(b);
-        }
-        private static native int support0(int b);
-        
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#apply(net.sf.javabdd.BDD, net.sf.javabdd.BDDFactory.BDDOp)
-         */
-        public BDD apply(BDD that, BDDFactory.BDDOp opr) {
-            BuDDyBDD c = (BuDDyBDD) that;
-            int b = apply0(_id, c._id, opr.id);
-            return makeBDD(b);
-        }
-        private static native int apply0(int b, int c, int opr);
-        
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#applyWith(net.sf.javabdd.BDD, net.sf.javabdd.BDDFactory.BDDOp)
-         */
-        public BDD applyWith(BDD that, BDDFactory.BDDOp opr) {
-            BuDDyBDD c = (BuDDyBDD) that;
-            int b = apply0(_id, c._id, opr.id);
-            addRef(b);
-            delRef(_id);
-            if (this != c) {
-                delRef(c._id);
-                c._id = INVALID_BDD;
-            }
-            _id = b;
-            return this;
-        }
-        
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#applyAll(net.sf.javabdd.BDD, net.sf.javabdd.BDDFactory.BDDOp, net.sf.javabdd.BDDVarSet)
-         */
-        public BDD applyAll(BDD that, BDDFactory.BDDOp opr, BDDVarSet var) {
-            BuDDyBDD c = (BuDDyBDD) that;
-            BuDDyBDD d = (BuDDyBDD) ((BDDVarSet.DefaultImpl) var).b;
-            int b = applyAll0(_id, c._id, opr.id, d._id);
-            return makeBDD(b);
-        }
-        private static native int applyAll0(int b, int c, int opr, int d);
-        
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#applyEx(net.sf.javabdd.BDD, net.sf.javabdd.BDDFactory.BDDOp, net.sf.javabdd.BDDVarSet)
-         */
-        public BDD applyEx(BDD that, BDDFactory.BDDOp opr, BDDVarSet var) {
-            BuDDyBDD c = (BuDDyBDD) that;
-            BuDDyBDD d = (BuDDyBDD) ((BDDVarSet.DefaultImpl) var).b;
-            int b = applyEx0(_id, c._id, opr.id, d._id);
-            return makeBDD(b);
-        }
-        private static native int applyEx0(int b, int c, int opr, int d);
-        
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#applyUni(net.sf.javabdd.BDD, net.sf.javabdd.BDDFactory.BDDOp, net.sf.javabdd.BDDVarSet)
-         */
-        public BDD applyUni(BDD that, BDDFactory.BDDOp opr, BDDVarSet var) {
-            BuDDyBDD c = (BuDDyBDD) that;
-            BuDDyBDD d = (BuDDyBDD) ((BDDVarSet.DefaultImpl) var).b;
-            int b = applyUni0(_id, c._id, opr.id, d._id);
-            return makeBDD(b);
-        }
-        private static native int applyUni0(int b, int c, int opr, int d);
-        
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#satOne()
-         */
-        public BDD satOne() {
-            int b = satOne0(_id);
-            return makeBDD(b);
-        }
-        private static native int satOne0(int b);
-        
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#fullSatOne()
-         */
-        public BDD fullSatOne() {
-            int b = fullSatOne0(_id);
-            return makeBDD(b);
-        }
-        private static native int fullSatOne0(int b);
-        
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#satOne(net.sf.javabdd.BDDVarSet, boolean)
-         */
-        public BDD satOne(BDDVarSet var, boolean pol) {
-            BuDDyBDD c = (BuDDyBDD) ((BDDVarSet.DefaultImpl) var).b;
-            int b = satOne1(_id, c._id, pol?1:0);
-            return makeBDD(b);
-        }
-        private static native int satOne1(int b, int c, int d);
-        
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#printSet()
-         */
-        public void printSet() {
-            printSet0(_id);
-        }
-        private static native void printSet0(int b);
-        
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#printDot()
-         */
-        public void printDot() {
-            printDot0(_id);
-        }
-        private static native void printDot0(int b);
-
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#nodeCount()
-         */
-        public int nodeCount() {
-            return nodeCount0(_id);
-        }
-        private static native int nodeCount0(int b);
-        
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#pathCount()
-         */
-        public double pathCount() {
-            return pathCount0(_id);
-        }
-        private static native double pathCount0(int b);
-        
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#satCount()
-         */
-        public double satCount() {
-            return satCount0(_id);
-        }
-        private static native double satCount0(int b);
-        
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#satCount(net.sf.javabdd.BDDVarSet)
-         */
-        public double satCount(BDDVarSet varset) {
-            BuDDyBDD c = (BuDDyBDD) ((BDDVarSet.DefaultImpl) varset).b;
-            return satCount1(_id, c._id);
-        }
-        private static native double satCount1(int b, int c);
-        
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#logSatCount()
-         */
-        public double logSatCount() {
-            return logSatCount0(_id);
-        }
-        private static native double logSatCount0(int b);
-        
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#logSatCount(net.sf.javabdd.BDDVarSet)
-         */
-        public double logSatCount(BDDVarSet varset) {
-            BuDDyBDD c = (BuDDyBDD) ((BDDVarSet.DefaultImpl) varset).b;
-            return logSatCount1(_id, c._id);
-        }
-        private static native double logSatCount1(int b, int c);
-        
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#varProfile()
-         */
-        public int[] varProfile() {
-            return varProfile0(_id);
-        }
-        private static native int[] varProfile0(int b);
-        
-        private static native void addRef(int b);
-        
-        private static native void delRef(int b);
-        
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#free()
-         */
-        public void free() {
-            if (INSTANCE != null) {
-                delRef(_id);
-            }
-            _id = INVALID_BDD;
-        }
-        
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#veccompose(net.sf.javabdd.BDDPairing)
-         */
-        public BDD veccompose(BDDPairing pair) {
-            BuDDyBDDPairing p = (BuDDyBDDPairing) pair;
-            int b = veccompose0(_id, p._ptr);
-            return makeBDD(b);
-        }
-        private static native int veccompose0(int b, long p);
-        
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#replace(net.sf.javabdd.BDDPairing)
-         */
-        public BDD replace(BDDPairing pair) {
-            BuDDyBDDPairing p = (BuDDyBDDPairing) pair;
-            int b = replace0(_id, p._ptr);
-            return makeBDD(b);
-        }
-        private static native int replace0(int b, long p);
-        
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#replaceWith(net.sf.javabdd.BDDPairing)
-         */
-        public BDD replaceWith(BDDPairing pair) {
-            BuDDyBDDPairing p = (BuDDyBDDPairing) pair;
-            int b = replace0(_id, p._ptr);
-            addRef(b);
-            delRef(_id);
-            _id = b;
-            return this;
-        }
-        
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#equals(net.sf.javabdd.BDD)
-         */
-        public boolean equals(BDD that) {
-            return this._id == ((BuDDyBDD) that)._id;
-        }
-        
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#hashCode()
-         */
-        public int hashCode() {
-            return this._id;
-        }
-
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#toVarSet()
-         */
-        public BDDVarSet toVarSet() {
-            return makeBDDVarSet(this._id);
-        }
-
-    }
-    
-    private static class BuDDyBDDWithFinalizer extends BuDDyBDD {
-        
-        protected BuDDyBDDWithFinalizer(int id) {
-            super(id);
-        }
-        
-        /* Finalizer runs in different thread, and BuDDy is not thread-safe.
-         * Also, the existence of any finalize() method hurts performance
-         * considerably.
-         */
-        /* (non-Javadoc)
-         * @see java.lang.Object#finalize()
-         */
-        protected void finalize() throws Throwable {
-            super.finalize();
-            if (_id >= 0) {
-                System.out.println("BDD not freed! "+System.identityHashCode(this)+" _id "+_id+" nodes: "+nodeCount());
-            }
-            //this.free();
-        }
-        static {
-            //System.runFinalizersOnExit(true);
-        }
+    static long unwrap(BDDPairing p) {
+        return ((BuDDyPairing)p)._ptr;
     }
     
     /* (non-Javadoc)
      * An implementation of a BDDPairing, used by the BuDDy interface.
      */
-    private static class BuDDyBDDPairing extends BDDPairing {
+    private static class BuDDyPairing extends BDDPairing {
         
         private long _ptr;
         
-        private BuDDyBDDPairing(long ptr) {
+        private BuDDyPairing(long ptr) {
                 this._ptr = ptr;
         }
         
@@ -1077,8 +414,7 @@ public class BuDDyFactory extends BDDFactory {
          * @see net.sf.javabdd.BDDPairing#set(int, net.sf.javabdd.BDD)
          */
         public void set(int oldvar, BDD newvar) {
-            BuDDyBDD c = (BuDDyBDD) newvar;
-            set2(_ptr, oldvar, c._id);
+            set2(_ptr, oldvar, unwrap(newvar));
         }
         private static native void set2(long p, int oldvar, int newbdd);
         
@@ -1086,8 +422,7 @@ public class BuDDyFactory extends BDDFactory {
          * @see net.sf.javabdd.BDDPairing#set(int[], net.sf.javabdd.BDD[])
          */
         public void set(int[] oldvar, BDD[] newvar) {
-            int[] a = toBuDDyArray(Arrays.asList(newvar));
-            set3(_ptr, oldvar, a);
+            set3(_ptr, oldvar, unwrap(Arrays.asList(newvar)));
         }
         private static native void set3(long p, int[] oldvar, int[] newbdds);
         
@@ -1110,9 +445,9 @@ public class BuDDyFactory extends BDDFactory {
         
     }
     
-    private static class BuDDyBDDPairingWithFinalizer extends BuDDyBDDPairing {
+    private static class BuDDyPairingWithFinalizer extends BuDDyPairing {
         
-        private BuDDyBDDPairingWithFinalizer(long ptr) {
+        private BuDDyPairingWithFinalizer(long ptr) {
             super(ptr);
         }
 

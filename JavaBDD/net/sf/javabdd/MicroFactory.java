@@ -188,7 +188,7 @@ public class MicroFactory extends BDDFactoryIntImpl {
     public int setNodeTableSize(int size) { return bdd_setallocnum(size); }
     public int setCacheSize(int v) { return bdd_setcachesize(v); }
     public boolean isInitialized() { return bddrunning; }
-    public void done() { bdd_done(); }
+    public void done() { super.done(); bdd_done(); }
     public void setError(int code) { bdderrorcond = code; }
     public void clearError() { bdderrorcond = 0; }
     public int setMaxNodeNum(int size) { return bdd_setmaxnodenum(size); }
@@ -3217,6 +3217,9 @@ public class MicroFactory extends BDDFactoryIntImpl {
         gcstats.num = gbcollectnum;
         gbc_handler(true, gcstats);
 
+        // Handle nodes that were marked as free by finalizer.
+        handleDeferredFree();
+        
         for (r = 0; r < bddrefstacktop; r++)
             bdd_mark(bddrefstack[r]);
 
