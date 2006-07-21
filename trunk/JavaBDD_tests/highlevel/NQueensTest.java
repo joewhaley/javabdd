@@ -34,7 +34,7 @@ public class NQueensTest extends BDDTestCase {
             for (int i = 1; i <= CHECK; ++i) {
                 NQueens.N = i;
                 double n = NQueens.runTest();
-                Assert.assertEquals(n, ANSWERS[i-1], 0.1);
+                Assert.assertEquals(NQueens.B.getVersion(), n, ANSWERS[i-1], 0.1);
                 NQueens.freeAll();
             }
         }

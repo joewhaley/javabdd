@@ -45,7 +45,12 @@ public class CallbackTests extends BDDTestCase {
         Assert.assertTrue(hasNext());
         while (hasNext()) {
             BDDFactory bdd = nextFactory();
-            bdd.registerGCCallback(this, m);
+            try {
+                bdd.registerGCCallback(this, m);
+            } catch (UnsupportedOperationException _) {
+                System.err.println("Warning: "+bdd.getVersion()+" does not support callbacks");
+                continue;
+            }
             gc_called = 0;
             final int numBits = 20;
             final int max = (1 << numBits) - 1;
@@ -89,7 +94,12 @@ public class CallbackTests extends BDDTestCase {
         Assert.assertTrue(hasNext());
         while (hasNext()) {
             BDDFactory bdd = nextFactory();
-            bdd.registerReorderCallback(this, m);
+            try {
+                bdd.registerReorderCallback(this, m);
+            } catch (UnsupportedOperationException _) {
+                System.err.println("Warning: "+bdd.getVersion()+" does not support callbacks");
+                continue;
+            }
             reorder_called = false;
             if (bdd.varNum() < 5) bdd.setVarNum(5);
             //bdd.varBlockAll();
@@ -127,7 +137,12 @@ public class CallbackTests extends BDDTestCase {
         Assert.assertTrue(hasNext());
         while (hasNext()) {
             BDDFactory bdd = nextFactory();
-            bdd.registerResizeCallback(this, m);
+            try {
+                bdd.registerResizeCallback(this, m);
+            } catch (UnsupportedOperationException _) {
+                System.err.println("Warning: "+bdd.getVersion()+" does not support callbacks");
+                continue;
+            }
             resize_called = false;
             int newSize = bdd.getNodeTableSize() * 2;
             bdd.setNodeTableSize(newSize);

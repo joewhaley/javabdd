@@ -55,7 +55,9 @@ public class BasicTests extends BDDTestCase {
         while (hasNext()) {
             BDDFactory bdd = nextFactory();
             if (bdd.varNum() < 5) bdd.setVarNum(5);
-            bdd.setVarOrder(new int[] { 0, 1, 2, 3, 4 });
+            try {
+                bdd.setVarOrder(new int[] { 0, 1, 2, 3, 4 });
+            } catch (UnsupportedOperationException _) { }
             BDD a = bdd.ithVar(1);
             BDD b = bdd.ithVar(2);
             BDD c = bdd.ithVar(3);
@@ -66,11 +68,11 @@ public class BasicTests extends BDDTestCase {
             Assert.assertEquals(3, c.var());
             try {
                 d.var();
-                Assert.fail();
+                Assert.fail(bdd.getVersion());
             } catch (BDDException x) { }
             try {
                 e.var();
-                Assert.fail();
+                Assert.fail(bdd.getVersion());
             } catch (BDDException x) { }
             BDD f = a.and(b);
             Assert.assertEquals(1, f.var());
@@ -84,7 +86,12 @@ public class BasicTests extends BDDTestCase {
         while (hasNext()) {
             BDDFactory bdd = nextFactory();
             if (bdd.varNum() < 5) bdd.setVarNum(5);
-            bdd.setVarOrder(new int[] { 0, 1, 2, 3, 4 });
+            try {
+                bdd.setVarOrder(new int[] { 0, 1, 2, 3, 4 });
+            } catch (UnsupportedOperationException _) {
+                System.err.println("Warning: "+bdd.getVersion()+" does not support setVarOrder()");
+                continue;
+            }
             BDD a = bdd.ithVar(0);
             BDD b = bdd.ithVar(1);
             BDD c = bdd.ithVar(2);
@@ -116,7 +123,9 @@ public class BasicTests extends BDDTestCase {
         while (hasNext()) {
             BDDFactory bdd = nextFactory();
             if (bdd.varNum() < 5) bdd.setVarNum(5);
-            bdd.setVarOrder(new int[] { 0, 1, 2, 3, 4 });
+            try {
+                bdd.setVarOrder(new int[] { 0, 1, 2, 3, 4 });
+            } catch (UnsupportedOperationException _) { }
             BDD a, b, c;
             a = bdd.ithVar(0);
             a.andWith(bdd.ithVar(1));
@@ -124,6 +133,16 @@ public class BasicTests extends BDDTestCase {
             Assert.assertEquals(0, a.var());
             b = a.low();
             Assert.assertEquals(true, b.isZero());
+            try {
+                b.low();
+                Assert.fail();
+            } catch (BDDException _) {
+            }
+            try {
+                b.high();
+                Assert.fail();
+            } catch (BDDException _) {
+            }
             b.free();
             b = a.high();
             Assert.assertEquals(1, b.var());
@@ -132,6 +151,16 @@ public class BasicTests extends BDDTestCase {
             Assert.assertEquals(2, c.var());
             b = c.low();
             Assert.assertEquals(true, b.isOne());
+            try {
+                b.low();
+                Assert.fail();
+            } catch (BDDException _) {
+            }
+            try {
+                b.high();
+                Assert.fail();
+            } catch (BDDException _) {
+            }
             a.free(); b.free(); c.free();
         }
     }
@@ -318,7 +347,9 @@ public class BasicTests extends BDDTestCase {
         while (hasNext()) {
             BDDFactory bdd = nextFactory();
             // TODO: more tests
-            testApply(bdd, BDDFactory.less, false, true, false, false);
+            try {
+                testApply(bdd, BDDFactory.less, false, true, false, false);
+            } catch (UnsupportedOperationException _) { }
         }
     }
     
@@ -328,7 +359,9 @@ public class BasicTests extends BDDTestCase {
         while (hasNext()) {
             BDDFactory bdd = nextFactory();
             // TODO: more tests
-            testApply(bdd, BDDFactory.invimp, true, false, true, true);
+            try {
+                testApply(bdd, BDDFactory.invimp, true, false, true, true);
+            } catch (UnsupportedOperationException _) { }
         }
     }
     
@@ -362,12 +395,18 @@ public class BasicTests extends BDDTestCase {
             testApplyWith(bdd, BDDFactory.or, false, true, true, true);
             testApplyWith(bdd, BDDFactory.xor, false, true, true, false);
             testApplyWith(bdd, BDDFactory.imp, true, true, false, true);
-            testApplyWith(bdd, BDDFactory.biimp, true, false, false, true);
             testApplyWith(bdd, BDDFactory.diff, false, false, true, false);
-            testApplyWith(bdd, BDDFactory.less, false, true, false, false);
-            testApplyWith(bdd, BDDFactory.invimp, true, false, true, true);
             testApplyWith(bdd, BDDFactory.nand, true, true, true, false);
             testApplyWith(bdd, BDDFactory.nor, true, false, false, false);
+            try {
+                testApplyWith(bdd, BDDFactory.biimp, true, false, false, true);
+            } catch (UnsupportedOperationException _) { }
+            try {
+                testApplyWith(bdd, BDDFactory.less, false, true, false, false);
+            } catch (UnsupportedOperationException _) { }
+            try {
+                testApplyWith(bdd, BDDFactory.invimp, true, false, true, true);
+            } catch (UnsupportedOperationException _) { }
         }
     }
     

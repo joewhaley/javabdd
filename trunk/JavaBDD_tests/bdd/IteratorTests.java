@@ -37,7 +37,7 @@ public class IteratorTests extends BDDTestCase {
             BDDVarSet var = d.set();
             Iterator i = b.iterator(var);
             b.free();
-            Assert.assertEquals(i.hasNext(), false);
+            Assert.assertEquals(bdd.getVersion(), i.hasNext(), false);
             try {
                 i.next();
                 Assert.fail();
@@ -53,18 +53,18 @@ public class IteratorTests extends BDDTestCase {
             while (i1.hasNext()) {
                 BDD b1 = (BDD) i1.next();
                 double sc = b1.satCount(var);
-                Assert.assertEquals(1., sc, 0.0000001);
+                Assert.assertEquals(bdd.getVersion(), 1., sc, 0.0000001);
                 s1.add(b1);
             }
             while (i2.hasNext()) {
                 BDD b2 = (BDD) i2.next();
                 double sc = b2.satCount(var); 
-                Assert.assertEquals(1., sc, 0.0000001);
+                Assert.assertEquals(bdd.getVersion(), 1., sc, 0.0000001);
                 s2.add(b2);
             }
             var.free();
-            Assert.assertEquals(s1.size(), domainSize);
-            Assert.assertEquals(s2.size(), domainSize);
+            Assert.assertEquals(bdd.getVersion(), s1.size(), domainSize);
+            Assert.assertEquals(bdd.getVersion(), s2.size(), domainSize);
             if (!s1.equals(s2)) {
                 Set s1_minus_s2 = new HashSet(s1);
                 s1_minus_s2.removeAll(s2);
@@ -118,13 +118,13 @@ public class IteratorTests extends BDDTestCase {
                 while (i1.hasNext()) {
                     BDD b1 = (BDD) i1.next();
                     double sc = b1.satCount(var);
-                    Assert.assertEquals(1., sc, 0.0000001);
+                    Assert.assertEquals(bdd.getVersion(), 1., sc, 0.0000001);
                     s1.add(b1);
                 }
                 while (i2.hasNext()) {
                     BDD b2 = (BDD) i2.next();
                     double sc = b2.satCount(var); 
-                    Assert.assertEquals(1., sc, 0.0000001);
+                    Assert.assertEquals(bdd.getVersion(), 1., sc, 0.0000001);
                     s2.add(b2);
                 }
                 var.free();
@@ -133,7 +133,7 @@ public class IteratorTests extends BDDTestCase {
                     s1_minus_s2.removeAll(s2);
                     Set s2_minus_s1 = new HashSet(s2);
                     s2_minus_s1.removeAll(s1);
-                    Assert.fail("iterator() contains these extras: "+s1_minus_s2+"\n"+
+                    Assert.fail(bdd.getVersion()+": iterator() contains these extras: "+s1_minus_s2+"\n"+
                         "iterator2() contains these extras: "+s2_minus_s1);
                 }
                 for (Iterator k = s1.iterator(); k.hasNext(); ) {
