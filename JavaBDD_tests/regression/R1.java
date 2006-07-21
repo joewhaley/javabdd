@@ -31,7 +31,7 @@ public class R1 extends BDDTestCase {
             double s1 = x.satCount(set);
             if (bdd.varNum() < 20) bdd.setVarNum(20);
             double s2 = x.satCount(set);
-            Assert.assertEquals(bdd.toString(), s1, s2, 0.00001);
+            Assert.assertEquals(bdd.getVersion(), s1, s2, 0.00001);
             x.free(); set.free();
         }
     }

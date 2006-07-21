@@ -26,12 +26,12 @@ public class R2 extends BDDTestCase {
             BDDFactory bdd = nextFactory();
             BDD zero = bdd.zero();
             BDD one = bdd.one();
-            Assert.assertTrue(bdd.toString(), zero.isZero());
-            Assert.assertTrue(bdd.toString(), one.isOne());
+            Assert.assertTrue(bdd.getVersion(), zero.isZero());
+            Assert.assertTrue(bdd.getVersion(), one.isOne());
             BDDVarSet s0 = zero.support();
             BDDVarSet s1 = one.support();
-            Assert.assertTrue(bdd.toString(), s0.isEmpty());
-            Assert.assertTrue(bdd.toString(), s1.isEmpty());
+            Assert.assertTrue(bdd.getVersion(), s0.isEmpty());
+            Assert.assertTrue(bdd.getVersion(), s1.isEmpty());
             zero.free(); one.free();
             s0.free(); s1.free();
         }
