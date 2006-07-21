@@ -28,8 +28,16 @@ import java.io.PrintStream;
  */
 public class JFactory extends BDDFactoryIntImpl {
 
-    static final boolean VERIFY_ASSERTIONS = false;
+    /**** Options ****/
+    
+    /**
+     * Flush the operation cache on every garbage collection.  If this is false,
+     * we only clean the collected entries on every GC, rather than emptying the
+     * whole cache.  For most problems, you should keep this set to true.
+     */
     public static boolean FLUSH_CACHE_ON_GC = true;
+    
+    static final boolean VERIFY_ASSERTIONS = false;
     static final boolean CACHESTATS = false;
     static final boolean SWAPCOUNT = false;
 
@@ -47,10 +55,19 @@ public class JFactory extends BDDFactoryIntImpl {
     public static BDDFactory init(int nodenum, int cachesize) {
         BDDFactory f = new JFactory();
         f.initialize(nodenum, cachesize);
+        if (CACHESTATS) addShutdownHook(f);
         return f;
     }
 
-    public boolean ZDD = false;
+    static void addShutdownHook(final BDDFactory f) {
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            public void run() {
+                System.out.println(f.getCacheStats().toString());
+            }
+        });
+    }
+    
+    boolean ZDD = false;
     
     /**
      * Implementation of BDDPairing used by JFactory.
@@ -122,7 +139,7 @@ public class JFactory extends BDDFactoryIntImpl {
     protected void addref_impl(int v) { bdd_addref(v); }
     protected void delref_impl(int v) { bdd_delref(v); }
     protected int zero_impl() { return BDDZERO; }
-    protected int one_impl() {return BDDONE; }
+    protected int one_impl() { return BDDONE; }
     protected int invalid_bdd_impl() { return INVALID_BDD; }
     protected int var_impl(int v) { return bdd_var(v); }
     protected int level_impl(int v) { return LEVEL(v); }
@@ -917,25 +934,20 @@ public class JFactory extends BDDFactoryIntImpl {
 
     int bdd_not(int r) {
         int res;
-        firstReorder = 1;
+        int numReorder = 1;
         CHECKa(r, bddfalse);
 
         if (applycache == null) applycache = BddCacheI_init(cachesize);
         again : for (;;) {
             try {
                 INITREF();
-
-                if (firstReorder == 0)
-                    bdd_disable_reorder();
+                if (numReorder == 0) bdd_disable_reorder();
                 res = ZDD ? znot_rec(r) : not_rec(r);
-                if (firstReorder == 0)
-                    bdd_enable_reorder();
+                if (numReorder == 0) bdd_enable_reorder();
             } catch (ReorderException x) {
                 bdd_checkreorder();
-                if (firstReorder-- == 1)
-                    continue again;
-                res = bddfalse;
-                /* avoid warning about res being uninitialized */
+                numReorder--;
+                continue again;
             }
             break;
         }
@@ -948,10 +960,8 @@ public class JFactory extends BDDFactoryIntImpl {
         BddCacheDataI entry;
         int res;
 
-        if (ISZERO(r))
-            return bddtrue;
-        if (ISONE(r))
-            return bddfalse;
+        if (ISCONST(r))
+            return 1 - r;
 
         entry = BddCache_lookupI(applycache, NOTHASH(r));
 
@@ -1007,7 +1017,7 @@ public class JFactory extends BDDFactoryIntImpl {
     
     int bdd_ite(int f, int g, int h) {
         int res;
-        firstReorder = 1;
+        int numReorder = 1;
 
         CHECKa(f, bddfalse);
         CHECKa(g, bddfalse);
@@ -1020,18 +1030,13 @@ public class JFactory extends BDDFactoryIntImpl {
             try {
                 INITREF();
 
-                if (firstReorder == 0)
-                    bdd_disable_reorder();
+                if (numReorder == 0) bdd_disable_reorder();
                 res = ZDD ? zite_rec(f, g, h) : ite_rec(f, g, h);
-                if (firstReorder == 0)
-                    bdd_enable_reorder();
+                if (numReorder == 0) bdd_enable_reorder();
             } catch (ReorderException x) {
                 bdd_checkreorder();
-
-                if (firstReorder-- == 1)
-                    continue again;
-                res = BDDZERO;
-                /* avoid warning about res being uninitialized */
+                numReorder--;
+                continue again;
             }
             break;
         }
@@ -1201,7 +1206,7 @@ public class JFactory extends BDDFactoryIntImpl {
     
     int bdd_replace(int r, bddPair pair) {
         int res;
-        firstReorder = 1;
+        int numReorder = 1;
 
         CHECKa(r, bddfalse);
 
@@ -1214,18 +1219,13 @@ public class JFactory extends BDDFactoryIntImpl {
                 replacelast = pair.last;
                 replaceid = (pair.id << 2) | CACHEID_REPLACE;
 
-                if (firstReorder == 0)
-                    bdd_disable_reorder();
+                if (numReorder == 0) bdd_disable_reorder();
                 res = replace_rec(r);
-                if (firstReorder == 0)
-                    bdd_enable_reorder();
+                if (numReorder == 0) bdd_enable_reorder();
             } catch (ReorderException x) {
                 bdd_checkreorder();
-
-                if (firstReorder-- == 1)
-                    continue again;
-                res = BDDZERO;
-                /* avoid warning about res being uninitialized */
+                numReorder--;
+                continue again;
             }
             break;
         }
@@ -1298,7 +1298,7 @@ public class JFactory extends BDDFactoryIntImpl {
 
     int bdd_apply(int l, int r, int op) {
         int res;
-        firstReorder = 1;
+        int numReorder = 1;
 
         CHECKa(l, bddfalse);
         CHECKa(r, bddfalse);
@@ -1315,29 +1315,22 @@ public class JFactory extends BDDFactoryIntImpl {
                 INITREF();
                 applyop = op;
 
-                if (firstReorder == 0)
-                    bdd_disable_reorder();
+                if (numReorder == 0) bdd_disable_reorder();
                 switch (op) {
                     case bddop_and: res = ZDD ? zand_rec(l, r) : and_rec(l, r); break;
                     case bddop_or: res = ZDD ? zor_rec(l, r) : or_rec(l, r); break;
                     case bddop_diff: res = ZDD ? zdiff_rec(l, r) : apply_rec(l, r); break;
                     default: res = apply_rec(l, r); break;
                 }
-                if (firstReorder == 0)
-                    bdd_enable_reorder();
+                if (numReorder == 0) bdd_enable_reorder();
             } catch (ReorderException x) {
                 bdd_checkreorder();
-
-                if (firstReorder-- == 1)
-                    continue again;
-                res = BDDZERO;
-                /* avoid warning about res being uninitialized */
+                numReorder--;
+                continue again;
             }
             break;
         }
 
-        //validate(res);
-        
         checkresize();
         return res;
     }
@@ -1705,7 +1698,7 @@ public class JFactory extends BDDFactoryIntImpl {
 
     int bdd_appex(int l, int r, int opr, int var) {
         int res;
-        firstReorder = 1;
+        int numReorder = 1;
 
         CHECKa(l, bddfalse);
         CHECKa(r, bddfalse);
@@ -1734,18 +1727,16 @@ public class JFactory extends BDDFactoryIntImpl {
                 appexid = (var << 5) | (appexop << 1); /* FIXME: range! */
                 quantid = (appexid << 3) | CACHEID_APPEX;
 
-                if (firstReorder == 0)
+                if (numReorder == 0)
                     bdd_disable_reorder();
                 res = opr == bddop_and ? relprod_rec(l, r) : appquant_rec(l, r);
-                if (firstReorder == 0)
+                if (numReorder == 0)
                     bdd_enable_reorder();
             } catch (ReorderException x) {
                 bdd_checkreorder();
 
-                if (firstReorder-- == 1)
-                    continue again;
-                res = BDDZERO;
-                /* avoid warning about res being uninitialized */
+                numReorder--;
+                continue again;
             }
             break;
         }
@@ -2073,7 +2064,7 @@ public class JFactory extends BDDFactoryIntImpl {
 
     int bdd_constrain(int f, int c) {
         int res;
-        firstReorder = 1;
+        int numReorder = 1;
 
         CHECKa(f, bddfalse);
         CHECKa(c, bddfalse);
@@ -2085,18 +2076,16 @@ public class JFactory extends BDDFactoryIntImpl {
                 INITREF();
                 miscid = CACHEID_CONSTRAIN;
 
-                if (firstReorder == 0)
+                if (numReorder == 0)
                     bdd_disable_reorder();
                 res = constrain_rec(f, c);
-                if (firstReorder == 0)
+                if (numReorder == 0)
                     bdd_enable_reorder();
             } catch (ReorderException x) {
                 bdd_checkreorder();
 
-                if (firstReorder-- == 1)
-                    continue again;
-                res = BDDZERO;
-                /* avoid warning about res being uninitialized */
+                numReorder--;
+                continue again;
             }
             break;
         }
@@ -2166,7 +2155,7 @@ public class JFactory extends BDDFactoryIntImpl {
 
     int bdd_compose(int f, int g, int var) {
         int res;
-        firstReorder = 1;
+        int numReorder = 1;
 
         CHECKa(f, bddfalse);
         CHECKa(g, bddfalse);
@@ -2184,18 +2173,16 @@ public class JFactory extends BDDFactoryIntImpl {
                 composelevel = bddvar2level[var];
                 replaceid = (composelevel << 2) | CACHEID_COMPOSE;
 
-                if (firstReorder == 0)
+                if (numReorder == 0)
                     bdd_disable_reorder();
                 res = compose_rec(f, g);
-                if (firstReorder == 0)
+                if (numReorder == 0)
                     bdd_enable_reorder();
             } catch (ReorderException x) {
                 bdd_checkreorder();
 
-                if (firstReorder-- == 1)
-                    continue again;
-                res = BDDZERO;
-                /* avoid warning about res being uninitialized */
+                numReorder--;
+                continue again;
             }
             break;
         }
@@ -2250,7 +2237,7 @@ public class JFactory extends BDDFactoryIntImpl {
 
     int bdd_veccompose(int f, bddPair pair) {
         int res;
-        firstReorder = 1;
+        int numReorder = 1;
 
         CHECKa(f, bddfalse);
 
@@ -2265,18 +2252,16 @@ public class JFactory extends BDDFactoryIntImpl {
                 replaceid = (pair.id << 2) | CACHEID_VECCOMPOSE;
                 replacelast = pair.last;
 
-                if (firstReorder == 0)
+                if (numReorder == 0)
                     bdd_disable_reorder();
                 res = veccompose_rec(f);
-                if (firstReorder == 0)
+                if (numReorder == 0)
                     bdd_enable_reorder();
             } catch (ReorderException x) {
                 bdd_checkreorder();
 
-                if (firstReorder-- == 1)
-                    continue again;
-                res = BDDZERO;
-                /* avoid warning about res being uninitialized */
+                numReorder--;
+                continue again;
             }
             break;
         }
@@ -2315,7 +2300,7 @@ public class JFactory extends BDDFactoryIntImpl {
 
     int bdd_exist(int r, int var) {
         int res;
-        firstReorder = 1;
+        int numReorder = 1;
 
         CHECKa(r, bddfalse);
         CHECKa(var, bddfalse);
@@ -2335,18 +2320,16 @@ public class JFactory extends BDDFactoryIntImpl {
                 quantid = (var << 3) | CACHEID_EXIST; /* FIXME: range */
                 applyop = bddop_or;
 
-                if (firstReorder == 0)
+                if (numReorder == 0)
                     bdd_disable_reorder();
                 res = quant_rec(r);
-                if (firstReorder == 0)
+                if (numReorder == 0)
                     bdd_enable_reorder();
             } catch (ReorderException x) {
                 bdd_checkreorder();
 
-                if (firstReorder-- == 1)
-                    continue again;
-                res = BDDZERO;
-                /* avoid warning about res being uninitialized */
+                numReorder--;
+                continue again;
             }
             break;
         }
@@ -2357,7 +2340,7 @@ public class JFactory extends BDDFactoryIntImpl {
 
     int bdd_forall(int r, int var) {
         int res;
-        firstReorder = 1;
+        int numReorder = 1;
 
         CHECKa(r, bddfalse);
         CHECKa(var, bddfalse);
@@ -2376,18 +2359,16 @@ public class JFactory extends BDDFactoryIntImpl {
                 quantid = (var << 3) | CACHEID_FORALL;
                 applyop = bddop_and;
 
-                if (firstReorder == 0)
+                if (numReorder == 0)
                     bdd_disable_reorder();
                 res = quant_rec(r);
-                if (firstReorder == 0)
+                if (numReorder == 0)
                     bdd_enable_reorder();
             } catch (ReorderException x) {
                 bdd_checkreorder();
 
-                if (firstReorder-- == 1)
-                    continue again;
-                res = BDDZERO;
-                /* avoid warning about res being uninitialized */
+                numReorder--;
+                continue again;
             }
             break;
         }
@@ -2398,7 +2379,7 @@ public class JFactory extends BDDFactoryIntImpl {
 
     int bdd_unique(int r, int var) {
         int res;
-        firstReorder = 1;
+        int numReorder = 1;
 
         CHECKa(r, bddfalse);
         CHECKa(var, bddfalse);
@@ -2415,18 +2396,16 @@ public class JFactory extends BDDFactoryIntImpl {
                 quantid = (var << 3) | CACHEID_UNIQUE;
                 applyop = bddop_xor;
 
-                if (firstReorder == 0)
+                if (numReorder == 0)
                     bdd_disable_reorder();
                 res = unique_rec(r, var);
-                if (firstReorder == 0)
+                if (numReorder == 0)
                     bdd_enable_reorder();
             } catch (ReorderException x) {
                 bdd_checkreorder();
 
-                if (firstReorder-- == 1)
-                    continue again;
-                res = BDDZERO;
-                /* avoid warning about res being uninitialized */
+                numReorder--;
+                continue again;
             }
             break;
         }
@@ -2437,7 +2416,7 @@ public class JFactory extends BDDFactoryIntImpl {
 
     int bdd_restrict(int r, int var) {
         int res;
-        firstReorder = 1;
+        int numReorder = 1;
 
         CHECKa(r, bddfalse);
         CHECKa(var, bddfalse);
@@ -2454,18 +2433,16 @@ public class JFactory extends BDDFactoryIntImpl {
                 INITREF();
                 miscid = (var << 3) | CACHEID_RESTRICT;
 
-                if (firstReorder == 0)
+                if (numReorder == 0)
                     bdd_disable_reorder();
                 res = restrict_rec(r);
-                if (firstReorder == 0)
+                if (numReorder == 0)
                     bdd_enable_reorder();
             } catch (ReorderException x) {
                 bdd_checkreorder();
 
-                if (firstReorder-- == 1)
-                    continue again;
-                res = BDDZERO;
-                /* avoid warning about res being uninitialized */
+                numReorder--;
+                continue again;
             }
             break;
         }
@@ -2512,7 +2489,7 @@ public class JFactory extends BDDFactoryIntImpl {
 
     int bdd_simplify(int f, int d) {
         int res;
-        firstReorder = 1;
+        int numReorder = 1;
 
         CHECKa(f, bddfalse);
         CHECKa(d, bddfalse);
@@ -2524,18 +2501,16 @@ public class JFactory extends BDDFactoryIntImpl {
                 INITREF();
                 applyop = bddop_or;
 
-                if (firstReorder == 0)
+                if (numReorder == 0)
                     bdd_disable_reorder();
                 res = simplify_rec(f, d);
-                if (firstReorder == 0)
+                if (numReorder == 0)
                     bdd_enable_reorder();
             } catch (ReorderException x) {
                 bdd_checkreorder();
 
-                if (firstReorder-- == 1)
-                    continue again;
-                res = BDDZERO;
-                /* avoid warning about res being uninitialized */
+                numReorder--;
+                continue again;
             }
             break;
         }
@@ -2670,7 +2645,7 @@ public class JFactory extends BDDFactoryIntImpl {
 
     int bdd_appall(int l, int r, int opr, int var) {
         int res;
-        firstReorder = 1;
+        int numReorder = 1;
 
         CHECKa(l, bddfalse);
         CHECKa(r, bddfalse);
@@ -2698,18 +2673,16 @@ public class JFactory extends BDDFactoryIntImpl {
                 appexid = (var << 5) | (appexop << 1) | 1; /* FIXME: range! */
                 quantid = (appexid << 3) | CACHEID_APPAL;
 
-                if (firstReorder == 0)
+                if (numReorder == 0)
                     bdd_disable_reorder();
                 res = appquant_rec(l, r);
-                if (firstReorder == 0)
+                if (numReorder == 0)
                     bdd_enable_reorder();
             } catch (ReorderException x) {
                 bdd_checkreorder();
 
-                if (firstReorder-- == 1)
-                    continue again;
-                res = BDDZERO;
-                /* avoid warning about res being uninitialized */
+                numReorder--;
+                continue again;
             }
             break;
         }
@@ -2720,7 +2693,7 @@ public class JFactory extends BDDFactoryIntImpl {
 
     int bdd_appuni(int l, int r, int opr, int var) {
         int res;
-        firstReorder = 1;
+        int numReorder = 1;
 
         CHECKa(l, bddfalse);
         CHECKa(r, bddfalse);
@@ -2746,17 +2719,15 @@ public class JFactory extends BDDFactoryIntImpl {
                 appexid = (var << 5) | (appexop << 1) | 1; /* FIXME: range! */
                 quantid = (appexid << 3) | CACHEID_APPUN;
 
-                if (firstReorder == 0)
+                if (numReorder == 0)
                     bdd_disable_reorder();
                 res = appuni_rec(l, r, var);
-                if (firstReorder == 0)
+                if (numReorder == 0)
                     bdd_enable_reorder();
             } catch (ReorderException x) {
                 bdd_checkreorder();
-                if (firstReorder-- == 1)
-                    continue again;
-                res = BDDZERO;
-                /* avoid warning about res being uninitialized */
+                numReorder--;
+                continue again;
             }
             break;
         }
@@ -3495,10 +3466,6 @@ public class JFactory extends BDDFactoryIntImpl {
     BddCache countcache; /* Cache for count results */
     int cacheratio;
     boolean satPolarity;
-    int firstReorder;
-    /* Used instead of local variable in order
-                   to avoid compiler warning about 'first'
-                   being clobbered by setjmp */
 
     void bdd_operator_init(int cachesize) {
         if (false) {
