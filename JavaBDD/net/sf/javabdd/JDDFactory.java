@@ -62,6 +62,7 @@ public class JDDFactory extends BDDFactoryIntImpl {
             throw new BDDException();
         return bdd.not(vars[var]);
     }
+    protected int makenode_impl(int lev, int lo, int hi) { return bdd.mk(lev, lo, hi); }
     protected int ite_impl(int v1, int v2, int v3) { return bdd.ite(v1, v2, v3); }
     protected int apply_impl(int x, int y, BDDOp opr) {
         int r;

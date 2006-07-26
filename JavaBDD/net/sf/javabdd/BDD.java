@@ -48,6 +48,14 @@ public abstract class BDD {
     public abstract boolean isOne();
     
     /**
+     * <p>Returns true if this BDD is the universe BDD.
+     * The universal BDD differs from the one BDD in ZDD mode.</p>
+     * 
+     * @return true if this BDD is the universe BDD
+     */
+    public boolean isUniverse() { return isOne(); }
+    
+    /**
      * <p>Converts this BDD to a new BDDVarSet.</p>
      * 
      * <p>This BDD must be a boolean function that represents the all-true minterm

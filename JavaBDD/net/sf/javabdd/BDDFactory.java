@@ -196,6 +196,14 @@ public abstract class BDDFactory {
     public abstract BDD one();
     
     /**
+     * <p>Get the constant universe BDD.
+     * (The universe BDD differs from the one BDD in ZDD mode.)</p>
+     * 
+     * <p>Compare to bdd_true.</p>
+     */
+    public BDD universe() { return one(); }
+    
+    /**
      * <p>Get an empty BDDVarSet.</p>
      * 
      * <p>Compare to bdd_true.</p>

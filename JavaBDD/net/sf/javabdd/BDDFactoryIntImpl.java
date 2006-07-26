@@ -20,6 +20,7 @@ public abstract class BDDFactoryIntImpl extends BDDFactory {
     protected abstract void delref_impl(/*bdd*/int v);
     protected abstract /*bdd*/int zero_impl();
     protected abstract /*bdd*/int one_impl();
+    protected /*bdd*/int universe_impl() { return one_impl(); }
     protected abstract /*bdd*/int invalid_bdd_impl();
     protected abstract int var_impl(/*bdd*/int v);
     protected abstract int level_impl(/*bdd*/int v);
@@ -28,6 +29,7 @@ public abstract class BDDFactoryIntImpl extends BDDFactory {
     protected abstract /*bdd*/int ithVar_impl(int var);
     protected abstract /*bdd*/int nithVar_impl(int var);
     
+    protected abstract /*bdd*/int makenode_impl(int lev, /*bdd*/int lo, /*bdd*/int hi);
     protected abstract /*bdd*/int ite_impl(/*bdd*/int v1, /*bdd*/int v2, /*bdd*/int v3);
     protected abstract /*bdd*/int apply_impl(/*bdd*/int v1, /*bdd*/int v2, BDDOp opr);
     protected abstract /*bdd*/int not_impl(/*bdd*/int v1);
@@ -120,6 +122,9 @@ public abstract class BDDFactoryIntImpl extends BDDFactory {
         }
         public boolean isOne() {
             return v == one_impl();
+        }
+        public boolean isUniverse() {
+            return v == universe_impl();
         }
         public boolean isZero() {
             return v == zero_impl();
@@ -236,7 +241,7 @@ public abstract class BDDFactoryIntImpl extends BDDFactory {
     
     public class IntBDDVarSet extends BDDVarSet {
         /*bdd*/int v;
-        private IntBDDVarSet(/*bdd*/int v) {
+        protected IntBDDVarSet(/*bdd*/int v) {
             this.v = v;
             addref_impl(v);
         }
@@ -256,12 +261,15 @@ public abstract class BDDFactoryIntImpl extends BDDFactory {
         public BDDVarSet id() {
             return makeBDDVarSet(v);
         }
+        protected int do_intersect(int v1, int v2) {
+            return apply_impl(v1, v2, or);
+        }
         public BDDVarSet intersect(BDDVarSet b) {
-            return makeBDDVarSet(apply_impl(v, unwrap(b), or));
+            return makeBDDVarSet(do_intersect(v, unwrap(b)));
         }
         public BDDVarSet intersectWith(BDDVarSet b) {
             /*bdd*/int v2 = unwrap(b);
-            /*bdd*/int v3 = apply_impl(v, v2, or);
+            /*bdd*/int v3 = do_intersect(v, v2);
             addref_impl(v3);
             delref_impl(v);
             if (this != b)
@@ -300,18 +308,21 @@ public abstract class BDDFactoryIntImpl extends BDDFactory {
             }
             return result;
         }
+        protected int do_unionvar(int v, int var) {
+            return apply_impl(v, ithVar_impl(var), and);
+        }
+        protected int do_union(int v1, int v2) {
+            return apply_impl(v1, v2, and);
+        }
         public BDDVarSet union(BDDVarSet b) {
-            return makeBDDVarSet(apply_impl(v, unwrap(b), and));
+            return makeBDDVarSet(do_union(v, unwrap(b)));
         }
         public BDDVarSet union(int var) {
-            /*bdd*/int v2 = ithVar_impl(var);
-            /*bdd*/int v3 = apply_impl(v, v2, and);
-            delref_impl(v2);
-            return makeBDDVarSet(v3);
+            return makeBDDVarSet(do_unionvar(v, var));
         }
         public BDDVarSet unionWith(BDDVarSet b) {
             /*bdd*/int v2 = unwrap(b);
-            /*bdd*/int v3 = apply_impl(v, v2, and);
+            /*bdd*/int v3 = do_union(v, v2);
             addref_impl(v3);
             delref_impl(v);
             if (this != b)
@@ -320,11 +331,9 @@ public abstract class BDDFactoryIntImpl extends BDDFactory {
             return this;
         }
         public BDDVarSet unionWith(int var) {
-            /*bdd*/int v2 = ithVar_impl(var);
-            /*bdd*/int v3 = apply_impl(v, v2, and);
+            /*bdd*/int v3 = do_unionvar(v, var);
             addref_impl(v3);
             delref_impl(v);
-            delref_impl(v2);
             v = v3;
             return this;
         }
@@ -348,11 +357,106 @@ public abstract class BDDFactoryIntImpl extends BDDFactory {
         
     }
     
+    public class IntZDDVarSet extends IntBDDVarSet {
+        protected IntZDDVarSet(/*bdd*/int v) {
+            super(v);
+        }
+        protected int do_intersect(int v1, int v2) {
+            if (v1 == one_impl()) return v2;
+            if (v2 == one_impl()) return v1;
+            int l1, l2;
+            l1 = level_impl(v1);
+            l2 = level_impl(v2);
+            for (;;) {
+                if (v1 == v2)
+                    return v1;
+                if (l1 < l2) {
+                    v1 = high_impl(v1);
+                    if (v1 == one_impl()) return v2;
+                    l1 = level_impl(v1);
+                } else if (l1 > l2) {
+                    v2 = high_impl(v2);
+                    if (v2 == one_impl()) return v1;
+                    l2 = level_impl(v2);
+                } else {
+                    int k = do_intersect(high_impl(v1), high_impl(v2));
+                    addref_impl(k);
+                    int result = makenode_impl(l1, zero_impl(), k);
+                    delref_impl(k);
+                    return result;
+                }
+            }
+        }
+        protected int do_union(int v1, int v2) {
+            if (v1 == v2) return v1;
+            if (v1 == one_impl()) return v2;
+            if (v2 == one_impl()) return v1;
+            int l1, l2;
+            l1 = level_impl(v1);
+            l2 = level_impl(v2);
+            int vv1 = v1, vv2 = v2, lev = l1;
+            if (l1 <= l2)
+                vv1 = high_impl(v1);
+            if (l1 >= l2) {
+                vv2 = high_impl(v2);
+                lev = l2;
+            }
+            int k = do_union(vv1, vv2);
+            addref_impl(k);
+            int result = makenode_impl(lev, zero_impl(), k);
+            delref_impl(k);
+            return result;
+        }
+        protected int do_unionvar(int v, int var) {
+            return do_unionlevel(v, var2Level(var));
+        }
+        private int do_unionlevel(int v, int lev) {
+            if (v == one_impl())
+                return makenode_impl(lev, zero_impl(), one_impl());
+            int l = level_impl(v);
+            if (l == lev) {
+                return v;
+            } else if (l > lev) {
+                return makenode_impl(lev, zero_impl(), v);
+            } else {
+                int k = do_unionlevel(high_impl(v), lev);
+                addref_impl(k);
+                int result = makenode_impl(lev, zero_impl(), k);
+                return result;
+            }
+        }
+    }
+    
+    public class IntZDDVarSetWithFinalizer extends IntZDDVarSet {
+        
+        protected IntZDDVarSetWithFinalizer(int v) {
+            super(v);
+        }
+        
+        protected void finalize() throws Throwable {
+            super.finalize();
+            if (USE_FINALIZER) {
+                if (false && v != invalid_bdd_impl()) {
+                    System.out.println("BDD not freed! "+System.identityHashCode(this));
+                }
+                deferredFree(v);
+            }
+        }
+        
+    }
+    
     protected IntBDDVarSet makeBDDVarSet(/*bdd*/int v) {
-        if (USE_FINALIZER)
-            return new IntBDDVarSetWithFinalizer(v);
-        else
-            return new IntBDDVarSet(v);
+        if (true || isZDD()) {
+            if (USE_FINALIZER)
+                return new IntZDDVarSetWithFinalizer(v);
+            else
+                return new IntZDDVarSet(v);
+        } else {
+            if (USE_FINALIZER)
+                return new IntBDDVarSetWithFinalizer(v);
+            else
+                return new IntBDDVarSet(v);
+        }
     }
     
     protected static final /*bdd*/int unwrap(BDDVarSet b) {
@@ -387,6 +491,10 @@ public abstract class BDDFactoryIntImpl extends BDDFactory {
         return makeBDD(one_impl());
     }
 
+    public BDD universe() {
+        return makeBDD(universe_impl());
+    }
+    
     public BDDVarSet emptySet() {
         return makeBDDVarSet(one_impl());
     }

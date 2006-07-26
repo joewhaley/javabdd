@@ -37,7 +37,7 @@ public class JFactory extends BDDFactoryIntImpl {
      */
     public static boolean FLUSH_CACHE_ON_GC = true;
     
-    static final boolean VERIFY_ASSERTIONS = false;
+    static final boolean VERIFY_ASSERTIONS = true;
     static final boolean CACHESTATS = false;
     static final boolean SWAPCOUNT = false;
 
@@ -67,7 +67,7 @@ public class JFactory extends BDDFactoryIntImpl {
         });
     }
     
-    boolean ZDD = false;
+    boolean ZDD = true;
     
     /**
      * Implementation of BDDPairing used by JFactory.
@@ -102,6 +102,7 @@ public class JFactory extends BDDFactoryIntImpl {
             sb.append('{');
             boolean any = false;
             for (int i = 0; i < result.length; ++i) {
+                // TODO: revisit for zdd
                 if (result[i] != bdd_ithvar(bddlevel2var[i])) {
                     if (any) sb.append(", ");
                     any = true;
@@ -124,6 +125,7 @@ public class JFactory extends BDDFactoryIntImpl {
         bddPair p = new bddPair();
         p.result = new int[bddvarnum];
         int n;
+        // TODO: revisit for zdd
         for (n = 0; n < bddvarnum; n++)
             p.result[n] = bdd_ithvar(bddlevel2var[n]);
 
@@ -140,6 +142,7 @@ public class JFactory extends BDDFactoryIntImpl {
     protected void delref_impl(int v) { bdd_delref(v); }
     protected int zero_impl() { return BDDZERO; }
     protected int one_impl() { return BDDONE; }
+    protected int universe_impl() { return univ; }
     protected int invalid_bdd_impl() { return INVALID_BDD; }
     protected int var_impl(int v) { return bdd_var(v); }
     protected int level_impl(int v) { return LEVEL(v); }
@@ -148,6 +151,12 @@ public class JFactory extends BDDFactoryIntImpl {
     protected int ithVar_impl(int var) { return bdd_ithvar(var); }
     protected int nithVar_impl(int var) { return bdd_nithvar(var); }
     
+    protected int makenode_impl(int lev, int lo, int hi) {
+        if (ZDD)
+            return zdd_makenode(lev, lo, hi);
+        else
+            return bdd_makenode(lev, lo, hi);
+    }
     protected int ite_impl(int v1, int v2, int v3) { return bdd_ite(v1, v2, v3); }
     protected int apply_impl(int v1, int v2, BDDOp opr) { return bdd_apply(v1, v2, opr.id); }
     protected int not_impl(int v1) { return bdd_not(v1); }
@@ -456,7 +465,7 @@ public class JFactory extends BDDFactoryIntImpl {
             prev_interleaved = inter;
         }
         BddTree newchild = my_vartree[0];
-        _assert(newchild.prev == null);
+        if (VERIFY_ASSERTIONS) _assert(newchild.prev == null);
         //while (newchild.prev != null) newchild = newchild.prev;
         if (parent == null) vartree = newchild;
         else parent.nextlevel = newchild;
@@ -491,8 +500,6 @@ public class JFactory extends BDDFactoryIntImpl {
         }
         return null;
     }
-    
-    
     
     /***** IMPLEMENTATION BELOW *****/
     
@@ -710,6 +717,7 @@ public class JFactory extends BDDFactoryIntImpl {
     /*=== PRIVATE KERNEL VARIABLES =========================================*/
 
     int[] bddvarset; /* Set of defined BDD variables */
+    int univ = 1; /* Universal set (used for ZDD) */
     int gbcollectnum; /* Number of garbage collections */
     int cachesize; /* Size of the operator caches */
     long gbcclock; /* Clock ticks used in GBC */
@@ -941,8 +949,10 @@ public class JFactory extends BDDFactoryIntImpl {
         again : for (;;) {
             try {
                 INITREF();
+                
                 if (numReorder == 0) bdd_disable_reorder();
-                res = ZDD ? znot_rec(r) : not_rec(r);
+                if (ZDD) res = zdiff_rec(univ, r);
+                else res = not_rec(r);
                 if (numReorder == 0) bdd_enable_reorder();
             } catch (ReorderException x) {
                 bdd_checkreorder();
@@ -985,36 +995,6 @@ public class JFactory extends BDDFactoryIntImpl {
         return res;
     }
 
-    int znot_rec(int r) {
-        BddCacheDataI entry;
-        int res;
-
-        if (ISZERO(r))
-            return bddtrue;
-        if (ISONE(r))
-            return bddfalse;
-
-        entry = BddCache_lookupI(applycache, NOTHASH(r));
-
-        if (entry.a == r && entry.c == bddop_not) {
-            if (CACHESTATS)
-                cachestats.opHit++;
-            return entry.res;
-        }
-        if (CACHESTATS)
-            cachestats.opMiss++;
-
-        PUSHREF(znot_rec(LOW(r)));
-        res = bdd_makenode(LEVEL(r), READREF(1), HIGH(r));
-        POPREF(1);
-
-        entry.a = r;
-        entry.c = bddop_not;
-        entry.res = res;
-
-        return res;
-    }
-    
     int bdd_ite(int f, int g, int h) {
         int res;
         int numReorder = 1;
@@ -1136,7 +1116,7 @@ public class JFactory extends BDDFactoryIntImpl {
         if (ISONE(g) && ISZERO(h))
             return f;
         if (ISZERO(g) && ISONE(h))
-            return znot_rec(f);
+            return zdiff_rec(univ, f);
         
         int v = Math.min(LEVEL(g), LEVEL(h));
         if (LEVEL(f) < v)
@@ -1155,43 +1135,43 @@ public class JFactory extends BDDFactoryIntImpl {
             if (LEVEL(f) == LEVEL(h)) {
                 PUSHREF(zite_rec(LOW(f), LOW(g), LOW(h)));
                 PUSHREF(zite_rec(HIGH(f), HIGH(g), HIGH(h)));
-                res = bdd_makenode(LEVEL(f), READREF(2), READREF(1));
+                res = zdd_makenode(LEVEL(f), READREF(2), READREF(1));
                 POPREF(2);
             } else if (LEVEL(f) < LEVEL(h)) {
                 PUSHREF(zite_rec(LOW(f), LOW(g), h));
                 PUSHREF(zite_rec(HIGH(f), HIGH(g), 0));
-                res = bdd_makenode(LEVEL(f), READREF(2), READREF(1));
+                res = zdd_makenode(LEVEL(f), READREF(2), READREF(1));
                 POPREF(2);
             } else /* f > h */ {
                 PUSHREF(zite_rec(f, g, LOW(h)));
-                res = bdd_makenode(LEVEL(h), HIGH(h), READREF(1));
+                res = zdd_makenode(LEVEL(h), HIGH(h), READREF(1));
                 POPREF(1);
             }
         } else if (LEVEL(f) < LEVEL(g)) {
             if (LEVEL(f) == LEVEL(h)) {
                 PUSHREF(zite_rec(LOW(f), g, LOW(h)));
                 PUSHREF(zite_rec(HIGH(f), 0, HIGH(h)));
-                res = bdd_makenode(LEVEL(f), READREF(2), READREF(1));
+                res = zdd_makenode(LEVEL(f), READREF(2), READREF(1));
                 POPREF(2);
             } else if (LEVEL(f) < LEVEL(h)) {
                 res = zite_rec(LOW(f), g, h);
             } else /* f > h */ {
                 PUSHREF(zite_rec(f, g, LOW(h)));
-                res = bdd_makenode(LEVEL(h), HIGH(h), READREF(1));
+                res = zdd_makenode(LEVEL(h), HIGH(h), READREF(1));
                 POPREF(1);
             }
         } else /* f > g */ {
             if (LEVEL(g) == LEVEL(h)) {
                 PUSHREF(zite_rec(f, LOW(g), LOW(h)));
-                res = bdd_makenode(LEVEL(g), HIGH(h), READREF(1));
+                res = zdd_makenode(LEVEL(g), HIGH(h), READREF(1));
                 POPREF(1);
             } else if (LEVEL(g) < LEVEL(h)) {
                 PUSHREF(zite_rec(f, LOW(g), h));
-                res = bdd_makenode(LEVEL(g), 0, READREF(1));
+                res = zdd_makenode(LEVEL(g), 0, READREF(1));
                 POPREF(1);
             } else /* g > h */ {
                 PUSHREF(zite_rec(f, g, LOW(h)));
-                res = bdd_makenode(LEVEL(h), HIGH(h), READREF(1));
+                res = zdd_makenode(LEVEL(h), HIGH(h), READREF(1));
                 POPREF(1);
             }
         }
@@ -1253,11 +1233,18 @@ public class JFactory extends BDDFactoryIntImpl {
         PUSHREF(replace_rec(LOW(r)));
         PUSHREF(replace_rec(HIGH(r)));
 
-        res =
-            bdd_correctify(
-                LEVEL(replacepair[LEVEL(r)]),
-                READREF(2),
-                READREF(1));
+        if (ZDD)
+            res =
+                zdd_correctify(
+                    LEVEL(replacepair[LEVEL(r)]),
+                    READREF(2),
+                    READREF(1));
+        else
+            res =
+                bdd_correctify(
+                    LEVEL(replacepair[LEVEL(r)]),
+                    READREF(2),
+                    READREF(1));
         POPREF(2);
 
         entry.a = r;
@@ -1296,6 +1283,36 @@ public class JFactory extends BDDFactoryIntImpl {
         return res; /* FIXME: cache ? */
     }
 
+    int zdd_correctify(int level, int l, int r) {
+        // TODO: This function is wrong.  Need to figure out how to do replace in ZDD.
+        int res;
+
+        if (level < LEVEL(l) && level < LEVEL(r))
+            return zdd_makenode(level, l, r);
+
+        if (level == LEVEL(l) || level == LEVEL(r)) {
+            bdd_error(BDD_REPLACE);
+            return 0;
+        }
+
+        if (LEVEL(l) == LEVEL(r)) {
+            PUSHREF(zdd_correctify(level, LOW(l), LOW(r)));
+            PUSHREF(zdd_correctify(level, HIGH(l), HIGH(r)));
+            res = zdd_makenode(LEVEL(l), READREF(2), READREF(1));
+        } else if (LEVEL(l) < LEVEL(r)) {
+            PUSHREF(zdd_correctify(level, LOW(l), r));
+            PUSHREF(zdd_correctify(level, HIGH(l), r));
+            res = zdd_makenode(LEVEL(l), READREF(2), READREF(1));
+        } else {
+            PUSHREF(zdd_correctify(level, l, LOW(r)));
+            PUSHREF(zdd_correctify(level, l, HIGH(r)));
+            res = zdd_makenode(LEVEL(r), READREF(2), READREF(1));
+        }
+        POPREF(2);
+
+        return res; /* FIXME: cache ? */
+    }
+    
     int bdd_apply(int l, int r, int op) {
         int res;
         int numReorder = 1;
@@ -1483,7 +1500,7 @@ public class JFactory extends BDDFactoryIntImpl {
 
         PUSHREF(zand_rec(LOW(l), LOW(r)));
         PUSHREF(zand_rec(HIGH(l), HIGH(r)));
-        res = bdd_makenode(LEVEL(l), READREF(2), READREF(1));
+        res = zdd_makenode(LEVEL(l), READREF(2), READREF(1));
 
         POPREF(2);
 
@@ -1547,8 +1564,8 @@ public class JFactory extends BDDFactoryIntImpl {
 
         if (l == r)
             return l;
-        if (ISONE(l) || ISONE(r))
-            return 1;
+        //if (ISONE(l) || ISONE(r))
+        //    return 1;
         if (ISZERO(l))
             return r;
         if (ISZERO(r))
@@ -1566,15 +1583,15 @@ public class JFactory extends BDDFactoryIntImpl {
         if (LEVEL(l) == LEVEL(r)) {
             PUSHREF(zor_rec(LOW(l), LOW(r)));
             PUSHREF(zor_rec(HIGH(l), HIGH(r)));
-            res = bdd_makenode(LEVEL(l), READREF(2), READREF(1));
+            res = zdd_makenode(LEVEL(l), READREF(2), READREF(1));
             POPREF(2);
         } else {
             if (LEVEL(l) < LEVEL(r)) {
                 PUSHREF(zor_rec(LOW(l), r));
-                res = bdd_makenode(LEVEL(l), READREF(1), HIGH(l));
+                res = zdd_makenode(LEVEL(l), READREF(1), HIGH(l));
             } else {
                 PUSHREF(zor_rec(l, LOW(r)));
-                res = bdd_makenode(LEVEL(r), READREF(1), HIGH(r));
+                res = zdd_makenode(LEVEL(r), READREF(1), HIGH(r));
             }
             POPREF(1);
         }
@@ -1591,16 +1608,16 @@ public class JFactory extends BDDFactoryIntImpl {
         BddCacheDataI entry;
         int res;
 
-        if (ISZERO(l) || ISONE(r) || l == r)
+        if (ISZERO(l) /*|| ISONE(r)*/ || l == r)
             return 0;
         if (ISZERO(r))
             return l;
         if (LEVEL(l) > LEVEL(r))
             return zdiff_rec(l, LOW(r));
         
-        entry = BddCache_lookupI(applycache, APPLYHASH(l, r, bddop_and));
+        entry = BddCache_lookupI(applycache, APPLYHASH(l, r, bddop_diff));
 
-        if (entry.a == l && entry.b == r && entry.c == bddop_and) {
+        if (entry.a == l && entry.b == r && entry.c == bddop_diff) {
             if (CACHESTATS)
                 cachestats.opHit++;
             return entry.res;
@@ -1611,11 +1628,11 @@ public class JFactory extends BDDFactoryIntImpl {
         if (LEVEL(l) == LEVEL(r)) {
             PUSHREF(zdiff_rec(LOW(l), LOW(r)));
             PUSHREF(zdiff_rec(HIGH(l), HIGH(r)));
-            res = bdd_makenode(LEVEL(l), READREF(2), READREF(1));
+            res = zdd_makenode(LEVEL(l), READREF(2), READREF(1));
             POPREF(2);
         } else {
             PUSHREF(zdiff_rec(LOW(l), r));
-            res = bdd_makenode(LEVEL(l), READREF(1), HIGH(l));
+            res = zdd_makenode(LEVEL(l), READREF(1), HIGH(l));
             POPREF(1);
         }
 
@@ -2050,7 +2067,9 @@ public class JFactory extends BDDFactoryIntImpl {
             default: res = apply_rec(r2, r1); break;
             }
         } else {
-            res = bdd_makenode(LEVEL(r), READREF(2), READREF(1));
+            res = ZDD
+                ? zdd_makenode(LEVEL(r), READREF(2), READREF(1))
+                : bdd_makenode(LEVEL(r), READREF(2), READREF(1));
         }
 
         POPREF(2);
@@ -3207,21 +3226,35 @@ public class JFactory extends BDDFactoryIntImpl {
     }
 
     int bdd_makenode(int level, int low, int high) {
-        int hash2;
-        int res;
-
+        if (VERIFY_ASSERTIONS) _assert(!ZDD);
+        
         if (CACHESTATS)
             cachestats.uniqueAccess++;
 
-        if (ZDD) {
-            /* check whether high child is zero */
-            if (high == 0)
-                return low;
-        } else {
-            /* check whether childs are equal */
-            if (low == high)
-                return low;
-        }
+        // check whether children are equal
+        if (low == high)
+            return low;
+        
+        return makenode(level, low, high);
+    }
+    
+    int zdd_makenode(int level, int low, int high) {
+        if (VERIFY_ASSERTIONS) _assert(ZDD);
+        
+        if (CACHESTATS)
+            cachestats.uniqueAccess++;
+        
+        // check whether high child is zero
+        if (high == 0)
+            return low;
+        
+        return makenode(level, low, high);
+    }
+    
+    // Don't call directly - call bdd_makenode or zdd_makenode instead.
+    private int makenode(int level, int low, int high) {
+        int hash2;
+        int res;
 
         /* Try to find an existing node of this kind */
         hash2 = NODEHASH(level, low, high);
@@ -3715,6 +3748,7 @@ public class JFactory extends BDDFactoryIntImpl {
             bdd_error(BDD_VAR);
 
         bdd_delref(pair.result[bddvar2level[oldvar]]);
+        // TODO: revisit for zdd
         pair.result[bddvar2level[oldvar]] = bdd_ithvar(newvar);
         pair.id = update_pairsid();
 
@@ -3748,6 +3782,7 @@ public class JFactory extends BDDFactoryIntImpl {
     void bdd_resetpair(bddPair p) {
         int n;
 
+        // TODO: revisit for zdd
         for (n = 0; n < bddvarnum; n++)
             p.result[n] = bdd_ithvar(bddlevel2var[n]);
         p.last = 0;
@@ -3826,6 +3861,7 @@ public class JFactory extends BDDFactoryIntImpl {
             System.arraycopy(p.result, 0, new_result, 0, oldsize);
             p.result = new_result;
 
+            // TODO: revisit for zdd
             for (n = oldsize; n < newsize; n++)
                 p.result[n] = bdd_ithvar(bddlevel2var[n]);
         }
@@ -4757,16 +4793,36 @@ public class JFactory extends BDDFactoryIntImpl {
         bddrefstack = new int[num * 2 + 1];
         bddrefstacktop = 0;
 
+        if (ZDD)
+            bddvarnum = 0; // need to recreate all of them for ZDD
+        
+        univ = 1;
         for (bdv = bddvarnum; bddvarnum < num; bddvarnum++) {
-            bddvarset[bddvarnum * 2] = PUSHREF(bdd_makenode(bddvarnum, 0, 1));
-            bddvarset[bddvarnum * 2 + 1] = bdd_makenode(bddvarnum, 1, 0);
-            POPREF(1);
+            if (ZDD) {
+                int res = 1, res_not = 1;
+                for (int k = num-1; k >= 0; --k) {
+                    PUSHREF(res);
+                    PUSHREF(res_not);
+                    PUSHREF(univ);
+                    res = zdd_makenode(k, (k == bddvarnum)?0:res, res);
+                    res_not = (k == bddvarnum) ? res_not : zdd_makenode(k, res_not, res_not);
+                    if (bdv == bddvarnum) univ = zdd_makenode(k, univ, univ);
+                    POPREF(3);
+                }
+                bddvarset[bddvarnum * 2] = res;
+                bddvarset[bddvarnum * 2 + 1] = res_not;
+                SETMAXREF(univ);
+            } else {
+                bddvarset[bddvarnum * 2] = PUSHREF(bdd_makenode(bddvarnum, 0, 1));
+                bddvarset[bddvarnum * 2 + 1] = bdd_makenode(bddvarnum, 1, 0);
+                POPREF(1);
+            }
 
             if (bdderrorcond != 0) {
                 bddvarnum = bdv;
                 return -bdderrorcond;
             }
-
+            
             SETMAXREF(bddvarset[bddvarnum * 2]);
             SETMAXREF(bddvarset[bddvarnum * 2 + 1]);
             bddlevel2var[bddvarnum] = bddvarnum;
@@ -5717,6 +5773,7 @@ public class JFactory extends BDDFactoryIntImpl {
         int next;
     }
 
+    // TODO: revisit for zdd
     int bdd_loaddata(BufferedReader ifile, int[] translate) throws IOException {
         int key, var, low, high, root = 0, n;
 
