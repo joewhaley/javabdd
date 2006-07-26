@@ -63,9 +63,11 @@ public class BasicTests extends BDDTestCase {
             BDD c = bdd.ithVar(3);
             BDD d = bdd.one();
             BDD e = bdd.zero();
-            Assert.assertEquals(1, a.var());
-            Assert.assertEquals(2, b.var());
-            Assert.assertEquals(3, c.var());
+            if (!bdd.isZDD()) {
+                Assert.assertEquals(1, a.var());
+                Assert.assertEquals(2, b.var());
+                Assert.assertEquals(3, c.var());
+            }
             try {
                 d.var();
                 Assert.fail(bdd.getVersion());
@@ -75,7 +77,8 @@ public class BasicTests extends BDDTestCase {
                 Assert.fail(bdd.getVersion());
             } catch (BDDException x) { }
             BDD f = a.and(b);
-            Assert.assertEquals(1, f.var());
+            if (!bdd.isZDD())
+                Assert.assertEquals(1, f.var());
             a.free(); b.free(); c.free(); d.free(); e.free(); f.free();
         }
     }
@@ -97,22 +100,26 @@ public class BasicTests extends BDDTestCase {
             BDD c = bdd.ithVar(2);
             BDD d = bdd.ithVar(3);
             BDD e = bdd.ithVar(4);
-            Assert.assertEquals(0, a.var());
-            Assert.assertEquals(1, b.var());
-            Assert.assertEquals(2, c.var());
-            Assert.assertEquals(3, d.var());
-            Assert.assertEquals(4, e.var());
+            if (!bdd.isZDD()) {
+                Assert.assertEquals(0, a.var());
+                Assert.assertEquals(1, b.var());
+                Assert.assertEquals(2, c.var());
+                Assert.assertEquals(3, d.var());
+                Assert.assertEquals(4, e.var());
+            }
             bdd.setVarOrder(new int[] { 2, 3, 4, 0, 1 });
-            Assert.assertEquals(0, a.var());
-            Assert.assertEquals(1, b.var());
-            Assert.assertEquals(2, c.var());
-            Assert.assertEquals(3, d.var());
-            Assert.assertEquals(4, e.var());
-            Assert.assertEquals(3, a.level());
-            Assert.assertEquals(4, b.level());
-            Assert.assertEquals(0, c.level());
-            Assert.assertEquals(1, d.level());
-            Assert.assertEquals(2, e.level());
+            if (!bdd.isZDD()) {
+                Assert.assertEquals(0, a.var());
+                Assert.assertEquals(1, b.var());
+                Assert.assertEquals(2, c.var());
+                Assert.assertEquals(3, d.var());
+                Assert.assertEquals(4, e.var());
+                Assert.assertEquals(3, a.level());
+                Assert.assertEquals(4, b.level());
+                Assert.assertEquals(0, c.level());
+                Assert.assertEquals(1, d.level());
+                Assert.assertEquals(2, e.level());
+            }
             a.free(); b.free(); c.free(); d.free(); e.free();
         }
     }
@@ -132,34 +139,39 @@ public class BasicTests extends BDDTestCase {
             a.andWith(bdd.nithVar(2));
             Assert.assertEquals(0, a.var());
             b = a.low();
-            Assert.assertEquals(true, b.isZero());
-            try {
-                b.low();
-                Assert.fail();
-            } catch (BDDException _) {
-            }
-            try {
-                b.high();
-                Assert.fail();
-            } catch (BDDException _) {
+            if (!bdd.isZDD()) {
+                Assert.assertEquals(true, b.isZero());
+                try {
+                    b.low();
+                    Assert.fail();
+                } catch (BDDException _) {
+                }
+                try {
+                    b.high();
+                    Assert.fail();
+                } catch (BDDException _) {
+                }
             }
             b.free();
             b = a.high();
             Assert.assertEquals(1, b.var());
             c = b.high();
             b.free();
-            Assert.assertEquals(2, c.var());
+            if (!bdd.isZDD())
+                Assert.assertEquals(2, c.var());
             b = c.low();
-            Assert.assertEquals(true, b.isOne());
-            try {
-                b.low();
-                Assert.fail();
-            } catch (BDDException _) {
-            }
-            try {
-                b.high();
-                Assert.fail();
-            } catch (BDDException _) {
+            if (!bdd.isZDD()) {
+                Assert.assertEquals(true, b.isOne());
+                try {
+                    b.low();
+                    Assert.fail();
+                } catch (BDDException _) {
+                }
+                try {
+                    b.high();
+                    Assert.fail();
+                } catch (BDDException _) {
+                }
             }
             a.free(); b.free(); c.free();
         }
@@ -175,13 +187,21 @@ public class BasicTests extends BDDTestCase {
             a = bdd.ithVar(0);
             b = a.not();
             c = bdd.nithVar(0);
+            System.out.println("First graph:");
+            a.printDot();
+            System.out.println("Second graph:");
+            b.printDot();
+            System.out.println("Third graph:");
+            c.printDot();
             Assert.assertEquals(b, c);
-            c.free();
-            c = b.high();
-            Assert.assertEquals(true, c.isZero());
-            c.free();
-            c = b.low();
-            Assert.assertEquals(true, c.isOne());
+            if (!bdd.isZDD()) {
+                c.free();
+                c = b.high();
+                Assert.assertEquals(true, c.isZero());
+                c.free();
+                c = b.low();
+                Assert.assertEquals(true, c.isOne());
+            }
             a.free(); b.free(); c.free();
         }
     }
@@ -198,7 +218,8 @@ public class BasicTests extends BDDTestCase {
             a.andWith(bdd.ithVar(0));
             Assert.assertTrue(!a.equals(b));
             Assert.assertTrue(a.var() == 0);
-            Assert.assertTrue(b.var() == 1);
+            if (!bdd.isZDD())
+                Assert.assertTrue(b.var() == 1);
             b.andWith(bdd.zero());
             Assert.assertTrue(b.isZero());
             Assert.assertTrue(!a.isZero());
@@ -278,12 +299,14 @@ public class BasicTests extends BDDTestCase {
             b = bdd.ithVar(2);
             c = bdd.nithVar(1);
             c.orWith(a);
-            Assert.assertTrue(c.isOne());
+            Assert.assertTrue(c.isUniverse());
             a = bdd.zero();
             a.orWith(bdd.zero());
             Assert.assertTrue(a.isZero());
+            c.free();
+            c = b.id();
             b.orWith(b);
-            Assert.assertEquals(2, b.var());
+            Assert.assertEquals(b, c);
             a.free(); b.free(); c.free();
             testApply(bdd, BDDFactory.or, false, true, true, true);
         }
@@ -346,6 +369,7 @@ public class BasicTests extends BDDTestCase {
         Assert.assertTrue(hasNext());
         while (hasNext()) {
             BDDFactory bdd = nextFactory();
+            if (bdd.isZDD()) continue;
             // TODO: more tests
             try {
                 testApply(bdd, BDDFactory.less, false, true, false, false);
