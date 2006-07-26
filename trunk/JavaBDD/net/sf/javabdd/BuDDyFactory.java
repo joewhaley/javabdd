@@ -115,6 +115,7 @@ public class BuDDyFactory extends BDDFactoryIntImpl {
     protected int nithVar_impl(int var) { return nithVar0(var); }
     private static native int nithVar0(int var);
     
+    protected int makenode_impl(int lev, int lo, int hi) { return ite0(ithVar_impl(level2Var0(lev)), hi, lo); }
     protected int ite_impl(int v1, int v2, int v3) { return ite0(v1, v2, v3); }
     private static native int ite0(int b, int c, int d);
     protected int apply_impl(int v1, int v2, BDDOp opr) { return apply0(v1, v2, opr.id); }

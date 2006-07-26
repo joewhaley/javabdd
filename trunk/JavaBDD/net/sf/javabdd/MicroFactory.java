@@ -149,6 +149,7 @@ public class MicroFactory extends BDDFactoryIntImpl {
     protected int ithVar_impl(int var) { return bdd_ithvar(var); }
     protected int nithVar_impl(int var) { return bdd_nithvar(var); }
     
+    protected int makenode_impl(int lev, int lo, int hi) { return bdd_makenode(lev, lo, hi); }
     protected int ite_impl(int v1, int v2, int v3) { return bdd_ite(v1, v2, v3); }
     protected int apply_impl(int v1, int v2, BDDOp opr) { return bdd_apply(v1, v2, opr.id); }
     protected int not_impl(int v1) { return bdd_not(v1); }
