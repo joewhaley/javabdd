@@ -25,6 +25,7 @@ public class R3 extends BDDTestCase {
         while (hasNext()) {
             
             BDDFactory bdd = nextFactory();
+            if (bdd.isZDD()) continue;
             BDD x0,x1,y0,y1,z0,z1,t,or,one;
             BDDVarSet xs0,xs1;
             bdd.setVarNum(5);
