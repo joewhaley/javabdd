@@ -77,7 +77,7 @@ public class NQueensTest extends BDDTestCase {
                     build(i, j);
                 }
 
-            solution = queen.satOne();
+            solution = queen.fullSatOne();
             
             double result = queen.satCount();
             return result;
