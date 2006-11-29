@@ -211,7 +211,7 @@ public class TraceDriver {
             if(ops == 2) ret.bdd = op1.bdd.or(op2.bdd);
             else {
                 for (Enumeration e = operands.elements() ; e.hasMoreElements() ;)
-                    if(((TracedVariable)e.nextElement()).bdd.isOne()) { ret.bdd = bdd.one(); return; }
+                    if(((TracedVariable)e.nextElement()).bdd.isUniverse()) { ret.bdd = bdd.universe(); return; }
 
                 BDD tmp = bdd.zero();
                 for (Enumeration e = operands.elements() ; e.hasMoreElements() ;) {
@@ -230,7 +230,7 @@ public class TraceDriver {
                 for (Enumeration e = operands.elements() ; e.hasMoreElements() ;)
                     if(((TracedVariable)e.nextElement()).bdd.isZero()) { ret.bdd = bdd.zero(); return; }
 
-                BDD tmp = bdd.one();
+                BDD tmp = bdd.universe();
                 for (Enumeration e = operands.elements() ; e.hasMoreElements() ;) {
                     TracedVariable v = (TracedVariable)e.nextElement();
                     BDD tmp2 = tmp.and(v.bdd);

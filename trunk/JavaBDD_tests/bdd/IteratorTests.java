@@ -44,7 +44,7 @@ public class IteratorTests extends BDDTestCase {
             } catch (NoSuchElementException x) {
             }
             
-            b = bdd.one();
+            b = bdd.universe();
             Iterator i1 = b.iterator(var);
             Iterator i2 = new MyBDDIterator(b, var);
             b.free();

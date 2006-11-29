@@ -25,9 +25,9 @@ public class R2 extends BDDTestCase {
         while (hasNext()) {
             BDDFactory bdd = nextFactory();
             BDD zero = bdd.zero();
-            BDD one = bdd.one();
+            BDD one = bdd.universe();
             Assert.assertTrue(bdd.getVersion(), zero.isZero());
-            Assert.assertTrue(bdd.getVersion(), one.isOne());
+            Assert.assertTrue(bdd.getVersion(), one.isUniverse());
             BDDVarSet s0 = zero.support();
             BDDVarSet s1 = one.support();
             Assert.assertTrue(bdd.getVersion(), s0.isEmpty());
