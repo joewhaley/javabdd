@@ -84,6 +84,11 @@ public abstract class BDDFactory {
                 return TestBDDFactory.init(nodenum, cachesize);
             if (bddpackage.equals("typed"))
                 return TypedBDDFactory.init(nodenum, cachesize);
+            if (bddpackage.equals("zdd")) {
+                BDDFactory bdd = JFactory.init(nodenum, cachesize);
+                ((JFactory)bdd).ZDD = true;
+                return bdd;
+            }
         } catch (LinkageError e) {
             System.out.println("Could not load BDD package "+bddpackage+": "+e.getLocalizedMessage());
         }
@@ -218,7 +223,7 @@ public abstract class BDDFactory {
      * <p>Compare to bdd_buildcube.</p>
      */
     public BDD buildCube(int value, List/*<BDD>*/ variables) {
-        BDD result = one();
+        BDD result = universe();
         Iterator i = variables.iterator();
         int z = 0;
         while (i.hasNext()) {
@@ -240,7 +245,7 @@ public abstract class BDDFactory {
      * <p>Compare to bdd_ibuildcube./p>
      */
     public BDD buildCube(int value, int[] variables) {
-        BDD result = one();
+        BDD result = universe();
         for (int z = 0; z < variables.length; z++, value >>= 1) {
             BDD v;
             if ((value & 0x1) != 0)
@@ -529,7 +534,7 @@ public abstract class BDDFactory {
         // Check for constant true / false
         if (lh_nodenum == 0 && vnum == 0) {
             int r = Integer.parseInt(readNext(ifile));
-            return r == 0 ? zero() : one();
+            return r == 0 ? zero() : universe();
         }
 
         // Not actually used.
@@ -631,7 +636,7 @@ public abstract class BDDFactory {
     protected BDD loadhash_get(LoadHash[] lh_table, int lh_nodenum, int key) {
         if (key < 0) return null;
         if (key == 0) return zero();
-        if (key == 1) return one();
+        if (key == 1) return universe();
         
         int hash = lh_table[key % lh_nodenum].first;
 
@@ -1423,6 +1428,14 @@ public abstract class BDDFactory {
             }
         }
 
+        if (isZDD()) {
+            // Need to rebuild varsets for existing domains.
+            for (n = 0; n < fdvarnum; n++) {
+                domain[n].var.free();
+                domain[n].var =
+                    makeSet(domain[n].ivar);
+            }
+        }
         for (n = 0; n < num; n++) {
             domain[n + fdvarnum].var =
                 makeSet(domain[n + fdvarnum].ivar);

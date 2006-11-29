@@ -159,7 +159,7 @@ public class RubiksCube {
     }
 
     static BDD buildInitial() {
-        BDD b = bdd.one();
+        BDD b = bdd.universe();
         for (int k=0; k<4; ++k) {
             for (int i=0; i<n; ++i) {
                 b.andWith(bdd.getDomain(k*n + i).ithVar(k));
