@@ -21,6 +21,7 @@ public abstract class BDDTestCase extends TestCase implements Iterator {
     
     public static final String[] factoryNames = {
         "net.sf.javabdd.JFactory",
+        "zdd",
         "net.sf.javabdd.BuDDyFactory",
         "net.sf.javabdd.MicroFactory",
         //"net.sf.javabdd.CUDDFactory",
@@ -38,10 +39,15 @@ public abstract class BDDTestCase extends TestCase implements Iterator {
         for (int k = 0; k < factoryNames.length; ++k) {
             String bddpackage = factoryNames[k];
             try {
-                Class c = Class.forName(bddpackage);
-                Method m = c.getMethod("init", new Class[] { int.class, int.class });
-                BDDFactory b = (BDDFactory) m.invoke(null, new Object[] { new Integer(nodenum), new Integer(cachesize) });
-                f.add(b);
+                if (bddpackage.indexOf('.') == -1) {
+                    BDDFactory b = BDDFactory.init(bddpackage, nodenum, cachesize);
+                    f.add(b);
+                } else {
+                    Class c = Class.forName(bddpackage);
+                    Method m = c.getMethod("init", new Class[] { int.class, int.class });
+                    BDDFactory b = (BDDFactory) m.invoke(null, new Object[] { new Integer(nodenum), new Integer(cachesize) });
+                    f.add(b);
+                }
             }
             catch (Throwable _) {
                 if (_ instanceof InvocationTargetException)

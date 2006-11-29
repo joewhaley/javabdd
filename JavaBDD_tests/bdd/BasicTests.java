@@ -473,7 +473,7 @@ public class BasicTests extends BDDTestCase {
             if (bdd.varNum() < 5) bdd.setVarNum(5);
             BDD a, b, c, d, e;
             a = bdd.ithVar(1);
-            b = bdd.one();
+            b = bdd.universe();
             c = bdd.zero();
             d = a.ite(b, c);
             Assert.assertEquals(a, d);
@@ -648,7 +648,7 @@ public class BasicTests extends BDDTestCase {
         for (int i = 0; i < f.numberOfDomains(); ++i) {
             list.add(f.getDomain(i));
         }
-        BDD result = f.one();
+        BDD result = f.universe();
         for (int i = 0; i < k; ++i) {
             int x = random.nextInt(f.numberOfDomains() - i);
             BDDDomain d = (BDDDomain) list.remove(x);
