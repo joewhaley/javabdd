@@ -94,7 +94,7 @@ public abstract class BDDDomain {
         
         /* Encode V<=X-1. V is the variables in 'var' and X is the domain size */
         BigInteger val = size().subtract(BigInteger.ONE);
-        BDD d = factory.one();
+        BDD d = factory.universe();
         int[] ivar = vars();
         for (int n = 0; n < this.varNum(); n++) {
             if (val.testBit(0))
@@ -128,7 +128,7 @@ public abstract class BDDDomain {
         BDDFactory bdd = getFactory();
         
         if (value == 0L) {
-            BDD result = bdd.one();
+            BDD result = bdd.universe();
             int n;
             for (n = 0; n < bits; n++) {
                 BDD b = bdd.ithVar(this.ivar[n]);
@@ -182,7 +182,7 @@ public abstract class BDDDomain {
         }
 
         BDDFactory factory = getFactory();
-        BDD e = factory.one();
+        BDD e = factory.universe();
 
         int[] this_ivar = this.vars();
         int[] that_ivar = that.vars();
@@ -226,7 +226,7 @@ public abstract class BDDDomain {
         }
 
         BDDFactory factory = getFactory();
-        BDD v = factory.one();
+        BDD v = factory.universe();
         int[] ivar = this.vars();
         for (int n = 0; n < ivar.length; n++) {
             if (val.testBit(0))
@@ -257,7 +257,7 @@ public abstract class BDDDomain {
         BDD result = factory.zero();
         int[] ivar = this.vars();
         while (lo.compareTo(hi) <= 0) {
-            BDD v = factory.one();
+            BDD v = factory.universe();
             for (int n = ivar.length - 1; ; n--) {
                 if (lo.testBit(n)) {
                     v.andWith(factory.ithVar(ivar[n]));

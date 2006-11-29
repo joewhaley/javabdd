@@ -446,7 +446,7 @@ public abstract class BDDFactoryIntImpl extends BDDFactory {
     }
     
     protected IntBDDVarSet makeBDDVarSet(/*bdd*/int v) {
-        if (true || isZDD()) {
+        if (isZDD()) {
             if (USE_FINALIZER)
                 return new IntZDDVarSetWithFinalizer(v);
             else

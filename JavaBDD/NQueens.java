@@ -58,7 +58,7 @@ public class NQueens {
         }
         if (B.varNum() < N * N) B.setVarNum(N * N);
 
-        queen = B.one();
+        queen = B.universe();
 
         int i, j;
 
@@ -108,7 +108,7 @@ public class NQueens {
     }
     
     static void build(int i, int j) {
-        BDD a = B.one(), b = B.one(), c = B.one(), d = B.one();
+        BDD a = B.universe(), b = B.universe(), c = B.universe(), d = B.universe();
         int k, l;
 
         /* No one in the same column */
