@@ -2978,37 +2978,42 @@ public class JFactory extends BDDFactoryIntImpl {
             return r;
 
         if (LEVEL(r) < LEVEL(var)) {
+            // r is not in the set
             if (ISZERO(LOW(r))) {
                 int res = satoneset_rec(HIGH(r), var);
-                int m = bdd_makenode(LEVEL(r), BDDZERO, res);
+                int m = makenode_impl(LEVEL(r), BDDZERO, res);
                 PUSHREF(m);
                 return m;
             } else {
                 int res = satoneset_rec(LOW(r), var);
-                int m = bdd_makenode(LEVEL(r), res, BDDZERO);
+                int m = makenode_impl(LEVEL(r), res, (ZDD && LOW(r) == HIGH(r))?res:BDDZERO);
                 PUSHREF(m);
                 return m;
             }
         } else if (LEVEL(var) < LEVEL(r)) {
             int res = satoneset_rec(r, HIGH(var));
-            if (satPolarity) {
-                int m = bdd_makenode(LEVEL(var), BDDZERO, res);
+            if (!ZDD && satPolarity) {
+                int m = makenode_impl(LEVEL(var), BDDZERO, res);
                 PUSHREF(m);
                 return m;
             } else {
-                int m = bdd_makenode(LEVEL(var), res, BDDZERO);
+                int m = makenode_impl(LEVEL(var), res, BDDZERO);
                 PUSHREF(m);
                 return m;
             }
         } else /* LEVEL(r) == LEVEL(var) */ {
             if (ISZERO(LOW(r))) {
                 int res = satoneset_rec(HIGH(r), HIGH(var));
-                int m = bdd_makenode(LEVEL(r), BDDZERO, res);
+                int m = makenode_impl(LEVEL(r), BDDZERO, res);
                 PUSHREF(m);
                 return m;
             } else {
                 int res = satoneset_rec(LOW(r), HIGH(var));
-                int m = bdd_makenode(LEVEL(r), res, BDDZERO);
+                int m;
+                if (ZDD && satPolarity && LOW(r) == HIGH(r))
+                    m = zdd_makenode(LEVEL(r), BDDZERO, res);
+                else
+                    m = makenode_impl(LEVEL(r), res, BDDZERO);
                 PUSHREF(m);
                 return m;
             }
@@ -3030,7 +3035,7 @@ public class JFactory extends BDDFactoryIntImpl {
         res = fullsatone_rec(r);
 
         for (v = LEVEL(r) - 1; v >= 0; v--) {
-            res = PUSHREF(ZDD?zdd_makenode(v, res, 0):bdd_makenode(v, res, 0));
+            res = PUSHREF(makenode_impl(v, res, 0));
         }
 
         bdd_enable_reorder();
@@ -3048,19 +3053,19 @@ public class JFactory extends BDDFactoryIntImpl {
             int v;
 
             for (v = LEVEL(LOW(r)) - 1; v > LEVEL(r); v--) {
-                res = PUSHREF(ZDD?zdd_makenode(v, res, 0):bdd_makenode(v, res, 0));
+                res = PUSHREF(makenode_impl(v, res, 0));
             }
 
-            return PUSHREF(ZDD?zdd_makenode(LEVEL(r), res, 0):bdd_makenode(LEVEL(r), res, 0));
+            return PUSHREF(makenode_impl(LEVEL(r), res, 0));
         } else {
             int res = fullsatone_rec(HIGH(r));
             int v;
 
             for (v = LEVEL(HIGH(r)) - 1; v > LEVEL(r); v--) {
-                res = PUSHREF(ZDD?zdd_makenode(v, res, 0):bdd_makenode(v, res, 0));
+                res = PUSHREF(makenode_impl(v, res, 0));
             }
 
-            return PUSHREF(ZDD?zdd_makenode(LEVEL(r), 0, res):bdd_makenode(LEVEL(r), 0, res));
+            return PUSHREF(makenode_impl(LEVEL(r), 0, res));
         }
     }
 
