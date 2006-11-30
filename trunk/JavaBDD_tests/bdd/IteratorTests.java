@@ -84,6 +84,75 @@ public class IteratorTests extends BDDTestCase {
         }
     }
     
+    static Random random = new Random(1234);
+    
+    static BDD randomBDD(BDDFactory f) {
+        BDD result = f.zero();
+        for (int i = 0; i < f.varNum(); ++i) {
+            BDD b = f.universe();
+            for (int j = 0; j < f.varNum(); ++j) {
+                int k = random.nextInt(3);
+                if (k == 0) b.andWith(f.nithVar(j));
+                else if (k == 1) b.andWith(f.ithVar(j));
+            }
+            result.orWith(b);
+        }
+        return result;
+    }
+
+    static BDD betterRandomBDD(BDDFactory f) {
+        // Use a random truth table.
+        byte[] bytes = new byte[(1 << f.varNum()) / 8 + 1];
+        random.nextBytes(bytes);
+        BDD result = f.zero();
+        for (int i = 0; i < (1 << f.varNum()); ++i) {
+            if ((bytes[i / 8] & (1<<(i%8))) != 0) {
+                BDD b = f.universe();
+                for (int j = 0; j < f.varNum(); ++j) {
+                    if ((i & (1<<j)) != 0)
+                        b.andWith(f.ithVar(j));
+                    else
+                        b.andWith(f.nithVar(j));
+                }
+                result.orWith(b);
+            }
+        }
+        return result;
+    }
+
+    public void testAllsatIterator() {
+        reset();
+        Assert.assertTrue(hasNext());
+        while (hasNext()) {
+            BDDFactory f = nextFactory();
+            f.setVarNum(5);
+            for (int kk = 0; kk < 10; ++kk) {
+                BDD bdd1 = ((kk&1)==0)?randomBDD(f):betterRandomBDD(f);
+                BDD bdd2 = f.zero();
+                BDD.AllSatIterator i = bdd1.allsat();
+                while (i.hasNext()) {
+                    byte[] b = i.nextSat();
+                    BDD t = f.universe();
+                    for (int k = 0; k < b.length; ++k) {
+                        if (b[k] == 0)
+                            t.andWith(f.nithVar(k));
+                        else if (b[k] == 1)
+                            t.andWith(f.ithVar(k));
+                    }
+                    
+                    BDD overlap = bdd2.and(t);
+                    Assert.assertTrue(overlap.isZero());
+                    overlap.free();
+                    
+                    bdd2.orWith(t);
+                }
+                Assert.assertEquals(bdd1, bdd2);
+                bdd2.free();
+                bdd1.free();
+            }
+        }
+    }
+    
     public void testRandomIterator() {
         reset();
         Assert.assertTrue(hasNext());
