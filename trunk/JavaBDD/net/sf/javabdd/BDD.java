@@ -598,10 +598,25 @@ public abstract class BDD {
                 BDD rn = lo_empty ? r.high() : r.low();
                 int v = rn.isOne()||rn.isZero() ? f.varNum() - 1 : rn.level() - 1;
                 for ( ; v > LEVEL_r; --v) {
-                    allsatProfile[useLevel?v:f.level2Var(v)] = -1;
+                    allsatProfile[useLevel?v:f.level2Var(v)] = f.isZDD()?(byte)0:(byte)-1;
                 }
                 if (!lo_empty) {
-                    hiStack.addLast(r);
+                    if (f.isZDD()) {
+                        // Check for dont-care bits in ZDD.
+                        BDD rh = r.high();
+                        boolean isDontCare = rn.equals(rh);
+                        rh.free();
+                        if (isDontCare) {
+                            // low child == high child, this is a dont-care bit.
+                            allsatProfile[useLevel?v:f.level2Var(v)] = -1;
+                            r.free();
+                        } else {
+                            hiStack.addLast(r);
+                        }
+                    } else {
+                        // BDD.
+                        hiStack.addLast(r);
+                    }
                 } else {
                     r.free();
                 }
@@ -965,7 +980,7 @@ public abstract class BDD {
                 throw new NoSuchElementException();
             }
             //if (lastReturned != null) lastReturned.free();
-            lastReturned = f.one();
+            lastReturned = f.universe();
             //for (int i = 0; i < v.length; ++i) {
             for (int i = v.length-1; i >= 0; --i) {
                 int li = v[i];
