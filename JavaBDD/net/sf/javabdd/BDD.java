@@ -546,6 +546,11 @@ public abstract class BDD {
         protected byte[] allsatProfile;
         protected final boolean useLevel;
 
+        protected AllSatIterator(BDDFactory factory, boolean level) {
+            f = factory;
+            useLevel = level;
+        }
+        
         /**
          * Constructs a satisfying-assignment iterator on the given BDD.
          * next() returns a byte array indexed by BDD variable number.
@@ -1289,6 +1294,8 @@ public abstract class BDD {
     public String toString() {
         BDDFactory f = this.getFactory();
         int[] set = new int[f.varNum()];
+        if (f.isZDD())
+            Arrays.fill(set, 1);
         StringBuffer sb = new StringBuffer();
         bdd_printset_rec(f, sb, this, set);
         return sb.toString();
@@ -1316,17 +1323,34 @@ public abstract class BDD {
             }
             sb.append('>');
         } else {
-            set[f.var2Level(r.var())] = 1;
-            BDD rl = r.low();
-            bdd_printset_rec(f, sb, rl, set);
-            rl.free();
-
-            set[f.var2Level(r.var())] = 2;
-            BDD rh = r.high();
-            bdd_printset_rec(f, sb, rh, set);
-            rh.free();
-
-            set[f.var2Level(r.var())] = 0;
+            if (f.isZDD()) {
+                if (r.low().equals(r.high())) {
+                    set[f.var2Level(r.var())] = 0;
+                } else {
+                    BDD rl = r.low();
+                    bdd_printset_rec(f, sb, rl, set);
+                    rl.free();
+                    
+                    set[f.var2Level(r.var())] = 2;
+                }
+                BDD rl = r.high();
+                bdd_printset_rec(f, sb, rl, set);
+                rl.free();
+                
+                set[f.var2Level(r.var())] = 1;
+            } else {
+                set[f.var2Level(r.var())] = 1;
+                BDD rl = r.low();
+                bdd_printset_rec(f, sb, rl, set);
+                rl.free();
+    
+                set[f.var2Level(r.var())] = 2;
+                BDD rh = r.high();
+                bdd_printset_rec(f, sb, rh, set);
+                rh.free();
+    
+                set[f.var2Level(r.var())] = 0;
+            }
         }
     }
     
