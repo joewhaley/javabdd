@@ -202,12 +202,6 @@ public class BasicTests extends BDDTestCase {
             a = bdd.ithVar(0);
             b = a.not();
             c = bdd.nithVar(0);
-            //System.out.println("First graph:");
-            //a.printDot();
-            //System.out.println("Second graph:");
-            //b.printDot();
-            //System.out.println("Third graph:");
-            //c.printDot();
             Assert.assertEquals(b, c);
             if (!bdd.isZDD()) {
                 c.free();
