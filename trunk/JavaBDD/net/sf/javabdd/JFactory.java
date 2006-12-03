@@ -2943,12 +2943,12 @@ public class JFactory extends BDDFactoryIntImpl {
 
         if (ISZERO(LOW(r))) {
             int res = satone_rec(HIGH(r));
-            int m = bdd_makenode(LEVEL(r), BDDZERO, res);
+            int m = makenode_impl(LEVEL(r), BDDZERO, res);
             PUSHREF(m);
             return m;
         } else {
             int res = satone_rec(LOW(r));
-            int m = bdd_makenode(LEVEL(r), res, BDDZERO);
+            int m = makenode_impl(LEVEL(r), res, (ZDD && LOW(r)==HIGH(r))?res:BDDZERO);
             PUSHREF(m);
             return m;
         }
@@ -5003,13 +5003,22 @@ public class JFactory extends BDDFactoryIntImpl {
             if (ZDD) {
                 int res = 1, res_not = 1;
                 for (int k = num-1; k >= 0; --k) {
-                    PUSHREF(res);
-                    PUSHREF(res_not);
-                    PUSHREF(univ);
-                    res = zdd_makenode(k, (k == bddvarnum)?0:res, res);
-                    res_not = (k == bddvarnum) ? res_not : zdd_makenode(k, res_not, res_not);
-                    if (bdv == bddvarnum) univ = zdd_makenode(k, univ, univ);
-                    POPREF(3);
+                    int res2 = zdd_makenode(k, (k == bddvarnum)?0:res, res);
+                    INCREF(res2);
+                    DECREF(res);
+                    res = res2;
+                    
+                    int res_not2 = (k == bddvarnum) ? res_not : zdd_makenode(k, res_not, res_not);
+                    INCREF(res_not2);
+                    DECREF(res_not);
+                    res_not = res_not2;
+                    
+                    if (bdv == bddvarnum) {
+                        int univ2 = zdd_makenode(k, univ, univ);
+                        INCREF(univ2);
+                        DECREF(univ);
+                        univ = univ2;
+                    }
                 }
                 bddvarset[bddvarnum * 2] = res;
                 bddvarset[bddvarnum * 2 + 1] = res_not;
@@ -5040,7 +5049,7 @@ public class JFactory extends BDDFactoryIntImpl {
         bdd_operator_varresize();
 
         if (ZDD) {
-            System.out.println("Changed number of ZDD variables, all existing ZDDs are now invalid.");
+            System.out.println("Changed number of ZDD variables to "+num+", all existing ZDDs are now invalid.");
             // Need to rebuild varsets for existing domains.
             for (int n = 0; n < fdvarnum; n++) {
                 domain[n].var.free();
