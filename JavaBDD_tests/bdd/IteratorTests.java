@@ -13,6 +13,7 @@ import net.sf.javabdd.BDD;
 import net.sf.javabdd.BDDDomain;
 import net.sf.javabdd.BDDFactory;
 import net.sf.javabdd.BDDVarSet;
+import net.sf.javabdd.TestBDDFactory;
 
 /**
  * IteratorTests
@@ -21,6 +22,8 @@ import net.sf.javabdd.BDDVarSet;
  * @version $Id$
  */
 public class IteratorTests extends BDDTestCase {
+    static Random random = new Random(1238);
+    
     public static void main(String[] args) {
         junit.textui.TestRunner.run(IteratorTests.class);
     }
@@ -84,8 +87,6 @@ public class IteratorTests extends BDDTestCase {
         }
     }
     
-    static Random random = new Random(1234);
-    
     static BDD randomBDD(BDDFactory f) {
         BDD result = f.zero();
         for (int i = 0; i < f.varNum(); ++i) {
@@ -100,6 +101,15 @@ public class IteratorTests extends BDDTestCase {
         return result;
     }
 
+    static BDDVarSet randomBDDVarSet(BDDFactory f) {
+        BDDVarSet s = f.emptySet();
+        for (int i = 0; i < f.varNum(); ++i) {
+            if (random.nextBoolean())
+                s.unionWith(i);
+        }
+        return s;
+    }
+    
     static BDD betterRandomBDD(BDDFactory f) {
         // Use a random truth table.
         byte[] bytes = new byte[(1 << f.varNum()) / 8 + 1];
@@ -150,6 +160,25 @@ public class IteratorTests extends BDDTestCase {
                 bdd2.free();
                 bdd1.free();
             }
+        }
+    }
+    
+    public void testRandomRelprod() {
+        System.setProperty("bdd1", "zdd");
+        System.setProperty("bdd2", "j");
+        BDDFactory bdd = TestBDDFactory.init(10000, 1000);
+        bdd.setVarNum(5);
+        for (int i = 0; i < 1000; ++i) {
+            BDD b = betterRandomBDD(bdd);
+            BDD c = betterRandomBDD(bdd);
+            BDDVarSet d = randomBDDVarSet(bdd);
+            BDD e = b.relprod(c, d);
+            
+            BDD f = b.and(c);
+            BDD g = f.exist(d);
+            Assert.assertEquals(g, e);
+            
+            b.free(); c.free(); d.free(); e.free(); f.free(); g.free();
         }
     }
     
