@@ -37,7 +37,7 @@ public class JFactory extends BDDFactoryIntImpl {
      */
     public static boolean FLUSH_CACHE_ON_GC = true;
     
-    static final boolean VERIFY_ASSERTIONS = true;
+    static final boolean VERIFY_ASSERTIONS = false;
     static final boolean CACHESTATS = false;
     static final boolean SWAPCOUNT = false;
 
@@ -1431,6 +1431,7 @@ public class JFactory extends BDDFactoryIntImpl {
         }
 
         checkresize();
+        if (true) bdd_validate(res);
         return res;
     }
 
@@ -1565,7 +1566,7 @@ public class JFactory extends BDDFactoryIntImpl {
             return zand_rec(LOW(l), r);
         else if (LEVEL(l) > LEVEL(r))
             return zand_rec(l, LOW(r));
-        _assert(!ISCONST(l) && !ISCONST(r));
+        if (VERIFY_ASSERTIONS) _assert(!ISCONST(l) && !ISCONST(r));
         
         entry = BddCache_lookupI(applycache, APPLYHASH(l, r, bddop_and));
 
@@ -1586,6 +1587,82 @@ public class JFactory extends BDDFactoryIntImpl {
         entry.a = l;
         entry.b = r;
         entry.c = bddop_and;
+        entry.res = res;
+
+        return res;
+    }
+    
+    int zrelprod_rec(int l, int r, int lev) {
+        BddCacheDataI entry;
+        int res;
+
+        if (l == r)
+            return zquant_rec(l, lev);
+        if (ISZERO(l) || ISZERO(r))
+            return 0;
+        
+        int LEVEL_l = LEVEL(l);
+        int LEVEL_r = LEVEL(r);
+        
+        for (;;) {
+            if (lev > quantlast) {
+                applyop = bddop_and;
+                res = zand_rec(l, r);
+                applyop = bddop_or;
+                return res;
+            }
+            if (lev >= LEVEL_l || lev >= LEVEL_r)
+                break;
+            if (INVARSET(lev)) {
+                res = zrelprod_rec(l, r, lev+1);
+                PUSHREF(res);
+                res = zdd_makenode(lev, res, res);
+                POPREF(1);
+                return res;
+            }
+            ++lev;
+        }
+        
+        entry = BddCache_lookupI(appexcache, APPEXHASH(l, r, bddop_and));
+        if (entry.a == l && entry.b == r && entry.c == appexid) {
+            if (CACHESTATS)
+                cachestats.opHit++;
+            return entry.res;
+        }
+        if (CACHESTATS)
+            cachestats.opMiss++;
+        
+        if (LEVEL_l == LEVEL_r) {
+            if (VERIFY_ASSERTIONS) _assert(LEVEL_l == lev);
+            PUSHREF(zrelprod_rec(LOW(l), LOW(r), lev+1));
+            PUSHREF(zrelprod_rec(HIGH(l), HIGH(r), lev+1));
+            if (INVARSET(lev)) {
+                res = zor_rec(READREF(2), READREF(1));
+                POPREF(2);
+                PUSHREF(res);
+                res = zdd_makenode(lev, res, res);
+                POPREF(1);
+            } else {
+                res = zdd_makenode(lev, READREF(2), READREF(1));
+                POPREF(2);
+            }
+        } else {
+            if (LEVEL_l < LEVEL_r) {
+                if (VERIFY_ASSERTIONS) _assert(LEVEL_l == lev);
+                res = zrelprod_rec(LOW(l), r, lev+1);
+            } else {
+                if (VERIFY_ASSERTIONS) _assert(LEVEL_r == lev);
+                res = zrelprod_rec(l, LOW(r), lev+1);
+            }
+            if (INVARSET(lev)) {
+                PUSHREF(res);
+                res = zdd_makenode(lev, res, res);
+                POPREF(1);
+            }
+        }
+        entry.a = l;
+        entry.b = r;
+        entry.c = appexid;
         entry.res = res;
 
         return res;
@@ -1808,14 +1885,6 @@ public class JFactory extends BDDFactoryIntImpl {
         if (var < 2) /* Empty set */
             return bdd_apply(l, r, opr);
 
-        if (ZDD) {
-            // TODO: A real ZDD implementation.
-            int x = bdd_addref(bdd_apply(l, r, opr));
-            int y = bdd_exist(x, var);
-            bdd_delref(x);
-            return y;
-        }
-        
         if (applycache == null) applycache = BddCacheI_init(cachesize);
         if (appexcache == null) appexcache = BddCacheI_init(cachesize);
         if (quantcache == null) quantcache = BddCacheI_init(cachesize);
@@ -1833,7 +1902,11 @@ public class JFactory extends BDDFactoryIntImpl {
 
                 if (numReorder == 0)
                     bdd_disable_reorder();
-                res = opr == bddop_and ? relprod_rec(l, r) : appquant_rec(l, r);
+                if (opr == bddop_and)
+                    res = ZDD ? zrelprod_rec(l, r, 0) : relprod_rec(l, r);
+                else
+                    res = appquant_rec(l, r);
+                
                 if (numReorder == 0)
                     bdd_enable_reorder();
             } catch (ReorderException x) {
@@ -2166,13 +2239,32 @@ public class JFactory extends BDDFactoryIntImpl {
         return res;
     }
 
-    int zquant_rec(int r) {
+    int zquant_rec(int r, int lev) {
         BddCacheDataI entry;
         int res;
 
-        if (r < 2 || LEVEL(r) > quantlast)
+        for (;;) {
+            if (lev > quantlast)
+                return r;
+            if (lev == LEVEL(r))
+                break;
+            if (INVARSET(lev)) {
+                switch (applyop) {
+                case bddop_and: return 0;
+                case bddop_or:
+                    PUSHREF(zquant_rec(r, lev+1));
+                    res = zdd_makenode(lev, READREF(1), READREF(1));
+                    POPREF(1);
+                    return res;
+                default: throw new BDDException();
+                }
+            }
+            lev++;
+        }
+        
+        if (r < 2)
             return r;
-
+        
         entry = BddCache_lookupI(quantcache, QUANTHASH(r));
         if (entry.a == r && entry.c == quantid) {
             if (CACHESTATS)
@@ -2182,8 +2274,9 @@ public class JFactory extends BDDFactoryIntImpl {
         if (CACHESTATS)
             cachestats.opMiss++;
 
-        PUSHREF(zquant_rec(LOW(r)));
-        PUSHREF(zquant_rec(HIGH(r)));
+        int nlev = LEVEL(r) + 1;
+        PUSHREF(zquant_rec(LOW(r), nlev));
+        PUSHREF(zquant_rec(HIGH(r), nlev));
 
         if (INVARSET(LEVEL(r))) {
             int r2 = READREF(2), r1 = READREF(1);
@@ -2192,11 +2285,14 @@ public class JFactory extends BDDFactoryIntImpl {
             case bddop_or: res = zor_rec(r2, r1); break;
             default: throw new BDDException();
             }
+            POPREF(2);
+            PUSHREF(res);
+            res = zdd_makenode(LEVEL(r), READREF(1), READREF(1));
+            POPREF(1);
         } else {
             res = zdd_makenode(LEVEL(r), READREF(2), READREF(1));
+            POPREF(2);
         }
-
-        POPREF(2);
 
         entry.a = r;
         entry.c = quantid;
@@ -2465,7 +2561,7 @@ public class JFactory extends BDDFactoryIntImpl {
 
                 if (numReorder == 0)
                     bdd_disable_reorder();
-                res = quant_rec(r);
+                res = ZDD?zquant_rec(r, 0):quant_rec(r);
                 if (numReorder == 0)
                     bdd_enable_reorder();
             } catch (ReorderException x) {
@@ -2478,6 +2574,7 @@ public class JFactory extends BDDFactoryIntImpl {
         }
 
         checkresize();
+        if (true) bdd_validate(res);
         return res;
     }
 
@@ -2504,7 +2601,7 @@ public class JFactory extends BDDFactoryIntImpl {
 
                 if (numReorder == 0)
                     bdd_disable_reorder();
-                res = quant_rec(r);
+                res = ZDD?zquant_rec(r, 0):quant_rec(r);
                 if (numReorder == 0)
                     bdd_enable_reorder();
             } catch (ReorderException x) {
@@ -2772,7 +2869,7 @@ public class JFactory extends BDDFactoryIntImpl {
 
     void support_rec(int r, int[] support) {
 
-        _assert(!ZDD);
+        if (VERIFY_ASSERTIONS) _assert(!ZDD);
         
         if (r < 2)
             return;
@@ -2793,7 +2890,7 @@ public class JFactory extends BDDFactoryIntImpl {
 
     void zsupport_rec(int r, int lev, int[] support) {
 
-        _assert(ZDD);
+        if (VERIFY_ASSERTIONS) _assert(ZDD);
         
         if (!ISZERO(r)) {
             while (lev != LEVEL(r)) {
@@ -3929,7 +4026,7 @@ public class JFactory extends BDDFactoryIntImpl {
                         break;
                     }
                 }
-                _assert(newIndex != bddvarnum);
+                if (VERIFY_ASSERTIONS) _assert(newIndex != bddvarnum);
             }
             int tmp = pair.result[oldlev];
             pair.result[oldlev] = pair.result[newIndex];
@@ -6295,7 +6392,11 @@ public class JFactory extends BDDFactoryIntImpl {
         }
     }
     void bdd_validate(int k) {
-        validate(k, -1);
+        try {
+            validate(k, -1);
+        } finally {
+            bdd_unmark(k);
+        }
     }
     void validate(int k, int lastLevel) {
         if (k < 2) return;
@@ -6303,6 +6404,15 @@ public class JFactory extends BDDFactoryIntImpl {
         //System.out.println("Level("+k+") = "+lev);
         if (lev <= lastLevel)
             throw new BDDException(lev+" <= "+lastLevel);
+        if (ZDD) {
+            if (HIGH(k) == 0)
+                throw new BDDException("HIGH("+k+")==0");
+        } else {
+            if (LOW(k) == HIGH(k))
+                throw new BDDException("LOW("+k+") == HIGH("+k+")");
+        }
+        if (MARKED(k)) return;
+        SETMARK(k);
         //System.out.println("Low:");
         validate(LOW(k), lev);
         //System.out.println("High:");
