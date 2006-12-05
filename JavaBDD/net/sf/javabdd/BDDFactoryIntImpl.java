@@ -421,7 +421,8 @@ public abstract class BDDFactoryIntImpl extends BDDFactory {
             } else {
                 int k = do_unionlevel(high_impl(v), lev);
                 addref_impl(k);
-                int result = makenode_impl(lev, zero_impl(), k);
+                int result = makenode_impl(l, zero_impl(), k);
+                delref_impl(k);
                 return result;
             }
         }

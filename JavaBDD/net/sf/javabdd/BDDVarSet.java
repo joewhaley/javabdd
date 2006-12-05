@@ -3,6 +3,8 @@
 // Licensed under the terms of the GNU LGPL; see COPYING for details.
 package net.sf.javabdd;
 
+import java.util.Arrays;
+
 /**
  * <p>Some BDD methods, namely <tt>exist()</tt>, <tt>forall()</tt>, <tt>unique()</tt>, 
  * <tt>relprod()</tt>, <tt>applyAll()</tt>, <tt>applyEx()</tt>, <tt>applyUni()</tt>, 
@@ -30,6 +32,10 @@ public abstract class BDDVarSet {
     
     public abstract int[] toArray();
     public abstract int[] toLevelArray();
+    
+    public String toString() {
+        return Arrays.toString(toArray());
+    }
     
     /**
      * <p>Scans this BDD and copies the stored variables into an array of BDDDomains.

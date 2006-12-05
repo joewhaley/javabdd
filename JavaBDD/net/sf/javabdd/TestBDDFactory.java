@@ -64,11 +64,19 @@ public class TestBDDFactory extends BDDFactory {
     }
 
     public static final void assertSame(BDDVarSet b1, BDDVarSet b2, String s) {
-        assertSame(b1.toBDD(), b2.toBDD(), s);
+        if (!b1.toString().equals(b2.toString())) {
+            System.out.println("b1 = " + b1.toString());
+            System.out.println("b2 = " + b2.toString());
+            throw new InternalError(s);
+        }
     }
 
     public static final void assertSame(boolean b, BDDVarSet b1, BDDVarSet b2, String s) {
-        assertSame(b, b1.toBDD(), b2.toBDD(), s);
+        if (!b) {
+            System.err.println("b1 = " + b1);
+            System.err.println("b2 = " + b2);
+            throw new InternalError(s);
+        }
     }
     private class TestBDD extends BDD {
         BDD b1, b2;
