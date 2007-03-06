@@ -34,7 +34,16 @@ public abstract class BDDVarSet {
     public abstract int[] toLevelArray();
     
     public String toString() {
-        return Arrays.toString(toArray());
+        //return Arrays.toString(toArray());
+	int[] a = toArray();
+	StringBuffer sb = new StringBuffer(a.length * 4 + 2);
+	sb.append('[');
+	for (int i = 0; i < a.length; ++i) {
+	    if (i != 0) sb.append(',');
+	    sb.append(a[i]);
+	}
+	sb.append(']');
+	return sb.toString();
     }
     
     /**

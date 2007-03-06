@@ -209,12 +209,10 @@ public abstract class BDDFactoryIntImpl extends BDDFactory {
         
         protected void finalize() throws Throwable {
             super.finalize();
-            if (USE_FINALIZER) {
-                if (false && v != invalid_bdd_impl()) {
-                    System.out.println("BDD not freed! "+System.identityHashCode(this));
-                }
-                deferredFree(v);
+            if (false && v != invalid_bdd_impl()) {
+                System.out.println("BDD not freed! "+System.identityHashCode(this));
             }
+            deferredFree(v);
         }
         
     }
@@ -347,12 +345,10 @@ public abstract class BDDFactoryIntImpl extends BDDFactory {
         
         protected void finalize() throws Throwable {
             super.finalize();
-            if (USE_FINALIZER) {
-                if (false && v != invalid_bdd_impl()) {
-                    System.out.println("BDD not freed! "+System.identityHashCode(this));
-                }
-                deferredFree(v);
+            if (false && v != invalid_bdd_impl()) {
+                System.out.println("BDD not freed! "+System.identityHashCode(this));
             }
+            deferredFree(v);
         }
         
     }
@@ -524,6 +520,8 @@ public abstract class BDDFactoryIntImpl extends BDDFactory {
     protected /*bdd*/int[] to_free = new /*bdd*/int[8];
     protected /*bdd*/int to_free_length = 0;
     public void deferredFree(int v) {
+        if (v == invalid_bdd_impl())
+            return;
         synchronized(to_free) {
             if (to_free_length == to_free.length) {
                 /*bdd*/int[] t = new /*bdd*/int[to_free.length * 2];

@@ -295,7 +295,7 @@ public class BuDDyFactory extends BDDFactoryIntImpl {
      * @see net.sf.javabdd.BDDFactory#setCacheRatio(int)
      */
     public double setCacheRatio(double x) {
-        return setCacheRatio0((int)(x * 100.)) / 100.;
+        return setCacheRatio0((int)x);
     }
     private static native int setCacheRatio0(int x);
     
