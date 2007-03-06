@@ -34,10 +34,11 @@ public class UberMicroFactory extends BDDFactoryIntImpl {
 
     public static boolean FLUSH_CACHE_ON_GC = true;
     
-    static final boolean VERIFY_ASSERTIONS = true;
+    static final boolean VERIFY_ASSERTIONS = false;
     static final boolean ORDER_CACHE = false;
     static final int CACHESTATS = 0;
     static final boolean SWAPCOUNT = false;
+    static final boolean TRACE_REORDER = false;
     
     public static final String REVISION = "$Revision: 465 $";
     
@@ -506,7 +507,7 @@ public class UberMicroFactory extends BDDFactoryIntImpl {
     float HASHFACTOR = 1.5f;
     
     void HASH_RESET() {
-        System.out.println("Resetting hash table");
+        if (false) System.out.println("Resetting hash table");
         if (bddhash == null || bddhash.length < bddnodesize * HASHFACTOR) {
             int newSize = (int)(bddnodesize * HASHFACTOR);
             if (POWEROF2)
@@ -533,7 +534,7 @@ public class UberMicroFactory extends BDDFactoryIntImpl {
     }
     
     final void HASH_RESET(int h) {
-        System.out.println("Resetting hash entry "+h);
+        if (false) System.out.println("Resetting hash entry "+h);
         bddhash[h] = HASH_EMPTY;
     }
     
@@ -667,7 +668,7 @@ public class UberMicroFactory extends BDDFactoryIntImpl {
             newBegin = 2;
         }
         
-        System.out.println("Moving level "+var0+" from ("+oldBegin+".."+oldEnd+") to ("+newBegin+".."+newEnd+")");
+        if (TRACE_REORDER) System.out.println("Moving level "+var0+" from ("+oldBegin+".."+oldEnd+") to ("+newBegin+".."+newEnd+")");
         
         if (newEnd > bddhash.length) {
             // grow the table!
@@ -748,7 +749,7 @@ public class UberMicroFactory extends BDDFactoryIntImpl {
                     //System.out.println("Rehashing "+r+" from hashloc "+k);
                     bddhash[k] = HASH_EMPTY;
                     int h = rehash_helper(var0, r);
-                    if (true)
+                    if (TRACE_REORDER)
                         System.out.println("Rehashed "+r+" from hashloc "+k+" to hashloc "+h);
                 }
             }
@@ -791,7 +792,7 @@ public class UberMicroFactory extends BDDFactoryIntImpl {
                 return h;
             }
             if (x < 0 || x == HASH_EMPTY) {
-                System.out.println("Rehashing node "+v+"("+VARr(v)+","+LOW(v)+","+HIGH(v)+") rc="+refcounts.get(v)+" into hash slot "+h);
+                if (TRACE_REORDER) System.out.println("Rehashing node "+v+"("+VARr(v)+","+LOW(v)+","+HIGH(v)+") rc="+refcounts.get(v)+" into hash slot "+h);
                 if (VERIFY_ASSERTIONS) _assert(x != HASH_SENTINEL);
                 bddhash[h] = v;
                 if (x != HASH_EMPTY && -x != v) {
@@ -826,7 +827,7 @@ public class UberMicroFactory extends BDDFactoryIntImpl {
             if (VERIFY_ASSERTIONS) _assert(HASH_GETVAL(h) != v);
             int x = bddhash[h];
             if (x == HASH_EMPTY || x == HASH_SENTINEL) {
-                System.out.println("Inserting node "+v+"("+VARr(v)+","+LOW(v)+","+HIGH(v)+") rc="+refcounts.get(v)+" into hash slot "+h);
+                if (TRACE_REORDER) System.out.println("Inserting node "+v+"("+VARr(v)+","+LOW(v)+","+HIGH(v)+") rc="+refcounts.get(v)+" into hash slot "+h);
                 bddhash[h] = v;
                 return h;
             } else {
@@ -843,7 +844,7 @@ public class UberMicroFactory extends BDDFactoryIntImpl {
                 h -= l.size;
         }
         
-        System.out.println("Inserting node "+v+"("+VARr(v)+","+LOW(v)+","+HIGH(v)+") rc="+refcounts.get(v)+" failed, resizing hash and trying again");
+        if (TRACE_REORDER) System.out.println("Inserting node "+v+"("+VARr(v)+","+LOW(v)+","+HIGH(v)+") rc="+refcounts.get(v)+" failed, resizing hash and trying again");
         
         HASHr_RESIZE(var);
         
@@ -5609,10 +5610,10 @@ public class UberMicroFactory extends BDDFactoryIntImpl {
             k += levels[n].size;
             if (levels[n].size >= 4)
                 levels[n].size = bdd_prime_lte(levels[n].size);
-            System.out.println("Var "+n+": "+levels[n].nodenum+" nodes, hash="+levels[n].start+"..."+(levels[n].start+levels[n].size));
+            if (TRACE_REORDER) System.out.println("Var "+n+": "+levels[n].nodenum+" nodes, hash="+levels[n].start+"..."+(levels[n].start+levels[n].size));
             total += levels[n].nodenum;
         }
-        System.out.println("total nodes="+total);
+        if (TRACE_REORDER) System.out.println("total nodes="+total);
     }
 
     // Reference counts.
@@ -5704,7 +5705,7 @@ public class UberMicroFactory extends BDDFactoryIntImpl {
         int size1 = levels[var1].size;
         int n;
 
-        System.out.println("Doing local GC for var "+var1+" ("+vl1+"..."+(vl1+size1)+")");
+        if (TRACE_REORDER) System.out.println("Doing local GC for var "+var1+" ("+vl1+"..."+(vl1+size1)+")");
 
         for (n = 0; n < size1; ++n) {
             int hash = n + vl1;
@@ -5712,7 +5713,7 @@ public class UberMicroFactory extends BDDFactoryIntImpl {
             int r = HASH_GETVAL(hash);
 
             if (!refcounts.hasref(r)) {
-                System.out.println("No longer referenced, freeing: "+r+"("+VARr(r)+","+LOW(r)+","+HIGH(r)+") rc="+refcounts.get(r)+" hash="+hash);
+                if (TRACE_REORDER) System.out.println("No longer referenced, freeing: "+r+"("+VARr(r)+","+LOW(r)+","+HIGH(r)+") rc="+refcounts.get(r)+" hash="+hash);
                 HASHr_SETSENTINEL(hash);
                 if (VERIFY_ASSERTIONS) _assert(VARr(r) == var1);
                 refcounts.dec(LOW(r));
@@ -5760,7 +5761,7 @@ public class UberMicroFactory extends BDDFactoryIntImpl {
         int size0 = levels[var0].size;
         int n;
 
-        System.out.println("Exchanging v"+var0+" and v"+var1+" ("+levels[var0].nodenum+" nodes) hashloc "+vl0+"..."+(vl0+size0));
+        if (TRACE_REORDER) System.out.println("Exchanging v"+var0+" and v"+var1+" ("+levels[var0].nodenum+" nodes) hashloc "+vl0+"..."+(vl0+size0));
         
         toBeProcessed.init(levels[var0].nodenum);
         
@@ -5768,11 +5769,11 @@ public class UberMicroFactory extends BDDFactoryIntImpl {
 
         for (n = 0; n < size0; ++n) {
             int hash = n + vl0;
-            System.out.println(" hashloc "+hash+" = "+bddhash[hash]);
+            if (TRACE_REORDER) System.out.println(" hashloc "+hash+" = "+bddhash[hash]);
             if (!HASHr_HASVAL(hash)) continue;
             int r = HASHr_GETVAL(hash);
 
-            System.out.println("Inspecting node "+r+"("+VARr(r)+","+LOW(r)+","+HIGH(r)+") rc="+refcounts.get(r));
+            if (TRACE_REORDER) System.out.println("Inspecting node "+r+"("+VARr(r)+","+LOW(r)+","+HIGH(r)+") rc="+refcounts.get(r));
             if (VERIFY_ASSERTIONS) _assert(VARr(r) == var0);
             
             if (VARr(LOW(r)) != var1 && VARr(HIGH(r)) != var1) {
@@ -5787,7 +5788,7 @@ public class UberMicroFactory extends BDDFactoryIntImpl {
             }
         }
 
-        System.out.println("Exchanging v"+var0+": "+toBeProcessed.numtoprocess+" nodes have v"+var1+
+        if (TRACE_REORDER) System.out.println("Exchanging v"+var0+": "+toBeProcessed.numtoprocess+" nodes have v"+var1+
                            " as a successor, "+levels[var0].nodenum+" do not");
         
         return toBeProcessed;
@@ -5817,7 +5818,7 @@ public class UberMicroFactory extends BDDFactoryIntImpl {
             } else
                 f10 = f11 = f1;
 
-            System.out.println("Pushing down node "+t+"("+var0+","+f0+","+f1+") rc="+refcounts.get(t));
+            if (TRACE_REORDER) System.out.println("Pushing down node "+t+"("+var0+","+f0+","+f1+") rc="+refcounts.get(t));
             
             // Note: makenode does refcou.
             f0 = reorder_makenode(var0, f00, f10);
@@ -5833,8 +5834,8 @@ public class UberMicroFactory extends BDDFactoryIntImpl {
             refcounts.dec(LOW(t));
             refcounts.dec(HIGH(t));
 
-            System.out.println("Old low child node: "+LOW(t)+"("+VARr(LOW(t))+","+LOW(LOW(t))+","+HIGH(LOW(t))+") rc="+refcounts.get(LOW(t)));
-            System.out.println("Old high child node: "+HIGH(t)+"("+VARr(HIGH(t))+","+LOW(HIGH(t))+","+HIGH(HIGH(t))+") rc="+refcounts.get(HIGH(t)));
+            if (TRACE_REORDER) System.out.println("Old low child node: "+LOW(t)+"("+VARr(LOW(t))+","+LOW(LOW(t))+","+HIGH(LOW(t))+") rc="+refcounts.get(LOW(t)));
+            if (TRACE_REORDER) System.out.println("Old high child node: "+HIGH(t)+"("+VARr(HIGH(t))+","+LOW(HIGH(t))+","+HIGH(HIGH(t))+") rc="+refcounts.get(HIGH(t)));
             
             // Update in-place
             SETVARr(t, var1);
@@ -5843,8 +5844,8 @@ public class UberMicroFactory extends BDDFactoryIntImpl {
 
             levels[var1].nodenum++;
 
-            System.out.println("New low child node: "+LOW(t)+"("+VARr(LOW(t))+","+LOW(LOW(t))+","+HIGH(LOW(t))+") rc="+refcounts.get(LOW(t)));
-            System.out.println("New high child node: "+HIGH(t)+"("+VARr(HIGH(t))+","+LOW(HIGH(t))+","+HIGH(HIGH(t))+") rc="+refcounts.get(HIGH(t)));
+            if (TRACE_REORDER) System.out.println("New low child node: "+LOW(t)+"("+VARr(LOW(t))+","+LOW(LOW(t))+","+HIGH(LOW(t))+") rc="+refcounts.get(LOW(t)));
+            if (TRACE_REORDER) System.out.println("New high child node: "+HIGH(t)+"("+VARr(HIGH(t))+","+LOW(HIGH(t))+","+HIGH(HIGH(t))+") rc="+refcounts.get(HIGH(t)));
             
             // Rehash the node since it has new children
             hash = NODEHASHr(var1, f0, f1);
@@ -5919,13 +5920,10 @@ public class UberMicroFactory extends BDDFactoryIntImpl {
         return res;
     }
 
-    double[] reordercheck;
-    
     int reorder_init() {
         int n;
 
         reorder_handler(true, reorderstats);
-        reordercheck = allSatCounts();        
         
         levels = new levelData[bddvarnum];
 
@@ -6072,9 +6070,6 @@ public class UberMicroFactory extends BDDFactoryIntImpl {
 
         // Garbage collect to rehash blocks.
         bdd_gbc();
-        
-        compare(reordercheck, allSatCounts());
-        reordercheck = null;
         
         reorder_handler(false, reorderstats);
     }
