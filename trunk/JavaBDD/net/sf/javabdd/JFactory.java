@@ -214,7 +214,7 @@ public class JFactory extends BDDFactoryIntImpl {
     public int getCacheSize() { return cachesize; }
     public int reorderGain() { return bdd_reorder_gain(); }
     public void printStat() { bdd_fprintstat(System.out); }
-    public double setCacheRatio(double x) { return bdd_setcacheratio((int)(x * 100)) / 100.; }
+    public double setCacheRatio(double x) { return bdd_setcacheratio((int)x); }
     public int varNum() { return bdd_varnum(); }
     public int setVarNum(int num) { return bdd_setvarnum(num); }
     public void printAll() { bdd_fprintall(System.out); }
@@ -1431,7 +1431,7 @@ public class JFactory extends BDDFactoryIntImpl {
         }
 
         checkresize();
-        if (true) bdd_validate(res);
+        if (false) bdd_validate(res);
         return res;
     }
 
@@ -2574,7 +2574,7 @@ public class JFactory extends BDDFactoryIntImpl {
         }
 
         checkresize();
-        if (true) bdd_validate(res);
+        if (false) bdd_validate(res);
         return res;
     }
 
@@ -5331,21 +5331,28 @@ public class JFactory extends BDDFactoryIntImpl {
         resizedInMakenode = false;
 
         if (imatrixDepends(iactmtx, var, bddlevel2var[level + 1])) {
+            // This var depends on the next one.
+            // (ie there is some BDD with both this var and the next one)
+            
+            // Rehash this level and return a list of nodes that depend on the
+            // next level.
             int toBeProcessed = reorder_downSimple(var);
             levelData l = levels[var];
 
             if (l.nodenum < (l.size) / 3
                 || l.nodenum >= (l.size * 3) / 2
                 && l.size < l.maxsize) {
+                // Hash table for this level is too big or too small, resize it.
                 reorder_swapResize(toBeProcessed, var);
                 reorder_localGbcResize(toBeProcessed, var);
             } else {
+                // Swap the variable and do a GC pass on this level.
                 reorder_swap(toBeProcessed, var);
                 reorder_localGbc(var);
             }
         }
 
-        /* Swap the var<->level tables */
+        // Swap the var<->level tables
         n = bddlevel2var[level];
         bddlevel2var[level] = bddlevel2var[level + 1];
         bddlevel2var[level + 1] = n;
@@ -5439,13 +5446,17 @@ public class JFactory extends BDDFactoryIntImpl {
 
     int reorder_downSimple(int var0) {
         int toBeProcessed = 0;
+        
+        // Next variable to swap with.
         int var1 = bddlevel2var[bddvar2level[var0] + 1];
+        
+        // Hash table range for source variable.
         int vl0 = levels[var0].start;
         int size0 = levels[var0].size;
         int n;
 
+        // Rehash this level and recalculate the number of nodes.
         levels[var0].nodenum = 0;
-
         for (n = 0; n < size0; n++) {
             int r;
 
@@ -5455,26 +5466,17 @@ public class JFactory extends BDDFactoryIntImpl {
             while (r != 0) {
                 int next = NEXT(r);
 
-/***
-                if (LOW(r) == -1) {
-                    System.out.println(r+": LOW="+LOW(r));
-                }
-                if (HIGH(r) == -1) {
-                    System.out.println(r+": HIGH="+HIGH(r));
-                }
-***/
                 if (VARr(LOW(r)) != var1 && VARr(HIGH(r)) != var1) {
-                    /* Node does not depend on next var, let it stay in the chain */
+                    // Node does not depend on next var, put it in the chain
                     SETNEXT(r, HASH(n + vl0));
                     SETHASH(n + vl0, r);
                     levels[var0].nodenum++;
                 } else {
-                    /* Node depends on next var - save it for later procesing */
+                    // Node depends on next var - save it for later processing
                     SETNEXT(r, toBeProcessed);
                     toBeProcessed = r;
                     if (SWAPCOUNT)
                         cachestats.swapCount++;
-
                 }
 
                 r = next;
@@ -5493,7 +5495,7 @@ public class JFactory extends BDDFactoryIntImpl {
             int f1 = HIGH(toBeProcessed);
             int f00, f01, f10, f11;
 
-            /* Find the cofactors for the new nodes */
+            // Find the cofactors for the new nodes
             if (VARr(f0) == var1) {
                 f00 = LOW(f0);
                 f01 = HIGH(f0);
@@ -5520,14 +5522,14 @@ public class JFactory extends BDDFactoryIntImpl {
             DECREF(LOW(toBeProcessed));
             DECREF(HIGH(toBeProcessed));
 
-            /* Update in-place */
+            // Update in-place
             SETVARr(toBeProcessed, var1);
             SETLOW(toBeProcessed, f0);
             SETHIGH(toBeProcessed, f1);
 
             levels[var1].nodenum++;
 
-            /* Do not rehash yet since we are going to resize the hash table */
+            // Do not rehash yet since we are going to resize the hash table
 
             toBeProcessed = next;
         }
@@ -5595,13 +5597,15 @@ public class JFactory extends BDDFactoryIntImpl {
     void reorder_swap(int toBeProcessed, int var0) {
         int var1 = bddlevel2var[bddvar2level[var0] + 1];
 
+        // toBeProcessed is a linked list of nodes that depend on the next level.
+        
         while (toBeProcessed != 0) {
             int next = NEXT(toBeProcessed);
             int f0 = LOW(toBeProcessed);
             int f1 = HIGH(toBeProcessed);
             int f00, f01, f10, f11, hash;
 
-            /* Find the cofactors for the new nodes */
+            // Find the cofactors for the new nodes
             if (VARr(f0) == var1) {
                 f00 = LOW(f0);
                 f01 = HIGH(f0);
@@ -5620,22 +5624,25 @@ public class JFactory extends BDDFactoryIntImpl {
             //node = bddnodes[toBeProcessed]; /* Might change in makenode */
 
             /* We know that the refcou of the grandchilds of this node
-            * is greater than one (these are f00...f11), so there is
-            * no need to do a recursive refcou decrease. It is also
-            * possible for the node.low/high nodes to come alive again,
-            * so deref. of the childs is delayed until the local GBC. */
+             * is greater than one (these are f00...f11), so there is
+             * no need to do a recursive refcou decrease. It is also
+             * possible for the node.low/high nodes to come alive again,
+             * so deref. of the childs is delayed until the local GBC. */
 
             DECREF(LOW(toBeProcessed));
             DECREF(HIGH(toBeProcessed));
 
-            /* Update in-place */
+            // Update in-place
+            // NOTE: This node may be a duplicate.  However, we add this to the start
+            // of the list so we will always encounter this one first.  The refcount
+            // of the node we duplicated will go to zero.
             SETVARr(toBeProcessed, var1);
             SETLOW(toBeProcessed, f0);
             SETHIGH(toBeProcessed, f1);
 
             levels[var1].nodenum++;
 
-            /* Rehash the node since it got new childs */
+            // Rehash the node since it has new children
             hash = NODEHASH2(VARr(toBeProcessed), LOW(toBeProcessed), HIGH(toBeProcessed));
             SETNEXT(toBeProcessed, HASH(hash));
             SETHASH(hash, toBeProcessed);
@@ -5658,7 +5665,7 @@ public class JFactory extends BDDFactoryIntImpl {
             cachestats.uniqueAccess++;
 
         /* Note: We know that low,high has a refcou greater than zero, so
-        there is no need to add reference *recursively* */
+           there is no need to add reference *recursively* */
 
         if (ZDD) {
             /* check whether high child is zero */
@@ -5701,9 +5708,9 @@ public class JFactory extends BDDFactoryIntImpl {
                 return 0;
 
             /* Try to allocate more nodes - call noderesize without
-            * enabling rehashing.
+             * enabling rehashing.
              * Note: if ever rehashing is allowed here, then remember to
-            * update local variable "hash" */
+             * update local variable "hash" */
             bdd_noderesize(false);
             resizedInMakenode = true;
 
@@ -5740,12 +5747,18 @@ public class JFactory extends BDDFactoryIntImpl {
     }
 
     int reorder_init() {
+        // This method does the following:
+        //  - Calculate interaction matrix "iactmtx"
+        //  - Calculates the number of nodes with each variable.
+        //  - Mutates each node to store the var instead of the level.
+        //  - Sets refcounts for all links, including internal ones.
+        
         int n;
 
         reorder_handler(true, reorderstats);
         
+        // Split the hash table into a separate region for each variable.
         levels = new levelData[bddvarnum];
-
         for (n = 0; n < bddvarnum; n++) {
             levels[n] = new levelData();
             levels[n].start = -1;
@@ -5753,15 +5766,15 @@ public class JFactory extends BDDFactoryIntImpl {
             levels[n].nodenum = 0;
         }
 
-        /* First mark and recursive refcou. all roots and childs. Also do some
-         * setup here for both setLevellookup and reorder_gbc */
+        // First mark and recursive refcou. all roots and childs. Also do some
+        // setup here for both setLevellookup and reorder_gbc
         if (mark_roots() < 0)
             return -1;
 
-        /* Initialize the hash tables */
+        // Initialize the hash tables
         reorder_setLevellookup();
 
-        /* Garbage collect and rehash to new scheme */
+        // Garbage collect and rehash to new scheme
         reorder_gbc();
 
         return 0;
@@ -5786,14 +5799,19 @@ public class JFactory extends BDDFactoryIntImpl {
 
         iactmtx = imatrixNew(bddvarnum);
 
+        // Loop to compute dependences and node refcounts.
         for (n = 2, extrootsize = 0; n < bddnodesize; n++) {
 
             if (MARKED(n)) {
+                // Node has an external reference.
                 UNMARK(n);
                 extroots[extrootsize++] = n;
 
+                // Calculate the set of variables in this BDD.
+                // Also sets refcounts on internal nodes.
                 for (int i = 0; i < bddvarnum; ++i)
                     dep[i] = false;
+                
                 dep[VARr(n)] = true;
                 levels[VARr(n)].nodenum++;
 
@@ -5835,12 +5853,15 @@ public class JFactory extends BDDFactoryIntImpl {
             return;
 
         if (!HASREF(r) || MARKED(r)) {
+            // We haven't processed the node yet.
+            // Processed nodes have a refcount and are unmarked.
+            
             bddfreenum--;
 
-            /* Detect variable dependencies for the interaction matrix */
+            // Detect variable dependencies for the interaction matrix
             dep[VARr(r) & ~MARK_MASK] = true;
 
-            /* Make sure the nodenum field is updated. Used in the initial GBC */
+            // Make sure the nodenum field is updated. Used in the initial GBC
             levels[VARr(r) & ~MARK_MASK].nodenum++;
 
             addref_rec(LOW(r), dep);
@@ -5848,8 +5869,8 @@ public class JFactory extends BDDFactoryIntImpl {
         } else {
             int n;
 
-            /* Update (from previously found) variable dependencies
-            * for the interaction matrix */
+            // Update (from previously found) variable dependencies
+            // for the interaction matrix
             for (n = 0; n < bddvarnum; n++)
                 dep[n]
                     |= imatrixDepends(iactmtx, VARr(r) & ~MARK_MASK, n);
@@ -5913,7 +5934,7 @@ public class JFactory extends BDDFactoryIntImpl {
                 CLEARREF(n);
 
             /* This is where we go from .var to .level again!
-            * - Do NOT use the LEVEL macro here. */
+             * - Do NOT use the LEVEL macro here. */
             SETLEVELANDMARK(n, bddvar2level[LEVELANDMARK(n)]);
         }
 

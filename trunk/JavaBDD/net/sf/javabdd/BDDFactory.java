@@ -76,7 +76,9 @@ public abstract class BDDFactory {
                 return CALFactory.init(nodenum, cachesize);
             if (bddpackage.equals("j") || bddpackage.equals("java"))
                 return JFactory.init(nodenum, cachesize);
-            if (bddpackage.equals("u") || bddpackage.equals("micro"))
+            if (bddpackage.equals("u"))
+                return UberMicroFactory.init(nodenum, cachesize);
+            if (bddpackage.equals("micro"))
                 return MicroFactory.init(nodenum, cachesize);
             if (bddpackage.equals("jdd"))
                 return JDDFactory.init(nodenum, cachesize);
@@ -1278,6 +1280,12 @@ public abstract class BDDFactory {
             sb.append("Unique Chain:   ");
             sb.append(uniqueChain);
             sb.append(newLine);
+            sb.append("=> Ave. chain = ");
+            if (uniqueAccess > 0)
+                sb.append(((float) uniqueChain) / ((float) uniqueAccess));
+            else
+                sb.append((float)0);
+            sb.append(newLine);
             sb.append("Unique Hit:     ");
             sb.append(uniqueHit);
             sb.append(newLine);
@@ -1830,7 +1838,11 @@ public abstract class BDDFactory {
     }
     
     protected static void bdd_default_gbchandler(boolean pre, GCStats s) {
-        if (!pre) {
+        if (pre) {
+            if (s.freenodes != 0)
+                System.err.println("Starting GC cycle  #"+(s.num+1)+
+                                   ": "+s.nodes+" nodes / "+s.freenodes+" free");
+        } else {
             System.err.println(s.toString());
         }
     }
