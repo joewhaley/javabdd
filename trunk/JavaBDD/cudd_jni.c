@@ -46,6 +46,84 @@ static void die(JNIEnv *env, char* msg)
     (*env)->DeleteLocalRef(env, cls);
 }
 
+
+/***************************************************************************
+ * Auxiliary Methods
+ */
+
+const char* BDDFACTORY_CLASS_NAME = "net/sf/javabdd/BDDFactory";
+
+jfieldID JAVA_REORDER_NONE;
+jfieldID JAVA_REORDER_RANDOM;
+jfieldID JAVA_REORDER_SIFT;
+jfieldID JAVA_REORDER_SIFTITE;
+jfieldID JAVA_REORDER_WIN2;
+jfieldID JAVA_REORDER_WIN2ITE;
+jfieldID JAVA_REORDER_WIN3;
+jfieldID JAVA_REORDER_WIN3ITE;
+
+
+static jboolean isJavaReorderMethod(JNIEnv *env, jclass cls,
+				    jfieldID id, jobject method)
+{
+  jobject field = (*env)->GetStaticObjectField(env, cls, id);
+  return (*env)->IsSameObject(env, field, method);
+}
+
+
+static Cudd_ReorderingType getCUDDReorderMethod(JNIEnv *env,
+						jobject javamethod)
+{
+  jclass cls = (*env)->FindClass(env, BDDFACTORY_CLASS_NAME); 
+  if (isJavaReorderMethod(env, cls, JAVA_REORDER_NONE, javamethod)) {
+    return CUDD_REORDER_NONE;
+  } else if (isJavaReorderMethod(env, cls, JAVA_REORDER_RANDOM, javamethod)) {
+    return CUDD_REORDER_RANDOM;
+  } else if (isJavaReorderMethod(env, cls, JAVA_REORDER_SIFT, javamethod)) {
+    return CUDD_REORDER_SIFT;
+  } else if (isJavaReorderMethod(env, cls, JAVA_REORDER_SIFTITE, javamethod)) {
+    return CUDD_REORDER_SIFT_CONVERGE;
+  } else if (isJavaReorderMethod(env, cls, JAVA_REORDER_WIN2, javamethod)) {
+    return CUDD_REORDER_WINDOW2;
+  } else if (isJavaReorderMethod(env, cls, JAVA_REORDER_WIN2ITE, javamethod)) {
+    return CUDD_REORDER_WINDOW2_CONV;
+  } else if (isJavaReorderMethod(env, cls, JAVA_REORDER_WIN3, javamethod)) {
+    return CUDD_REORDER_WINDOW3;
+  } else if (isJavaReorderMethod(env, cls, JAVA_REORDER_WIN3ITE, javamethod)) {
+    return CUDD_REORDER_WINDOW3_CONV;
+  } else {
+    die(env, "Unknown Java reorder method!");
+    return 0;
+  }
+}
+
+static jfieldID getJavaReorderMethodId(JNIEnv *env,
+				       Cudd_ReorderingType cuddmethod)
+{
+  switch (cuddmethod) {
+  case CUDD_REORDER_NONE:
+    return JAVA_REORDER_NONE;
+  case CUDD_REORDER_RANDOM:
+    return JAVA_REORDER_RANDOM;
+  case CUDD_REORDER_SIFT:
+    return JAVA_REORDER_SIFT;
+  case CUDD_REORDER_SIFT_CONVERGE:
+    return JAVA_REORDER_SIFTITE;
+  case CUDD_REORDER_WINDOW2:
+    return JAVA_REORDER_WIN2;
+  case CUDD_REORDER_WINDOW2_CONV:
+    return JAVA_REORDER_WIN2ITE;
+  case CUDD_REORDER_WINDOW3:
+    return JAVA_REORDER_WIN3;
+  case CUDD_REORDER_WINDOW3_CONV:
+    return JAVA_REORDER_WIN3ITE;
+  default:
+    die(env, "Unknown reorder method in CUDD!");
+    return 0;
+  }
+}
+
+
 /**** START OF NATIVE METHOD IMPLEMENTATIONS ****/
 
 /*
@@ -56,6 +134,24 @@ static void die(JNIEnv *env, char* msg)
 JNIEXPORT void JNICALL Java_net_sf_javabdd_CUDDFactory_registerNatives
   (JNIEnv *env, jclass cl)
 {
+  jclass cls = (*env)->FindClass(env, BDDFACTORY_CLASS_NAME); 
+  const char* type = "Lnet/sf/javabdd/BDDFactory$ReorderMethod;";
+  JAVA_REORDER_NONE =
+    (*env)->GetStaticFieldID(env, cls, "REORDER_NONE", type);
+  JAVA_REORDER_RANDOM =
+    (*env)->GetStaticFieldID(env, cls, "REORDER_RANDOM", type);;
+  JAVA_REORDER_SIFT =
+    (*env)->GetStaticFieldID(env, cls, "REORDER_SIFT", type);
+  JAVA_REORDER_SIFTITE =
+    (*env)->GetStaticFieldID(env, cls, "REORDER_SIFTITE", type);
+  JAVA_REORDER_WIN2 =
+    (*env)->GetStaticFieldID(env, cls, "REORDER_WIN2", type);
+  JAVA_REORDER_WIN2ITE =
+    (*env)->GetStaticFieldID(env, cls, "REORDER_WIN2ITE", type);
+  JAVA_REORDER_WIN3 =
+    (*env)->GetStaticFieldID(env, cls, "REORDER_WIN3", type);
+  JAVA_REORDER_WIN3ITE =
+    (*env)->GetStaticFieldID(env, cls, "REORDER_WIN3ITE", type);
 }
 
 typedef struct CuddPairing {
@@ -146,12 +242,15 @@ JNIEXPORT void JNICALL Java_net_sf_javabdd_CUDDFactory_done0
 
     Cudd_Deref((DdNode *)(intptr_cast_type) bdd_one);
     Cudd_Deref((DdNode *)(intptr_cast_type) bdd_zero);
-    
+    /*
     fprintf(stderr, "Garbage collections: %d  Time spent: %ldms\n",
-    Cudd_ReadGarbageCollections(manager), Cudd_ReadGarbageCollectionTime(manager));
-    
+            Cudd_ReadGarbageCollections(manager),
+	    Cudd_ReadGarbageCollectionTime(manager));
     bdds = Cudd_CheckZeroRef(manager);
-    if (bdds > 0) fprintf(stderr, "Note: %d BDDs still in memory when terminating\n", bdds);
+    if (bdds > 0)
+      fprintf(stderr, "Note: %d BDDs still in memory when terminating\n",
+                      bdds);
+    */
     m = manager;
     manager = NULL; // race condition with delRef
     Cudd_Quit(m);
@@ -248,6 +347,34 @@ JNIEXPORT jint JNICALL Java_net_sf_javabdd_CUDDFactory_var2Level0
 
 /*
  * Class:     net_sf_javabdd_CUDDFactory
+ * Method:    reorder0
+ * Signature: (Lnet/sf/javabdd/BDDFactory/ReorderMethod;)V
+ */
+JNIEXPORT void JNICALL Java_net_sf_javabdd_CUDDFactory_reorder0
+  (JNIEnv *env, jclass cl, jobject javamethod)
+{
+  Cudd_ReorderingType cuddmethod = getCUDDReorderMethod(env, javamethod);
+  if (!(*env)->ExceptionOccurred(env)) {
+    Cudd_ReduceHeap(manager, cuddmethod, INT_MAX);
+  }
+}
+
+/*
+ * Class:     net_sf_javabdd_CUDDFactory
+ * Method:    autoreorder0
+ * Signature: (Lnet/sf/javabdd/BDDFactory/ReorderMethod;)V
+ */
+JNIEXPORT void JNICALL Java_net_sf_javabdd_CUDDFactory_autoreorder0
+  (JNIEnv *env, jclass cl, jobject javamethod)
+{
+  Cudd_ReorderingType cuddmethod = getCUDDReorderMethod(env, javamethod);
+  if (!(*env)->ExceptionOccurred(env)) {
+    Cudd_AutodynEnable(manager, cuddmethod);
+  }
+}
+
+/*
+ * Class:     net_sf_javabdd_CUDDFactory
  * Method:    setVarOrder0
  * Signature: ([I)V
  */
@@ -267,6 +394,35 @@ JNIEXPORT void JNICALL Java_net_sf_javabdd_CUDDFactory_setVarOrder0
     if (a == NULL) return;
     Cudd_ShuffleHeap(manager, a);
     (*env)->ReleasePrimitiveArrayCritical(env, arr, a, JNI_ABORT);
+}
+
+/*
+ * Class:     net_sf_javabdd_CUDDFactory
+ * Method:    addVarBlock0
+ * Signature: (IIZ)V
+ */
+JNIEXPORT void JNICALL Java_net_sf_javabdd_CUDDFactory_addVarBlock0
+  (JNIEnv *env, jclass cl, jint first, jint last, jboolean fixed)
+{
+  int firstp = Cudd_ReadPerm(manager, first);
+  int lastp = Cudd_ReadPerm(manager, last);
+  if (firstp <= lastp) {
+    int len = lastp - firstp + 1;
+    Cudd_MakeTreeNode(manager, first, len, fixed ? MTR_FIXED : MTR_DEFAULT);
+  } else {
+    die(env, "Bad indexes in variable block!");
+  }
+}
+
+/*
+ * Class:     net_sf_javabdd_CUDDFactory
+ * Method:    clearVarBlocks0
+ * Signature: ()V
+ */
+JNIEXPORT void JNICALL Java_net_sf_javabdd_CUDDFactory_clearVarBlocks0
+  (JNIEnv *env, jclass cl)
+{
+  Cudd_FreeTree(manager);
 }
 
 /*

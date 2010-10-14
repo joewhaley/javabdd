@@ -1,6 +1,9 @@
+//# -*- tab-width: 4  indent-tabs-mode: nil  c-basic-offset: 4 -*-
+
 // CUDDFactory.java, created Jan 29, 2003 9:50:57 PM by jwhaley
 // Copyright (C) 2003 John Whaley
 // Licensed under the terms of the GNU LGPL; see COPYING for details.
+
 package net.sf.javabdd;
 
 import java.util.Collection;
@@ -277,57 +280,55 @@ public class CUDDFactory extends BDDFactory {
     /* (non-Javadoc)
      * @see net.sf.javabdd.BDDFactory#reorder(net.sf.javabdd.BDDFactory.ReorderMethod)
      */
-    public void reorder(ReorderMethod m) {
-        // TODO Implement this.
-        throw new UnsupportedOperationException();
+    public void reorder(final ReorderMethod method)
+    {
+        reorder0(method);
     }
+    private static native void reorder0(ReorderMethod method);
 
     /* (non-Javadoc)
      * @see net.sf.javabdd.BDDFactory#autoReorder(net.sf.javabdd.BDDFactory.ReorderMethod)
      */
-    public void autoReorder(ReorderMethod method) {
-        // TODO Implement this.
-        throw new UnsupportedOperationException();
+    public void autoReorder(final ReorderMethod method)
+    {
+        mAutoReorderMethod = method;
+        autoreorder0(method);
     }
+    private static native void autoreorder0(ReorderMethod method);
 
     /* (non-Javadoc)
      * @see net.sf.javabdd.BDDFactory#autoReorder(net.sf.javabdd.BDDFactory.ReorderMethod, int)
      */
     public void autoReorder(ReorderMethod method, int max) {
-        // TODO Implement this.
-        throw new UnsupportedOperationException();
+        autoReorder(method);
     }
 
     /* (non-Javadoc)
      * @see net.sf.javabdd.BDDFactory#getReorderMethod()
      */
     public ReorderMethod getReorderMethod() {
-        // TODO Implement this.
-        throw new UnsupportedOperationException();
+        return mAutoReorderMethod;
     }
 
     /* (non-Javadoc)
      * @see net.sf.javabdd.BDDFactory#getReorderTimes()
      */
     public int getReorderTimes() {
-        // TODO Implement this.
-        throw new UnsupportedOperationException();
+        return Integer.MAX_VALUE;
     }
 
     /* (non-Javadoc)
      * @see net.sf.javabdd.BDDFactory#disableReorder()
      */
     public void disableReorder() {
-        // TODO Implement this.
-        System.err.println("Warning: disableReorder() not yet implemented");
+        autoReorder(BDDFactory.REORDER_NONE);
     }
 
     /* (non-Javadoc)
      * @see net.sf.javabdd.BDDFactory#enableReorder()
      */
     public void enableReorder() {
-        // TODO Implement this.
-        System.err.println("Warning: enableReorder() not yet implemented");
+        autoReorder(mAutoReorderMethod);
     }
 
     /* (non-Javadoc)
@@ -349,34 +350,56 @@ public class CUDDFactory extends BDDFactory {
     /* (non-Javadoc)
      * @see net.sf.javabdd.BDDFactory#addVarBlock(net.sf.javabdd.BDD, boolean)
      */
-    public void addVarBlock(BDD var, boolean fixed) {
-        // TODO Implement this.
-        throw new UnsupportedOperationException();
+    public void addVarBlock(BDD vars, final boolean fixed)
+    {
+        if (vars.isZero()) {
+            return;
+        } else if (vars.isOne()) {
+            throw new IllegalArgumentException
+                ("Bad cube in CUDDFactory.addVarBlock()!");
+        } else {
+            final int first = vars.var();
+            int last;
+            do {
+                last = vars.var();
+                vars = vars.high();
+                if (vars.isZero()) {
+                    throw new IllegalArgumentException
+                        ("Bad cube in CUDDFactory.addVarBlock()!");
+                }
+            } while (!vars.isOne());
+            addVarBlock(first, last, fixed);
+        }
     }
 
     /* (non-Javadoc)
      * @see net.sf.javabdd.BDDFactory#addVarBlock(int, int, boolean)
      */
-    public void addVarBlock(int first, int last, boolean fixed) {
-        // TODO Implement this.
-        throw new UnsupportedOperationException();
+    public void addVarBlock
+        (final int first, final int last, final boolean fixed)
+    {
+        addVarBlock0(first, last, fixed);
     }
+    private static native void addVarBlock0
+        (int first, int last, boolean fixed);
 
     /* (non-Javadoc)
      * @see net.sf.javabdd.BDDFactory#varBlockAll()
      */
     public void varBlockAll() {
-        // TODO Implement this.
-        throw new UnsupportedOperationException();
+        final int varnum = varNum();
+        for (int i = 0; i < varnum; i++) {
+            addVarBlock(i, i, false);
+        }
     }
 
     /* (non-Javadoc)
      * @see net.sf.javabdd.BDDFactory#clearVarBlocks()
      */
     public void clearVarBlocks() {
-        // TODO Implement this.
-        throw new UnsupportedOperationException();
+        clearVarBlocks0();
     }
+    private static native void clearVarBlocks0();
 
     /* (non-Javadoc)
      * @see net.sf.javabdd.BDDFactory#printOrder()
@@ -954,5 +977,9 @@ public class CUDDFactory extends BDDFactory {
     public String getVersion() {
         return "CUDD "+REVISION.substring(11, REVISION.length()-2);
     }
-    
+
+
+    private static BDDFactory.ReorderMethod mAutoReorderMethod =
+        BDDFactory.REORDER_NONE;
+
 }
