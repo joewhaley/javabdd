@@ -66,46 +66,51 @@ public abstract class BDDFactory {
      * @param cachesize operation cache size
      * @return BDD factory object
      */
-    public static BDDFactory init(String bddpackage, int nodenum, int cachesize) {
-        try {
-            if (bddpackage.equals("buddy"))
-                return BuDDyFactory.init(nodenum, cachesize);
-            if (bddpackage.equals("cudd"))
-                return CUDDFactory.init(nodenum, cachesize);
-            if (bddpackage.equals("cal"))
-                return CALFactory.init(nodenum, cachesize);
-            if (bddpackage.equals("j") || bddpackage.equals("java"))
-                return JFactory.init(nodenum, cachesize);
-            if (bddpackage.equals("u"))
-                return UberMicroFactory.init(nodenum, cachesize);
-            if (bddpackage.equals("micro"))
-                return MicroFactory.init(nodenum, cachesize);
-            if (bddpackage.equals("jdd"))
-                return JDDFactory.init(nodenum, cachesize);
-            if (bddpackage.equals("test"))
-                return TestBDDFactory.init(nodenum, cachesize);
-            if (bddpackage.equals("typed"))
-                return TypedBDDFactory.init(nodenum, cachesize);
-            if (bddpackage.equals("zdd")) {
-                BDDFactory bdd = JFactory.init(nodenum, cachesize);
-                ((JFactory)bdd).ZDD = true;
-                return bdd;
-            }
-        } catch (LinkageError e) {
-            System.out.println("Could not load BDD package "+bddpackage+": "+e.getLocalizedMessage());
-        }
-        try {
-            Class c = Class.forName(bddpackage);
-            Method m = c.getMethod("init", new Class[] { int.class, int.class });
-            return (BDDFactory) m.invoke(null, new Object[] { new Integer(nodenum), new Integer(cachesize) });
-        }
-        catch (ClassNotFoundException _) {}
-        catch (NoSuchMethodException _) {}
-        catch (IllegalAccessException _) {}
-        catch (InvocationTargetException _) {}
-        // falling back to default java implementation.
-        return JFactory.init(nodenum, cachesize);
+  public static BDDFactory init(String bddpackage, int nodenum, int cachesize)
+  {
+    try {
+      if (bddpackage.equals("buddy")) {
+	return BuDDyFactory.init(nodenum, cachesize);
+      } else if (bddpackage.equals("cudd")) {
+	return CUDDFactory.init(nodenum, cachesize);
+      } else if (bddpackage.equals("cal")) {
+	return CALFactory.init(nodenum, cachesize);
+      } else if (bddpackage.equals("j") || bddpackage.equals("java")) {
+	return JFactory.init(nodenum, cachesize);
+      } else if (bddpackage.equals("u")) {
+	return UberMicroFactory.init(nodenum, cachesize);
+      } else if (bddpackage.equals("micro")) {
+	return MicroFactory.init(nodenum, cachesize);
+      } else if (bddpackage.equals("jdd")) {
+	return JDDFactory.init(nodenum, cachesize);
+      } else if (bddpackage.equals("test")) {
+	return TestBDDFactory.init(nodenum, cachesize);
+      } else if (bddpackage.equals("typed")) {
+	return TypedBDDFactory.init(nodenum, cachesize);
+      } else if (bddpackage.equals("zdd")) {
+	BDDFactory bdd = JFactory.init(nodenum, cachesize);
+	((JFactory)bdd).ZDD = true;
+	return bdd;
+      } else {
+	System.err.println("Unknown BDD package: " + bddpackage);
+      }
+    } catch (LinkageError e) {
+      System.err.println("Could not load BDD package "+ bddpackage +
+			 ": " + e.getLocalizedMessage());
     }
+    try {
+      Class c = Class.forName(bddpackage);
+      Method m = c.getMethod("init", new Class[] { int.class, int.class });
+      return (BDDFactory) m.invoke(null, new Object[]
+	{ new Integer(nodenum), new Integer(cachesize) });
+    }
+    catch (ClassNotFoundException _) {}
+    catch (NoSuchMethodException _) {}
+    catch (IllegalAccessException _) {}
+    catch (InvocationTargetException _) {}
+    // falling back to default java implementation.
+    return JFactory.init(nodenum, cachesize);
+  }
 
     /**
      * Logical 'and'.

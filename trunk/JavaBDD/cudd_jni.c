@@ -1,5 +1,6 @@
 #include <jni.h>
 #include <stdlib.h>
+
 #include "util.h"
 #include "cudd.h"
 #include "cuddInt.h"
@@ -369,7 +370,11 @@ JNIEXPORT void JNICALL Java_net_sf_javabdd_CUDDFactory_autoreorder0
 {
   Cudd_ReorderingType cuddmethod = getCUDDReorderMethod(env, javamethod);
   if (!(*env)->ExceptionOccurred(env)) {
-    Cudd_AutodynEnable(manager, cuddmethod);
+    if (cuddmethod == CUDD_REORDER_NONE) {
+      Cudd_AutodynDisable(manager);
+    } else {
+      Cudd_AutodynEnable(manager, cuddmethod);
+    }
   }
 }
 

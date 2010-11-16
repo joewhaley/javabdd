@@ -205,7 +205,7 @@ public class BuDDyFactory extends BDDFactoryIntImpl {
     private static native void enableReorder0();
     public int reorderVerbose(int v) { return reorderVerbose0(v); }
     private static native int reorderVerbose0(int v);
-    public void reorder(ReorderMethod m) { reorder0(m.id); }
+    public void reorder(ReorderMethod m) { if (varNum() > 1) reorder0(m.id); }
     private static native void reorder0(int method);
     public void autoReorder(ReorderMethod method) { autoReorder0(method.id); }
     private static native void autoReorder0(int method);

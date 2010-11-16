@@ -227,7 +227,7 @@ public class JFactory extends BDDFactoryIntImpl {
     public void disableReorder() { bdd_disable_reorder(); }
     public void enableReorder() { bdd_enable_reorder(); }
     public int reorderVerbose(int v) { return bdd_reorder_verbose(v); }
-    public void reorder(ReorderMethod m) { bdd_reorder(m.id); }
+    public void reorder(ReorderMethod m) { if (varNum() > 1) bdd_reorder(m.id); }
     public void autoReorder(ReorderMethod method) { bdd_autoreorder(method.id); }
     public void autoReorder(ReorderMethod method, int max) { bdd_autoreorder_times(method.id, max); }
     public void swapVar(int v1, int v2) { bdd_swapvar(v1, v2); }
