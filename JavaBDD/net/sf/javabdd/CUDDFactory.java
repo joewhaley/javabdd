@@ -617,29 +617,25 @@ public class CUDDFactory extends BDDFactory {
          * @see net.sf.javabdd.BDD#restrict(net.sf.javabdd.BDD)
          */
         public BDD restrict(BDD var) {
-//            CUDDBDD c = (CUDDBDD) var;
-//            long b = cofactor0(_ddnode_ptr, c._ddnode_ptr);
-//            return new CUDDBDD(b);
-            // TODO Implement this.
-            throw new UnsupportedOperationException();
+            CUDDBDD c = (CUDDBDD) var;
+            long b = restrict0(_ddnode_ptr, c._ddnode_ptr);
+            return new CUDDBDD(b);
         }
         
         /* (non-Javadoc)
          * @see net.sf.javabdd.BDD#restrictWith(net.sf.javabdd.BDD)
          */
         public BDD restrictWith(BDD var) {
-//            CUDDBDD c = (CUDDBDD) var;
-//            long b = cofactor0(_ddnode_ptr, c._ddnode_ptr);
-//            addRef(b);
-//            delRef(_ddnode_ptr);
-//            if (this != c) {
-//                delRef(c._ddnode_ptr);
-//                c._ddnode_ptr = INVALID_BDD;
-//            }
-//            _ddnode_ptr = b;
-//            return this;
-            // TODO Implement this.
-            throw new UnsupportedOperationException();
+            CUDDBDD c = (CUDDBDD) var;
+            long b = restrict0(_ddnode_ptr, c._ddnode_ptr);
+            addRef(b);
+            delRef(_ddnode_ptr);
+            if (this != c) {
+                delRef(c._ddnode_ptr);
+                c._ddnode_ptr = INVALID_BDD;
+            }
+            _ddnode_ptr = b;
+            return this;
         }
 //        private static native long cofactor0(long b, long var);
         
