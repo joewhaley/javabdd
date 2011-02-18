@@ -179,7 +179,7 @@ public abstract class BDDFactoryIntImpl extends BDDFactory {
         public BDD satOne(BDDVarSet var, boolean pol) {
             return makeBDD(satOne_impl2(v, unwrap(var), pol));
         }
-        public BDD simplify(BDDVarSet d) {
+        public BDD simplify(BDD d) {
             return makeBDD(simplify_impl(v, unwrap(d)));
         }
         public BDDVarSet support() {

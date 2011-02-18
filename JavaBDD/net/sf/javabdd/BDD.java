@@ -404,7 +404,7 @@ public abstract class BDD {
      * @param d BDDVarSet containing the variables in the domain
      * @return the result of the simplify operation
      */
-    public abstract BDD simplify(BDDVarSet d);
+    public abstract BDD simplify(BDD d);
 
     /**
      * <p>Returns the variable support of this BDD.  The support is all the
