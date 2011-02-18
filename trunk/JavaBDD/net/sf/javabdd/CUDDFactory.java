@@ -617,35 +617,43 @@ public class CUDDFactory extends BDDFactory {
          * @see net.sf.javabdd.BDD#restrict(net.sf.javabdd.BDD)
          */
         public BDD restrict(BDD var) {
-            CUDDBDD c = (CUDDBDD) var;
-            long b = restrict0(_ddnode_ptr, c._ddnode_ptr);
-            return new CUDDBDD(b);
+//            CUDDBDD c = (CUDDBDD) var;
+//            long b = cofactor0(_ddnode_ptr, c._ddnode_ptr);
+//            return new CUDDBDD(b);
+            // TODO Implement this.
+            throw new UnsupportedOperationException();
         }
-        private static native long restrict0(long b, long var);
         
         /* (non-Javadoc)
          * @see net.sf.javabdd.BDD#restrictWith(net.sf.javabdd.BDD)
          */
         public BDD restrictWith(BDD var) {
-            CUDDBDD c = (CUDDBDD) var;
-            long b = restrict0(_ddnode_ptr, c._ddnode_ptr);
-            addRef(b);
-            delRef(_ddnode_ptr);
-            if (this != c) {
-                delRef(c._ddnode_ptr);
-                c._ddnode_ptr = INVALID_BDD;
-            }
-            _ddnode_ptr = b;
-            return this;
-        }
-        
-        /* (non-Javadoc)
-         * @see net.sf.javabdd.BDD#simplify(net.sf.javabdd.BDDVarSet)
-         */
-        public BDD simplify(BDDVarSet d) {
+//            CUDDBDD c = (CUDDBDD) var;
+//            long b = cofactor0(_ddnode_ptr, c._ddnode_ptr);
+//            addRef(b);
+//            delRef(_ddnode_ptr);
+//            if (this != c) {
+//                delRef(c._ddnode_ptr);
+//                c._ddnode_ptr = INVALID_BDD;
+//            }
+//            _ddnode_ptr = b;
+//            return this;
             // TODO Implement this.
             throw new UnsupportedOperationException();
         }
+//        private static native long cofactor0(long b, long var);
+        
+        /** Coudert and Mardre's restrict function.  Note that this function
+         * is called restrict in CUDD, While the JavaBDD's restrict function is
+         * called cofactor in CUDD. (the generalized cofactor is constrain)
+         * @see net.sf.javabdd.BDD#simplify(net.sf.javabdd.BDDVarSet)
+         */
+        public BDD simplify(BDD d) {
+            CUDDBDD c = (CUDDBDD) d;
+            long b = restrict0(_ddnode_ptr, c._ddnode_ptr);
+            return new CUDDBDD(b);
+        }
+        private static native long restrict0(long b, long var);
 
         /* (non-Javadoc)
          * @see net.sf.javabdd.BDD#support()

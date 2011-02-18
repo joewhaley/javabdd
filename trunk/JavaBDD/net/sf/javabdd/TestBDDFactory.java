@@ -326,9 +326,9 @@ public class TestBDDFactory extends BDDFactory {
          * 
          * @see net.sf.javabdd.BDD#simplify(net.sf.javabdd.BDDVarSet)
          */
-        public BDD simplify(BDDVarSet d) {
-            BDDVarSet c1 = ((TestBDDVarSet) d).b1;
-            BDDVarSet c2 = ((TestBDDVarSet) d).b2;
+        public BDD simplify(BDD d) {
+            BDD c1 = ((TestBDD) d).b1;
+            BDD c2 = ((TestBDD) d).b2;
             BDD r1 = b1.simplify(c1);
             BDD r2 = b2.simplify(c2);
             return new TestBDD(r1, r2);

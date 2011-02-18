@@ -586,7 +586,7 @@ public class CALFactory extends BDDFactory {
         /* (non-Javadoc)
          * @see net.sf.javabdd.BDD#simplify(net.sf.javabdd.BDDVarSet)
          */
-        public BDD simplify(BDDVarSet d) {
+        public BDD simplify(BDD d) {
             // TODO Implement this.
             throw new UnsupportedOperationException();
         }

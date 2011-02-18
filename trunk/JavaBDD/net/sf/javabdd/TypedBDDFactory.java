@@ -755,8 +755,8 @@ public class TypedBDDFactory extends BDDFactory {
         /* (non-Javadoc)
          * @see net.sf.javabdd.BDD#simplify(net.sf.javabdd.BDDVarSet)
          */
-        public BDD simplify(BDDVarSet d) {
-            TypedBDDVarSet bdd1 = (TypedBDDVarSet) d;
+        public BDD simplify(BDD d) {
+            TypedBDD bdd1 = (TypedBDD) d;
             // TODO How does this change the domains?
             Set newDom = makeSet();
             newDom.addAll(dom);
