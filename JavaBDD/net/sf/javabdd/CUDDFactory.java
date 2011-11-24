@@ -174,9 +174,9 @@ public class CUDDFactory extends BDDFactory {
      * @see net.sf.javabdd.BDDFactory#setCacheRatio(double)
      */
     public double setCacheRatio(double x) {
-        // TODO Implement this.
-        System.err.println("Warning: setCacheRatio() not yet implemented");
-        return 0;
+        // Cache size is determined automatically by CUDD.
+        // System.err.println("Warning: setCacheRatio() not yet implemented");
+        return 1.0;
     }
 
     /* (non-Javadoc)
